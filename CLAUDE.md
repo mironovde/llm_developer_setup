@@ -1,4 +1,8 @@
-# LLM Developer Setup - Base Configuration
+# LLM Developer Setup - Backend Developer Specialization
+
+## Specialization: Backend Development (Node.js, Python, Go, Databases)
+
+This configuration is optimized for backend development including API design, database management, security, and deployment.
 
 ## Critical Workflow: Always Start Here
 
@@ -23,13 +27,14 @@
 - Merge to main only after testing and review
 
 ### Quality Standards
-- Every feature must be tested
-- Code must be challenged before merge
-- Product usability is paramount
-- Technical debt must be documented
+- Every endpoint must be tested
+- Security review for all changes
+- API documentation maintained
+- Product usability is paramount (API DX)
 
-## Available Core Skills
+## Available Skills
 
+### Core Skills (All Specializations)
 | Skill | Command | Purpose |
 |-------|---------|---------|
 | Skill Router | `/skill-router` | **MANDATORY** - Determines which skills to load |
@@ -41,6 +46,40 @@
 | Context Manager | `/context-manage` | Optimizes context usage |
 | Progress Tracker | `/progress-update` | Updates project status |
 
+### Backend-Specific Skills
+| Skill | Command | Purpose |
+|-------|---------|---------|
+| API Design | `/api-design` | REST/GraphQL API patterns |
+| Database Design | `/db-design` | Schema design, queries, migrations |
+| Security | `/security` | Authentication, authorization, OWASP |
+| Backend Testing | `/backend-testing` | Unit, integration, load testing |
+| Deployment | `/deployment` | Docker, CI/CD, infrastructure |
+
+## Technology Stack
+
+### Languages
+- **Node.js**: Express, Fastify, NestJS
+- **Python**: FastAPI, Django, Flask
+- **Go**: Gin, Echo, Fiber
+- **TypeScript**: Full type safety
+
+### Databases
+- **SQL**: PostgreSQL, MySQL, SQLite
+- **NoSQL**: MongoDB, Redis, DynamoDB
+- **ORM/ODM**: Prisma, TypeORM, Drizzle, SQLAlchemy
+
+### Infrastructure
+- **Containers**: Docker, Docker Compose
+- **Orchestration**: Kubernetes, ECS
+- **Cloud**: AWS, GCP, Azure
+- **Serverless**: Lambda, Cloud Functions
+
+### Tools
+- **API Docs**: OpenAPI/Swagger
+- **Testing**: Jest, pytest, Go testing
+- **CI/CD**: GitHub Actions, GitLab CI
+- **Monitoring**: Prometheus, Grafana, DataDog
+
 ## Workflow Pattern
 
 ```
@@ -48,7 +87,7 @@ User Request
     │
     ▼
 ┌─────────────────┐
-│  /skill-router  │ ◄── MANDATORY: Identify relevant skills & MCPs
+│  /skill-router  │ ◄── MANDATORY: Route to backend skills
 └────────┬────────┘
          │
          ▼
@@ -58,19 +97,27 @@ User Request
          │
          ▼
 ┌─────────────────────┐
-│   Load Skills &     │ ◄── Only load what's needed
-│   Configure MCPs    │
+│   /api-design       │ ◄── Design endpoints and contracts
 └────────┬────────────┘
          │
          ▼
 ┌─────────────────────┐
-│   Execute Tasks     │ ◄── Parallel when possible
-│   (with subagents)  │
+│   /db-design        │ ◄── Schema and data modeling
 └────────┬────────────┘
          │
          ▼
 ┌─────────────────────┐
-│   /test-challenge   │ ◄── Test and challenge results
+│   /security         │ ◄── Security review
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│   /backend-testing  │ ◄── Test implementation
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│   /deployment       │ ◄── Deploy and monitor
 └────────┬────────────┘
          │
          ▼
@@ -84,45 +131,115 @@ User Request
 └─────────────────────┘
 ```
 
+## Code Standards
+
+### API Design
+- RESTful conventions
+- Consistent error responses
+- Pagination for lists
+- Versioning strategy
+
+### Database
+- Normalize appropriately
+- Index strategically
+- Use migrations
+- Connection pooling
+
+### Security
+- Input validation
+- SQL injection prevention
+- Authentication required
+- Secrets in environment
+
+## Project Structure
+
+### Node.js/TypeScript
+```
+src/
+├── api/
+│   ├── routes/
+│   ├── controllers/
+│   └── middleware/
+├── services/
+├── repositories/
+├── models/
+├── utils/
+├── config/
+└── __tests__/
+```
+
+### Python
+```
+app/
+├── api/
+│   ├── routes/
+│   └── dependencies/
+├── services/
+├── repositories/
+├── models/
+├── schemas/
+├── core/
+└── tests/
+```
+
+## API Design Principles
+
+### REST
+- Use nouns for resources
+- HTTP methods for actions
+- Status codes properly
+- HATEOAS when needed
+
+### Error Handling
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid input",
+    "details": [
+      { "field": "email", "message": "Invalid format" }
+    ]
+  }
+}
+```
+
+### Response Formats
+```json
+{
+  "data": { ... },
+  "meta": {
+    "page": 1,
+    "limit": 20,
+    "total": 100
+  }
+}
+```
+
+## MCP Configuration for Backend
+
+Recommended MCPs for backend development:
+- `github` - Repository management
+- `postgres` - Database queries
+- `filesystem` - Project file access
+- `docker` - Container management
+
 ## Branching Strategy
 
 ```
 main
   │
-  ├── feature/task-name      # Individual features
-  ├── experiment/idea-name   # Experimental work
-  ├── bugfix/issue-name      # Bug fixes
-  └── release/version        # Release preparation
+  ├── feature/api-endpoint-name
+  ├── feature/service-name
+  ├── bugfix/issue-description
+  ├── migration/schema-change
+  └── release/v1.0.0
 ```
-
-## Project Status Location
-
-All project progress is tracked in `PROJECT_STATUS.md`:
-- Current sprint tasks with statuses
-- Completed features
-- Known issues and blockers
-- Next steps
-
-## MCP Configuration
-
-MCPs are configured in `.mcp.json`. The skill router will:
-1. Analyze task requirements
-2. Check currently configured MCPs
-3. Recommend additional MCPs if needed
-4. Provide installation commands
-
-## Subagent Usage
-
-For parallel task execution:
-- Use Task tool with appropriate subagent_type
-- Launch independent tasks in parallel
-- Coordinate dependent tasks sequentially
-- Always challenge results before merge
 
 ## Remember
 
 1. **Never skip the skill router** - it's the gateway to efficient context
 2. **Decompose before implementing** - atomic tasks succeed
-3. **Test everything** - quality over speed
-4. **Update progress** - visibility matters
+3. **Security is not optional** - review every change
+4. **Test all endpoints** - unit + integration + load
 5. **Challenge results** - better products through critique
+6. **Document APIs** - developer experience matters
