@@ -1,4 +1,8 @@
-# LLM Developer Setup - Base Configuration
+# LLM Developer Setup - ML Engineer Specialization
+
+## Specialization: Machine Learning Engineering (PyTorch, TensorFlow, MLOps)
+
+This configuration is optimized for ML engineering including model development, data pipelines, experiment tracking, and production deployment.
 
 ## Critical Workflow: Always Start Here
 
@@ -23,13 +27,14 @@
 - Merge to main only after testing and review
 
 ### Quality Standards
-- Every feature must be tested
-- Code must be challenged before merge
-- Product usability is paramount
-- Technical debt must be documented
+- Every model must be validated
+- Experiments must be reproducible
+- Data quality must be monitored
+- Product usability is paramount (ML products)
 
-## Available Core Skills
+## Available Skills
 
+### Core Skills (All Specializations)
 | Skill | Command | Purpose |
 |-------|---------|---------|
 | Skill Router | `/skill-router` | **MANDATORY** - Determines which skills to load |
@@ -41,6 +46,38 @@
 | Context Manager | `/context-manage` | Optimizes context usage |
 | Progress Tracker | `/progress-update` | Updates project status |
 
+### ML-Specific Skills
+| Skill | Command | Purpose |
+|-------|---------|---------|
+| ML Modeling | `/ml-modeling` | Model architecture and training |
+| Data Engineering | `/data-engineering` | Data pipelines and processing |
+| ML Deployment | `/ml-deployment` | Model serving and inference |
+| Experiment Tracking | `/experiment-tracking` | MLflow, W&B, experiment management |
+| ML Testing | `/ml-testing` | Model validation and testing |
+
+## Technology Stack
+
+### Deep Learning
+- **Frameworks**: PyTorch, TensorFlow, JAX
+- **Libraries**: Hugging Face, timm, torchvision
+- **Training**: PyTorch Lightning, Keras
+
+### Data
+- **Processing**: Pandas, Polars, DuckDB
+- **Visualization**: Matplotlib, Seaborn, Plotly
+- **Feature Engineering**: scikit-learn, Feature-engine
+
+### MLOps
+- **Experiment Tracking**: MLflow, Weights & Biases, Neptune
+- **Model Registry**: MLflow, DVC
+- **Serving**: TorchServe, TensorFlow Serving, Triton
+- **Orchestration**: Airflow, Prefect, Dagster
+
+### Infrastructure
+- **Compute**: AWS SageMaker, GCP Vertex AI, Azure ML
+- **GPUs**: CUDA, cuDNN, NVIDIA Triton
+- **Containers**: Docker, NVIDIA Container Toolkit
+
 ## Workflow Pattern
 
 ```
@@ -48,7 +85,7 @@ User Request
     │
     ▼
 ┌─────────────────┐
-│  /skill-router  │ ◄── MANDATORY: Identify relevant skills & MCPs
+│  /skill-router  │ ◄── MANDATORY: Route to ML skills
 └────────┬────────┘
          │
          ▼
@@ -58,19 +95,27 @@ User Request
          │
          ▼
 ┌─────────────────────┐
-│   Load Skills &     │ ◄── Only load what's needed
-│   Configure MCPs    │
+│  /data-engineering  │ ◄── Data pipeline and quality
 └────────┬────────────┘
          │
          ▼
 ┌─────────────────────┐
-│   Execute Tasks     │ ◄── Parallel when possible
-│   (with subagents)  │
+│   /ml-modeling      │ ◄── Model architecture and training
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────────┐
+│   /experiment-tracking  │ ◄── Log experiments
+└────────┬────────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│   /ml-testing       │ ◄── Validate model
 └────────┬────────────┘
          │
          ▼
 ┌─────────────────────┐
-│   /test-challenge   │ ◄── Test and challenge results
+│   /ml-deployment    │ ◄── Deploy to production
 └────────┬────────────┘
          │
          ▼
@@ -84,45 +129,109 @@ User Request
 └─────────────────────┘
 ```
 
+## ML Code Standards
+
+### Reproducibility
+- Set random seeds
+- Version datasets
+- Log all hyperparameters
+- Use config files
+
+### Code Quality
+- Type hints for all functions
+- Docstrings with examples
+- Modular architecture
+- Configuration management
+
+### Experiment Management
+- Meaningful experiment names
+- Clear metrics logging
+- Artifact versioning
+- Comparison baselines
+
+## Project Structure
+
+```
+ml_project/
+├── configs/
+│   ├── model/
+│   ├── training/
+│   └── data/
+├── data/
+│   ├── raw/
+│   ├── processed/
+│   └── features/
+├── notebooks/
+│   ├── exploration/
+│   └── experiments/
+├── src/
+│   ├── data/
+│   │   ├── dataset.py
+│   │   └── transforms.py
+│   ├── models/
+│   │   ├── architecture.py
+│   │   └── layers.py
+│   ├── training/
+│   │   ├── trainer.py
+│   │   └── callbacks.py
+│   ├── evaluation/
+│   │   └── metrics.py
+│   └── inference/
+│       └── predictor.py
+├── tests/
+├── scripts/
+│   ├── train.py
+│   ├── evaluate.py
+│   └── serve.py
+├── Dockerfile
+├── requirements.txt
+└── pyproject.toml
+```
+
+## ML Development Principles
+
+### Data Quality
+- Validate data distributions
+- Handle missing values
+- Check for data leakage
+- Monitor data drift
+
+### Model Development
+- Start simple, add complexity
+- Use proper train/val/test splits
+- Cross-validation for small data
+- Regularization and early stopping
+
+### Evaluation
+- Multiple metrics
+- Confidence intervals
+- Fairness assessment
+- Business metrics alignment
+
+## MCP Configuration for ML
+
+Recommended MCPs for ML development:
+- `github` - Repository management
+- `filesystem` - Data and model files
+- `jupyter` - Notebook management (if available)
+
 ## Branching Strategy
 
 ```
 main
   │
-  ├── feature/task-name      # Individual features
-  ├── experiment/idea-name   # Experimental work
-  ├── bugfix/issue-name      # Bug fixes
-  └── release/version        # Release preparation
+  ├── experiment/model-v1
+  ├── experiment/feature-engineering
+  ├── feature/data-pipeline
+  ├── feature/model-serving
+  └── release/model-v1.0
 ```
-
-## Project Status Location
-
-All project progress is tracked in `PROJECT_STATUS.md`:
-- Current sprint tasks with statuses
-- Completed features
-- Known issues and blockers
-- Next steps
-
-## MCP Configuration
-
-MCPs are configured in `.mcp.json`. The skill router will:
-1. Analyze task requirements
-2. Check currently configured MCPs
-3. Recommend additional MCPs if needed
-4. Provide installation commands
-
-## Subagent Usage
-
-For parallel task execution:
-- Use Task tool with appropriate subagent_type
-- Launch independent tasks in parallel
-- Coordinate dependent tasks sequentially
-- Always challenge results before merge
 
 ## Remember
 
 1. **Never skip the skill router** - it's the gateway to efficient context
 2. **Decompose before implementing** - atomic tasks succeed
-3. **Test everything** - quality over speed
-4. **Update progress** - visibility matters
+3. **Reproducibility is essential** - log everything
+4. **Data quality first** - garbage in, garbage out
 5. **Challenge results** - better products through critique
+6. **Monitor in production** - models degrade over time
