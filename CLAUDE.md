@@ -1,4 +1,8 @@
-# LLM Developer Setup - Base Configuration
+# LLM Developer Setup - Fullstack Developer Specialization
+
+## Specialization: Fullstack Development (React + Node.js/Python Backend)
+
+This configuration is optimized for fullstack web development combining modern frontend frameworks with robust backend services.
 
 ## Critical Workflow: Always Start Here
 
@@ -23,13 +27,14 @@
 - Merge to main only after testing and review
 
 ### Quality Standards
-- Every feature must be tested
-- Code must be challenged before merge
+- Frontend components tested with Jest/RTL
+- Backend endpoints tested with integration tests
+- E2E tests for critical user flows
 - Product usability is paramount
-- Technical debt must be documented
 
-## Available Core Skills
+## Available Skills
 
+### Core Skills (All Specializations)
 | Skill | Command | Purpose |
 |-------|---------|---------|
 | Skill Router | `/skill-router` | **MANDATORY** - Determines which skills to load |
@@ -41,6 +46,42 @@
 | Context Manager | `/context-manage` | Optimizes context usage |
 | Progress Tracker | `/progress-update` | Updates project status |
 
+### Fullstack-Specific Skills
+| Skill | Command | Purpose |
+|-------|---------|---------|
+| React Development | `/react-dev` | React patterns and best practices |
+| CSS Styling | `/css-style` | Modern CSS, Tailwind, design systems |
+| Accessibility | `/accessibility` | WCAG compliance |
+| API Design | `/api-design` | REST/GraphQL API patterns |
+| Database Design | `/db-design` | Schema design and queries |
+| Fullstack Integration | `/fullstack-integration` | Frontend-backend integration |
+| Deployment | `/deployment` | Docker, CI/CD, infrastructure |
+
+## Technology Stack
+
+### Frontend
+- **Framework**: React 18+ / Next.js 14+
+- **Language**: TypeScript (strict mode)
+- **Styling**: Tailwind CSS / CSS Modules
+- **State**: React Query, Zustand
+- **Forms**: React Hook Form + Zod
+
+### Backend
+- **Runtime**: Node.js / Python
+- **Framework**: Express, Fastify, NestJS / FastAPI, Django
+- **ORM**: Prisma, Drizzle / SQLAlchemy
+- **Validation**: Zod / Pydantic
+
+### Database
+- **Primary**: PostgreSQL
+- **Cache**: Redis
+- **ORM**: Prisma / SQLAlchemy
+
+### Infrastructure
+- **Containers**: Docker, Docker Compose
+- **CI/CD**: GitHub Actions
+- **Cloud**: Vercel, Railway, AWS
+
 ## Workflow Pattern
 
 ```
@@ -48,29 +89,30 @@ User Request
     │
     ▼
 ┌─────────────────┐
-│  /skill-router  │ ◄── MANDATORY: Identify relevant skills & MCPs
+│  /skill-router  │ ◄── MANDATORY: Route to fullstack skills
 └────────┬────────┘
          │
          ▼
 ┌─────────────────────┐
-│ /task-decomposition │ ◄── Break into atomic subtasks
+│ /task-decomposition │ ◄── Break into frontend/backend tasks
 └────────┬────────────┘
+         │
+    ┌────┴────┐
+    ▼         ▼
+┌────────┐ ┌────────┐
+│Frontend│ │Backend │  ◄── Can be parallel
+│ Skills │ │ Skills │
+└───┬────┘ └───┬────┘
+    │          │
+    └────┬─────┘
+         ▼
+┌──────────────────────────┐
+│  /fullstack-integration  │ ◄── Connect frontend and backend
+└────────┬─────────────────┘
          │
          ▼
 ┌─────────────────────┐
-│   Load Skills &     │ ◄── Only load what's needed
-│   Configure MCPs    │
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│   Execute Tasks     │ ◄── Parallel when possible
-│   (with subagents)  │
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│   /test-challenge   │ ◄── Test and challenge results
+│   /test-challenge   │ ◄── E2E testing
 └────────┬────────────┘
          │
          ▼
@@ -84,45 +126,180 @@ User Request
 └─────────────────────┘
 ```
 
+## Parallel Development Pattern
+
+For fullstack features, decompose into parallel tracks:
+
+```
+Feature Request
+    │
+    ├── Frontend Track (branch: feature/ui-component)
+    │   ├── Component design
+    │   ├── State management
+    │   └── Mock API integration
+    │
+    ├── Backend Track (branch: feature/api-endpoint)
+    │   ├── Database schema
+    │   ├── API endpoints
+    │   └── Business logic
+    │
+    └── Integration Track (branch: feature/integration)
+        ├── Connect real API
+        ├── E2E tests
+        └── Merge to main
+```
+
+## Project Structure
+
+### Monorepo (Recommended)
+```
+project/
+├── apps/
+│   ├── web/                 # Next.js frontend
+│   │   ├── app/
+│   │   ├── components/
+│   │   └── lib/
+│   └── api/                 # Backend API
+│       ├── src/
+│       │   ├── routes/
+│       │   ├── services/
+│       │   └── models/
+│       └── tests/
+├── packages/
+│   ├── shared/              # Shared types/utils
+│   │   ├── types/
+│   │   └── utils/
+│   └── ui/                  # Shared UI components
+├── docker-compose.yml
+└── turbo.json
+```
+
+### Separate Repos
+```
+Frontend (Next.js):
+├── app/
+├── components/
+├── hooks/
+├── lib/
+└── tests/
+
+Backend (Express/FastAPI):
+├── src/
+│   ├── routes/
+│   ├── controllers/
+│   ├── services/
+│   ├── models/
+│   └── middleware/
+└── tests/
+```
+
+## API Contract Pattern
+
+### TypeScript Shared Types
+```typescript
+// packages/shared/types/api.ts
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export interface CreateUserRequest {
+  email: string;
+  password: string;
+  name: string;
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  meta?: {
+    page?: number;
+    total?: number;
+  };
+}
+
+export interface ApiError {
+  code: string;
+  message: string;
+  details?: unknown;
+}
+```
+
+### API Client
+```typescript
+// apps/web/lib/api.ts
+import { User, CreateUserRequest, ApiResponse } from '@project/shared';
+
+class ApiClient {
+  private baseUrl: string;
+
+  constructor(baseUrl: string) {
+    this.baseUrl = baseUrl;
+  }
+
+  async getUsers(): Promise<ApiResponse<User[]>> {
+    const res = await fetch(`${this.baseUrl}/users`);
+    if (!res.ok) throw new ApiError(await res.json());
+    return res.json();
+  }
+
+  async createUser(data: CreateUserRequest): Promise<ApiResponse<User>> {
+    const res = await fetch(`${this.baseUrl}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new ApiError(await res.json());
+    return res.json();
+  }
+}
+```
+
+## Code Standards
+
+### Frontend
+- TypeScript strict mode
+- Functional components
+- Custom hooks for logic
+- Server Components where possible
+
+### Backend
+- Input validation on all endpoints
+- Proper error handling
+- Authentication middleware
+- Consistent response format
+
+### Integration
+- Type-safe API contracts
+- Environment-based configuration
+- CORS properly configured
+- Error handling end-to-end
+
+## MCP Configuration for Fullstack
+
+Recommended MCPs for fullstack development:
+- `github` - Repository management
+- `postgres` - Database queries
+- `filesystem` - Project file access
+- `browser` - E2E testing
+
 ## Branching Strategy
 
 ```
 main
   │
-  ├── feature/task-name      # Individual features
-  ├── experiment/idea-name   # Experimental work
-  ├── bugfix/issue-name      # Bug fixes
-  └── release/version        # Release preparation
+  ├── feature/frontend-component
+  ├── feature/backend-endpoint
+  ├── feature/fullstack-feature
+  ├── bugfix/issue-description
+  └── release/v1.0.0
 ```
-
-## Project Status Location
-
-All project progress is tracked in `PROJECT_STATUS.md`:
-- Current sprint tasks with statuses
-- Completed features
-- Known issues and blockers
-- Next steps
-
-## MCP Configuration
-
-MCPs are configured in `.mcp.json`. The skill router will:
-1. Analyze task requirements
-2. Check currently configured MCPs
-3. Recommend additional MCPs if needed
-4. Provide installation commands
-
-## Subagent Usage
-
-For parallel task execution:
-- Use Task tool with appropriate subagent_type
-- Launch independent tasks in parallel
-- Coordinate dependent tasks sequentially
-- Always challenge results before merge
 
 ## Remember
 
 1. **Never skip the skill router** - it's the gateway to efficient context
-2. **Decompose before implementing** - atomic tasks succeed
-3. **Test everything** - quality over speed
-4. **Update progress** - visibility matters
+2. **Decompose before implementing** - split frontend/backend tasks
+3. **Type safety end-to-end** - shared types between front and back
+4. **Test at all levels** - unit, integration, E2E
 5. **Challenge results** - better products through critique
+6. **API contract first** - design API before implementation
