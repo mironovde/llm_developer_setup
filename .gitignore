@@ -1,0 +1,66 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Dependencies
+node_modules/
+.pnpm-store/
+vendor/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.parcel-cache/
+.turbo/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/
+
+# Swift
+.build/
+DerivedData/
+*.xcuserstate
+*.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+
+# ML/Data
+*.model
+*.h5
+*.pkl
+*.ckpt
+data/raw/
+data/processed/
+wandb/
+mlruns/
