@@ -1,4 +1,8 @@
-# LLM Developer Setup - Base Configuration
+# LLM Developer Setup - Swift Developer Specialization
+
+## Specialization: Swift Development (iOS, macOS, watchOS, tvOS, Vapor Backend)
+
+This configuration is optimized for Swift ecosystem development including native Apple platform apps and server-side Swift with Vapor.
 
 ## Critical Workflow: Always Start Here
 
@@ -23,13 +27,14 @@
 - Merge to main only after testing and review
 
 ### Quality Standards
-- Every feature must be tested
-- Code must be challenged before merge
+- Every feature must be tested (XCTest, Quick/Nimble)
+- Code must follow Swift API Design Guidelines
+- SwiftUI views must be previewed and tested
 - Product usability is paramount
-- Technical debt must be documented
 
-## Available Core Skills
+## Available Skills
 
+### Core Skills (All Specializations)
 | Skill | Command | Purpose |
 |-------|---------|---------|
 | Skill Router | `/skill-router` | **MANDATORY** - Determines which skills to load |
@@ -41,6 +46,43 @@
 | Context Manager | `/context-manage` | Optimizes context usage |
 | Progress Tracker | `/progress-update` | Updates project status |
 
+### Swift-Specific Skills
+| Skill | Command | Purpose |
+|-------|---------|---------|
+| iOS Development | `/swift-ios` | iOS app development patterns |
+| macOS Development | `/swift-macos` | macOS app development patterns |
+| Vapor Backend | `/swift-vapor` | Server-side Swift with Vapor |
+| SwiftUI Design | `/swift-ui-design` | SwiftUI design patterns and best practices |
+| Swift Testing | `/swift-testing` | Swift testing strategies |
+
+## Technology Stack
+
+### Frontend (Native)
+- **UI Framework**: SwiftUI (preferred), UIKit (when needed)
+- **Architecture**: MVVM, TCA (The Composable Architecture)
+- **State Management**: @Observable, @State, @Binding
+- **Navigation**: NavigationStack, NavigationSplitView
+- **Async**: Swift Concurrency (async/await, actors)
+
+### Backend (Vapor)
+- **Framework**: Vapor 4+
+- **ORM**: Fluent
+- **Authentication**: JWT, Sessions
+- **Database**: PostgreSQL, SQLite
+- **Deployment**: Docker, Railway, Heroku
+
+### Testing
+- **Unit**: XCTest, Quick/Nimble
+- **UI**: XCUITest
+- **Snapshot**: swift-snapshot-testing
+- **Mocking**: Mockolo, Cuckoo
+
+### Tools
+- **Package Manager**: Swift Package Manager
+- **Linting**: SwiftLint
+- **Formatting**: swift-format
+- **CI/CD**: Xcode Cloud, GitHub Actions
+
 ## Workflow Pattern
 
 ```
@@ -48,7 +90,7 @@ User Request
     │
     ▼
 ┌─────────────────┐
-│  /skill-router  │ ◄── MANDATORY: Identify relevant skills & MCPs
+│  /skill-router  │ ◄── MANDATORY: Route to Swift-specific skills
 └────────┬────────┘
          │
          ▼
@@ -58,19 +100,29 @@ User Request
          │
          ▼
 ┌─────────────────────┐
-│   Load Skills &     │ ◄── Only load what's needed
-│   Configure MCPs    │
+│   Platform Check    │ ◄── iOS? macOS? Vapor? Multi-platform?
 └────────┬────────────┘
          │
          ▼
 ┌─────────────────────┐
-│   Execute Tasks     │ ◄── Parallel when possible
-│   (with subagents)  │
+│   Load Platform     │ ◄── /swift-ios, /swift-macos, /swift-vapor
+│   Skills            │
 └────────┬────────────┘
          │
          ▼
 ┌─────────────────────┐
-│   /test-challenge   │ ◄── Test and challenge results
+│   Implement with    │ ◄── Follow Swift best practices
+│   /swift-ui-design  │
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│   /swift-testing    │ ◄── Comprehensive testing
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│   /test-challenge   │ ◄── Challenge implementation
 └────────┬────────────┘
          │
          ▼
@@ -84,45 +136,56 @@ User Request
 └─────────────────────┘
 ```
 
+## Swift Code Standards
+
+### Naming Conventions
+- Types: `UpperCamelCase`
+- Functions, variables: `lowerCamelCase`
+- Boolean: `is`, `has`, `should` prefix
+- Protocols: `-able`, `-ible`, `-ing` suffix for capabilities
+
+### Architecture Patterns
+- **MVVM** for simple apps
+- **TCA** for complex state management
+- **Clean Architecture** for large projects
+- **Repository Pattern** for data access
+
+### SwiftUI Best Practices
+- Extract reusable views
+- Use ViewModifiers for styling
+- Leverage @Observable for state
+- Test with PreviewProvider
+
+### Vapor Best Practices
+- Use dependency injection
+- Implement middleware properly
+- Handle errors with proper types
+- Use migrations for schema changes
+
+## MCP Configuration for Swift
+
+Recommended MCPs for Swift development:
+- `github` - Repository management
+- `filesystem` - Project file access
+- `xcode` - Xcode project manipulation (if available)
+
 ## Branching Strategy
 
 ```
 main
   │
-  ├── feature/task-name      # Individual features
-  ├── experiment/idea-name   # Experimental work
-  ├── bugfix/issue-name      # Bug fixes
-  └── release/version        # Release preparation
+  ├── feature/ios-feature-name
+  ├── feature/macos-feature-name
+  ├── feature/vapor-api-name
+  ├── bugfix/platform-issue
+  └── release/v1.0.0
 ```
-
-## Project Status Location
-
-All project progress is tracked in `PROJECT_STATUS.md`:
-- Current sprint tasks with statuses
-- Completed features
-- Known issues and blockers
-- Next steps
-
-## MCP Configuration
-
-MCPs are configured in `.mcp.json`. The skill router will:
-1. Analyze task requirements
-2. Check currently configured MCPs
-3. Recommend additional MCPs if needed
-4. Provide installation commands
-
-## Subagent Usage
-
-For parallel task execution:
-- Use Task tool with appropriate subagent_type
-- Launch independent tasks in parallel
-- Coordinate dependent tasks sequentially
-- Always challenge results before merge
 
 ## Remember
 
 1. **Never skip the skill router** - it's the gateway to efficient context
 2. **Decompose before implementing** - atomic tasks succeed
-3. **Test everything** - quality over speed
-4. **Update progress** - visibility matters
+3. **Follow Swift API Design Guidelines** - consistency matters
+4. **Test on all target platforms** - don't assume cross-platform works
 5. **Challenge results** - better products through critique
+6. **Think SwiftUI-first** - but know when UIKit is better
