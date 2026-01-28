@@ -1,4 +1,8 @@
-# LLM Developer Setup - Base Configuration
+# LLM Developer Setup - Frontend Developer Specialization
+
+## Specialization: Frontend Development (React, Vue, TypeScript, CSS)
+
+This configuration is optimized for modern frontend development with focus on React ecosystem, TypeScript, and modern CSS techniques.
 
 ## Critical Workflow: Always Start Here
 
@@ -23,13 +27,14 @@
 - Merge to main only after testing and review
 
 ### Quality Standards
-- Every feature must be tested
-- Code must be challenged before merge
+- Every component must be tested (Jest, Testing Library)
+- Components must be accessible (WCAG 2.1 AA)
+- Design must be responsive
 - Product usability is paramount
-- Technical debt must be documented
 
-## Available Core Skills
+## Available Skills
 
+### Core Skills (All Specializations)
 | Skill | Command | Purpose |
 |-------|---------|---------|
 | Skill Router | `/skill-router` | **MANDATORY** - Determines which skills to load |
@@ -41,6 +46,41 @@
 | Context Manager | `/context-manage` | Optimizes context usage |
 | Progress Tracker | `/progress-update` | Updates project status |
 
+### Frontend-Specific Skills
+| Skill | Command | Purpose |
+|-------|---------|---------|
+| React Development | `/react-dev` | React patterns and best practices |
+| CSS Styling | `/css-style` | Modern CSS, Tailwind, design systems |
+| Accessibility | `/accessibility` | WCAG compliance and a11y patterns |
+| Frontend Testing | `/frontend-testing` | Jest, Testing Library, E2E |
+| Performance | `/performance` | Core Web Vitals, optimization |
+
+## Technology Stack
+
+### Core
+- **Language**: TypeScript (strict mode)
+- **Framework**: React 18+ / Next.js 14+
+- **State**: React Query, Zustand, Jotai
+- **Forms**: React Hook Form + Zod
+
+### Styling
+- **CSS**: Tailwind CSS / CSS Modules
+- **Components**: Radix UI, shadcn/ui
+- **Animation**: Framer Motion
+- **Icons**: Lucide React
+
+### Testing
+- **Unit**: Jest + React Testing Library
+- **E2E**: Playwright / Cypress
+- **Visual**: Storybook + Chromatic
+- **A11y**: axe-core, jest-axe
+
+### Build
+- **Bundler**: Vite / Turbopack
+- **Package Manager**: pnpm
+- **Linting**: ESLint + Prettier
+- **CI/CD**: GitHub Actions
+
 ## Workflow Pattern
 
 ```
@@ -48,7 +88,7 @@ User Request
     │
     ▼
 ┌─────────────────┐
-│  /skill-router  │ ◄── MANDATORY: Identify relevant skills & MCPs
+│  /skill-router  │ ◄── MANDATORY: Route to frontend skills
 └────────┬────────┘
          │
          ▼
@@ -58,19 +98,27 @@ User Request
          │
          ▼
 ┌─────────────────────┐
-│   Load Skills &     │ ◄── Only load what's needed
-│   Configure MCPs    │
+│   /react-dev        │ ◄── Component architecture
 └────────┬────────────┘
          │
          ▼
 ┌─────────────────────┐
-│   Execute Tasks     │ ◄── Parallel when possible
-│   (with subagents)  │
+│   /css-style        │ ◄── Styling and design
 └────────┬────────────┘
          │
          ▼
 ┌─────────────────────┐
-│   /test-challenge   │ ◄── Test and challenge results
+│   /accessibility    │ ◄── Ensure WCAG compliance
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│ /frontend-testing   │ ◄── Test components
+└────────┬────────────┘
+         │
+         ▼
+┌─────────────────────┐
+│   /performance      │ ◄── Optimize performance
 └────────┬────────────┘
          │
          ▼
@@ -84,45 +132,90 @@ User Request
 └─────────────────────┘
 ```
 
+## Code Standards
+
+### TypeScript
+- Strict mode enabled
+- No `any` types
+- Explicit return types for functions
+- Use type inference where clear
+
+### React Patterns
+- Functional components only
+- Custom hooks for logic reuse
+- Composition over inheritance
+- Server Components where possible
+
+### CSS Patterns
+- Design tokens for consistency
+- Mobile-first responsive
+- CSS custom properties
+- Avoid !important
+
+## Project Structure
+
+```
+src/
+├── app/                 # Next.js app router
+│   ├── (auth)/         # Route groups
+│   ├── api/            # API routes
+│   └── layout.tsx
+├── components/
+│   ├── ui/             # Base components
+│   ├── features/       # Feature components
+│   └── layouts/        # Layout components
+├── hooks/              # Custom hooks
+├── lib/                # Utilities
+├── styles/             # Global styles
+├── types/              # TypeScript types
+└── __tests__/          # Tests
+```
+
+## Design Principles
+
+### Visual Hierarchy
+- Clear focal points
+- Consistent spacing (8px grid)
+- Typography scale
+- Color with purpose
+
+### Responsive Design
+- Mobile-first approach
+- Breakpoints: sm(640), md(768), lg(1024), xl(1280)
+- Fluid typography
+- Flexible layouts
+
+### Interaction Design
+- Clear affordances
+- Immediate feedback
+- Error prevention
+- Graceful degradation
+
+## MCP Configuration for Frontend
+
+Recommended MCPs for frontend development:
+- `github` - Repository management
+- `filesystem` - Project file access
+- `figma` - Design file access (if available)
+- `browser` - Testing and debugging
+
 ## Branching Strategy
 
 ```
 main
   │
-  ├── feature/task-name      # Individual features
-  ├── experiment/idea-name   # Experimental work
-  ├── bugfix/issue-name      # Bug fixes
-  └── release/version        # Release preparation
+  ├── feature/component-name
+  ├── feature/page-name
+  ├── bugfix/issue-description
+  ├── style/design-update
+  └── release/v1.0.0
 ```
-
-## Project Status Location
-
-All project progress is tracked in `PROJECT_STATUS.md`:
-- Current sprint tasks with statuses
-- Completed features
-- Known issues and blockers
-- Next steps
-
-## MCP Configuration
-
-MCPs are configured in `.mcp.json`. The skill router will:
-1. Analyze task requirements
-2. Check currently configured MCPs
-3. Recommend additional MCPs if needed
-4. Provide installation commands
-
-## Subagent Usage
-
-For parallel task execution:
-- Use Task tool with appropriate subagent_type
-- Launch independent tasks in parallel
-- Coordinate dependent tasks sequentially
-- Always challenge results before merge
 
 ## Remember
 
 1. **Never skip the skill router** - it's the gateway to efficient context
 2. **Decompose before implementing** - atomic tasks succeed
-3. **Test everything** - quality over speed
-4. **Update progress** - visibility matters
+3. **Accessibility is not optional** - WCAG 2.1 AA minimum
+4. **Test components** - unit + integration + E2E
 5. **Challenge results** - better products through critique
+6. **Performance matters** - Core Web Vitals are critical
