@@ -1,0 +1,63 @@
+# Pre-commit hooks for security baseline
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+#
+# Reference: ~/.claude/SECURITY.md → ENFORCEMENT LAYERS (L2)
+
+repos:
+  # Secret scanning — ОБЯЗАТЕЛЬНО
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+        name: gitleaks (block secrets in commits)
+
+  # Prevent committing sensitive files
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: detect-private-key
+      - id: detect-aws-credentials
+        args: ["--allow-missing-credentials"]
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: no-commit-to-branch
+        args: [--branch, main, --branch, master]
+
+  # Python: bandit (AST-based security linter)
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.8.0
+    hooks:
+      - id: bandit
+        args: ["-c", "pyproject.toml"]
+        additional_dependencies: ["bandit[toml]"]
+
+  # Node.js/TS: ESLint with security plugin
+  # (enable only if project is JS/TS — adjust or remove)
+  # - repo: https://github.com/pre-commit/mirrors-eslint
+  #   rev: v9.15.0
+  #   hooks:
+  #     - id: eslint
+  #       files: \.(js|jsx|ts|tsx)$
+  #       additional_dependencies:
+  #         - eslint@9.15.0
+  #         - eslint-plugin-security@3.0.1
+
+  # Dockerfile lint
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.13.1-beta
+    hooks:
+      - id: hadolint-docker
+
+  # YAML/TF/etc static analysis
+  - repo: https://github.com/bridgecrewio/checkov
+    rev: 3.2.400
+    hooks:
+      - id: checkov
+        args: ["--skip-check", "CKV_DOCKER_2,CKV_DOCKER_3"]  # customize per project
