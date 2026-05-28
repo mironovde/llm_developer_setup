@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sed -i '' '190,448d' ~/.claude/CLAUDE.md)",
+      "Read(//Users/mironovde/.claude/**)"
+    ]
+  }
+}

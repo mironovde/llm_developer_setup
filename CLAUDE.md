@@ -1,128 +1,89 @@
-# LLM Developer Setup - Base Configuration
+# LLM Developer Setup — Entry Point Configuration
 
-## Critical Workflow: Always Start Here
+> Этот проект — шаблон/entry point для новых проектов с Claude Code.
+> Глобальные правила (pipeline, git, MCP, overrides) → `~/.claude/CLAUDE.md`
 
-**MANDATORY FIRST STEP**: Before ANY task execution, you MUST:
-1. Read this file completely
-2. Invoke `/skill-router` to determine relevant skills and MCPs
-3. Decompose the task using `/task-decomposition`
-4. Only then proceed with implementation
+## Назначение
 
-## Core Principles
+Этот репозиторий содержит:
+- Набор skills для Claude Code (`.claude/skills/`)
+- MCP конфигурацию (`.mcp.json`)
+- Шаблон workflow для новых проектов
 
-### Context Efficiency
-- Load only relevant skills for current task
-- Unload context that's no longer needed
-- Use skill router to optimize context usage
-- Keep working memory focused on active task
+## Как создать CLAUDE.md для нового проекта
 
-### Git Discipline
-- Create feature branches for any non-trivial work
-- Make atomic, well-documented commits
-- Update PROJECT_STATUS.md after each milestone
-- Merge to main only after testing and review
+```markdown
+# [Project Name]
 
-### Quality Standards
-- Every feature must be tested
-- Code must be challenged before merge
-- Product usability is paramount
-- Technical debt must be documented
+> Last verified: [date]
 
-## Available Core Skills
+## Stack
+- [framework, language, DB, etc.]
 
-| Skill | Command | Purpose |
-|-------|---------|---------|
-| Skill Router | `/skill-router` | **MANDATORY** - Determines which skills to load |
-| Task Decomposition | `/task-decomposition` | Breaks tasks into atomic subtasks |
-| Product Manager | `/pm-challenge` | Challenges product decisions |
-| Financial Analyst | `/financial-review` | Reviews financial aspects |
-| Git Workflow | `/git-workflow` | Manages git operations |
-| Testing Challenger | `/test-challenge` | Tests and challenges results |
-| Context Manager | `/context-manage` | Optimizes context usage |
-| Progress Tracker | `/progress-update` | Updates project status |
+## Key Files
+- [основные пути]
 
-## Workflow Pattern
+## Conventions
+- [project-specific правила]
 
+## Dev Commands
+- `[dev]`: [описание]
+- `[test]`: [описание]
+- `[build]`: [описание]
 ```
-User Request
-    │
-    ▼
-┌─────────────────┐
-│  /skill-router  │ ◄── MANDATORY: Identify relevant skills & MCPs
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────────┐
-│ /task-decomposition │ ◄── Break into atomic subtasks
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│   Load Skills &     │ ◄── Only load what's needed
-│   Configure MCPs    │
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│   Execute Tasks     │ ◄── Parallel when possible
-│   (with subagents)  │
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│   /test-challenge   │ ◄── Test and challenge results
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│   /pm-challenge     │ ◄── Product review
-└────────┬────────────┘
-         │
-         ▼
-┌─────────────────────┐
-│   /progress-update  │ ◄── Update status & commit
-└─────────────────────┘
+
+## Как инициализировать MEMORY.md для нового проекта
+
+Создай `~/.claude/projects/-Users-mironovde-development-[project-name]/memory/MEMORY.md`:
+
+```markdown
+# [Project Name] — Project Memory
+
+> Last verified: [date]
+
+## Project Structure
+- [to discover]
+
+## Stack
+- [to discover]
+
+## Key Files
+- [to discover]
+
+## Known Patterns
+- [to discover]
+
+## History
+- [date]: Memory file initialized
 ```
+
+## Available Skills
+
+Skills в `.claude/skills/` — project-local копии, работают только внутри этого репо:
+
+| Skill | Назначение |
+|-------|------------|
+| skill-router | Роутинг задач → skills + MCP |
+| task-decomposition | Декомпозиция на подзадачи |
+| testing-challenger | Тестирование и качество |
+| product-manager | Продуктовый челлендж |
+| financial-analyst | ROI анализ |
+| git-workflow | Git операции |
+| context-manager | Оптимизация контекста |
+| progress-tracker | Прогресс проекта |
+
+> Глобальные skills (superpowers:*, feature-dev:*, code-review:*) доступны из любого проекта.
 
 ## Branching Strategy
 
 ```
 main
-  │
-  ├── feature/task-name      # Individual features
-  ├── experiment/idea-name   # Experimental work
-  ├── bugfix/issue-name      # Bug fixes
-  └── release/version        # Release preparation
+  ├── feature/task-name
+  ├── experiment/idea-name
+  ├── bugfix/issue-name
+  └── release/version
 ```
 
-## Project Status Location
+## Project Status
 
-All project progress is tracked in `PROJECT_STATUS.md`:
-- Current sprint tasks with statuses
-- Completed features
-- Known issues and blockers
-- Next steps
-
-## MCP Configuration
-
-MCPs are configured in `.mcp.json`. The skill router will:
-1. Analyze task requirements
-2. Check currently configured MCPs
-3. Recommend additional MCPs if needed
-4. Provide installation commands
-
-## Subagent Usage
-
-For parallel task execution:
-- Use Task tool with appropriate subagent_type
-- Launch independent tasks in parallel
-- Coordinate dependent tasks sequentially
-- Always challenge results before merge
-
-## Remember
-
-1. **Never skip the skill router** - it's the gateway to efficient context
-2. **Decompose before implementing** - atomic tasks succeed
-3. **Test everything** - quality over speed
-4. **Update progress** - visibility matters
-5. **Challenge results** - better products through critique
+Прогресс в `PROJECT_STATUS.md`. Обновляется через `/progress-update`.
