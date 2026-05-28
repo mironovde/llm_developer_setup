@@ -97,7 +97,9 @@ jobs:
       - name: Build image
         run: docker build -t app:ci .
       - name: Trivy scan
-        uses: aquasecurity/trivy-action@0.28.0
+        # 0.28.0 was removed from the action repo (errors at "Set up job");
+        # 0.36.0 is current LTS — lesson from crm_npf security.yml audit 2026-04-28.
+        uses: aquasecurity/trivy-action@0.36.0
         with:
           image-ref: app:ci
           severity: CRITICAL,HIGH
