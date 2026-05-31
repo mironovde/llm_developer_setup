@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# claude-autonomous — engage/disengage the autonomous loop + watchdog for the
+# CURRENT project directory.
+#
+#   claude-autonomous on  ["<resume prompt>"]   # arm: Stop-driver loops, watchdog resurrects
+#   claude-autonomous off                        # disarm
+#   claude-autonomous status                     # show state
+#
+# Arming writes a project-local `.autonomous` marker (read by the Stop-hook
+# driver) and registers the project with the launchd watchdog so a rate-limited
+# / crashed session is relaunched after ~2 minutes.
+
+set -euo pipefail
+REGISTRY="$HOME/.claude/.autonomous-registry"
+proj="$(pwd)"
+# Prefer git toplevel as the project root.
+top="$(git -C "$proj" rev-parse --show-toplevel 2>/dev/null || true)"
+[ -n "$top" ] && proj="$top"
+
+cmd="${1:-status}"
+
+ensure_gitignore() {
+  local gi="$proj/.gitignore"
+  for pat in ".autonomous" ".autonomous-heartbeat" ".autonomous-prompt" ".autonomous.log" ".autonomous.pid"; do
+    if [ -f "$gi" ] && ! grep -qxF "$pat" "$gi" 2>/dev/null; then echo "$pat" >> "$gi"; fi
+    [ -f "$gi" ] || printf '%s\n' "$pat" >> "$gi"
+  done
+}
+
+case "$cmd" in
+  on)
+    touch "$proj/.autonomous"
+    date +%s > "$proj/.autonomous-heartbeat"
+    if [ "${2:-}" != "" ]; then
+      printf '%s\n' "$2" > "$proj/.autonomous-prompt"
+    elif [ ! -f "$proj/.autonomous-prompt" ]; then
+      cat > "$proj/.autonomous-prompt" <<'EOF'
+Resume autonomous work on this project. Mode: AUTONOMOUS OPERATION.
+Run /gsd-progress to orient, then the self-driving loop (ORIENT→PRIORITIZE→EXECUTE→RECORD→LOOP).
+If a team exists, re-attach and keep pinging teammates — do not let the orchestrator sleep.
+A rate limit is NOT completion: back off and resume. Do not ask me questions — research and decide.
+Stop ONLY by writing a line starting with "AUTONOMOUS-HALT:" (work complete or a stop-and-ask condition).
+EOF
+    fi
+    mkdir -p "$(dirname "$REGISTRY")"
+    touch "$REGISTRY"
+    grep -qxF "$proj" "$REGISTRY" || echo "$proj" >> "$REGISTRY"
+    ensure_gitignore
+    echo "✅ autonomous ON for: $proj"
+    echo "   marker .autonomous + registered with watchdog (relaunch ~2min after a rate-limit fall)."
+    echo "   prompt: $proj/.autonomous-prompt   (edit to customize the resume brief)"
+    ;;
+  off)
+    rm -f "$proj/.autonomous" "$proj/.autonomous-heartbeat"
+    if [ -f "$REGISTRY" ]; then grep -vxF "$proj" "$REGISTRY" > "$REGISTRY.tmp" 2>/dev/null || true; mv "$REGISTRY.tmp" "$REGISTRY" 2>/dev/null || true; fi
+    echo "🛑 autonomous OFF for: $proj"
+    ;;
+  status)
+    if [ -f "$proj/.autonomous" ]; then
+      hb=$(cat "$proj/.autonomous-heartbeat" 2>/dev/null || echo 0)
+      age=$(( $(date +%s) - hb ))
+      echo "ON  $proj  (heartbeat ${age}s ago)"
+    else
+      echo "OFF $proj"
+    fi
+    echo "--- registry ---"; [ -f "$REGISTRY" ] && cat "$REGISTRY" || echo "(empty)"
+    ;;
+  *) echo "usage: claude-autonomous on|off|status [\"prompt\"]"; exit 1 ;;
+esac
