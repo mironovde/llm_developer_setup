@@ -108,6 +108,16 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "Bash|Edit|Write|MultiEdit|Agent|Task|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash /Users/mironovde/.claude/hooks/gsd-autonomous-heartbeat.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "Edit|Write",
         "hooks": [
           {

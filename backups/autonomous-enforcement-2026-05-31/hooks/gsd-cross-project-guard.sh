@@ -37,7 +37,10 @@ fi
 # Teams / tasks / memory / per-session runtime are owned by potentially-live
 # OTHER sessions. Agents must use proper tools (TeamDelete) or leave them be.
 if printf '%s' "$CMD" | grep -qiE '\.claude/(teams|tasks)([/ ]|$)'; then
-  deny "BLOCKED: this destructively touches ~/.claude/teams or ~/.claude/tasks — shared state of possibly-LIVE parallel sessions. Use TeamDelete after shutdown_response, or the mtime-gated gsd-team-archive hook. Never rm a team/task dir directly."
+  # Carve-out: the _archived graveyard is dead snapshots — safe to clean.
+  if ! printf '%s' "$CMD" | grep -qiE '\.claude/teams/_archived'; then
+    deny "BLOCKED: this destructively touches ~/.claude/teams or ~/.claude/tasks — shared state of possibly-LIVE parallel sessions. Use TeamDelete after shutdown_response, or the mtime-gated reaper. Never rm a live team/task dir directly (the _archived/ graveyard is exempt)."
+  fi
 fi
 if printf '%s' "$CMD" | grep -qiE '\.claude/projects/.*/memory|(^|[/ ])memory/MEMORY\.md'; then
   deny "BLOCKED: this would destroy persistent MEMORY. Memory is cross-session and append-only — read and update files, never bulk-delete. Remove a single wrong memory only with an explicit, narrow command."

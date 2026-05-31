@@ -59,10 +59,13 @@ function main(data) {
   const active = safeExists(projMarker) || safeExists(globalMarker);
   if (!active) allow(); // normal supervised session — let it stop
 
-  // Liveness heartbeat: every turn-end of a live autonomous session refreshes
-  // this. The launchd watchdog (gsd-autonomous-watchdog.sh) treats a STALE
-  // heartbeat as "session died / rate-limited" and relaunches after ~2 min.
-  try { fs.writeFileSync(path.join(cwd, '.autonomous-heartbeat'), String(Date.now())); } catch {}
+  // Liveness heartbeat: "<epoch_seconds> <session_id>". PostToolUse refreshes it
+  // continuously; this Stop-time write also records the session id so the watchdog
+  // can RESUME the same conversation (claude -p --resume <id>) after a crash.
+  try {
+    const sid = data.session_id || '';
+    fs.writeFileSync(path.join(cwd, '.autonomous-heartbeat'), Math.floor(Date.now() / 1000) + ' ' + sid);
+  } catch {}
 
   // --- escape: agent signalled a clean halt --------------------------------
   if (lastMessageHasHalt(data.transcript_path)) allow();
@@ -95,16 +98,22 @@ function main(data) {
   // --- the loop directive --------------------------------------------------
   block(
     'AUTONOMOUS MODE — do NOT stop to wait for a ping. Continue the self-driving loop NOW:\n' +
-    '1. ORIENT — re-read .planning/STATE.md / shared TaskList / backlog. If you are a teammate, ' +
-    'claim the next UNCLAIMED task (TaskUpdate owner:<you>); if orchestrator, dispatch the next unit.\n' +
-    '2. PRIORITIZE — security-first, then (Value×Reach)/Effort, then unblock-others.\n' +
-    '3. EXECUTE the next concrete unit: plan→build→verify→secure→ship, atomic commits.\n' +
-    '4. RECORD to STATE.md, then keep looping.\n' +
-    'ONLY stop by writing a line that STARTS with "AUTONOMOUS-HALT:" followed by the reason, and ONLY when ' +
-    '(a) all roadmap/backlog work is genuinely complete, or (b) you hit a stop-and-ask condition ' +
-    '(security trade-off / HIGH+ issue you cannot fix cleanly, irreversible deletion of code you did not write, ' +
-    'public-API change other services depend on, business logic not derivable from code, budget exceeded). ' +
-    'Otherwise proceed without yielding. On low context: checkpoint to STATE.md → /compact → continue.'
+    '1. ORIENT — re-read .planning/STATE.md / shared TaskList / backlog.\n' +
+    '2. TEAM HEALTH (if you are the orchestrator) — you are the resurrection layer for teammates ' +
+    '(the watchdog cannot relaunch in-harness teammates, only you). Check the shared TaskList: any task ' +
+    'claimed but stale, or a teammate idle/unresponsive after a ping → RE-DISPATCH it or re-spawn that ' +
+    'archetype. TeamDelete teams whose work is finished — never leave idle teammates accumulating.\n' +
+    '3. PRIORITIZE — security-first, then (Value×Reach)/Effort, then unblock-others. If teammate: claim the next UNCLAIMED task.\n' +
+    '4. EXECUTE the next concrete unit: plan→build→verify→secure→ship, atomic commits.\n' +
+    '5. RECORD to STATE.md, then keep looping.\n' +
+    'Decide craft/technical choices YOURSELF (how to fix a model, which method, refactor approach, test design) — ' +
+    'research, try, measure, iterate. Do NOT ask the user about anything you can resolve by investigation or experiment.\n' +
+    'A rate limit / partial answer is NOT completion and NOT a halt — back off and continue. ' +
+    'ONLY stop by writing a line that STARTS with "AUTONOMOUS-HALT:" and ONLY when ' +
+    '(a) all roadmap/backlog work is genuinely complete, or (b) a TRUE user-only condition: ' +
+    'security trade-off you cannot resolve safely, irreversible deletion of code you did not write, ' +
+    'public-API/contract change other services depend on, business DIRECTION not derivable from code/docs, budget exceeded. ' +
+    'On low context: checkpoint to STATE.md → /compact → continue.'
   );
 }
 

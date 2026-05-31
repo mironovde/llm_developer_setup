@@ -1,112 +1,128 @@
 #!/usr/bin/env bash
-# Autonomous WATCHDOG — resurrection layer for rate-limit / crash recovery.
+# Autonomous WATCHDOG — runs from launchd every ~120s. Two jobs:
 #
-# A Stop hook keeps a LIVE session looping, but cannot revive a DEAD process
-# (e.g. one that fell on a rate limit). This watchdog runs from launchd every
-# ~120s and relaunches an autonomous session whose heartbeat has gone stale —
-# i.e. "restart the agent a couple of minutes after a rate-limited fall".
+# (A) RESURRECTION — relaunch an autonomous session whose heartbeat went stale
+#     (rate-limit / partial-answer / crash). RESUMES the same conversation by
+#     session id (claude -p --resume <id>) so work continues with full context,
+#     rather than starting fresh. Keeps retrying (min-gap) until the rate-limit
+#     window clears.
 #
-# Per project registered in ~/.claude/.autonomous-registry it relaunches only
-# when ALL are true (safety): marker present, heartbeat stale > STALE_S, no live
-# launched process, min-gap since last relaunch elapsed, daily cap not hit.
+# (B) TEAM REAPER — archive Agent Teams that were spawned and forgotten (no file
+#     activity for REAP_MIN minutes). Fixes idle teammates piling up. Reversible
+#     (moved to ~/.claude/teams/_archived/). A live team writes inboxes far more
+#     often than REAP_MIN, so it is never touched.
 #
-# Enable a project:  claude-autonomous on ["<resume prompt>"]   (control script)
-# Disable:           claude-autonomous off
+# Heartbeat format: "<epoch_seconds> <session_id>" (written by the PostToolUse
+# heartbeat hook continuously + the Stop driver). OFF by default: only projects
+# registered via `claude-autonomous on` are resurrected.
 
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
 REGISTRY="$HOME/.claude/.autonomous-registry"
 STATE_DIR="$HOME/.claude/autonomous-state"
 LOG="$STATE_DIR/watchdog.log"
-STALE_S=180          # heartbeat older than this → presumed dead / rate-limited
+TEAMS_DIR="$HOME/.claude/teams"
+TASKS_DIR="$HOME/.claude/tasks"
+ARCHIVE_DIR="$TEAMS_DIR/_archived"
+
+STALE_S=240          # heartbeat older than this → presumed dead / rate-limited
 MIN_GAP_S=180        # min seconds between relaunches of the same project
-DAILY_CAP=30         # max relaunches per project per day
+DAILY_CAP=40         # max relaunches per project per day
+REAP_MIN=60          # team idle minutes before archiving a forgotten team
 
 mkdir -p "$STATE_DIR"
-[ -f "$REGISTRY" ] || exit 0
-
-CLAUDE_BIN=$(command -v claude 2>/dev/null)
 now=$(date +%s)
 today=$(date +%Y-%m-%d)
-
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"; }
 key() { printf '%s' "$1" | sed 's#[^A-Za-z0-9]#_#g'; }
+CLAUDE_BIN=$(command -v claude 2>/dev/null)
 
-# Rewrite registry without dropped entries.
-tmp_reg=$(mktemp)
-
-while IFS= read -r proj; do
-  [ -z "$proj" ] && continue
-  # Drop entries whose project or marker is gone.
-  if [ ! -d "$proj" ] || [ ! -f "$proj/.autonomous" ]; then
-    log "deregister $proj (marker/dir gone)"
-    continue
-  fi
-  echo "$proj" >> "$tmp_reg"   # keep
-
-  k=$(key "$proj")
-  hb_file="$proj/.autonomous-heartbeat"
-  pid_file="$STATE_DIR/$k.pid"
-  last_file="$STATE_DIR/$k.last"
-  count_file="$STATE_DIR/$k.count"
-
-  # Heartbeat age.
-  if [ -f "$hb_file" ]; then
-    hb=$(stat -f %m "$hb_file" 2>/dev/null || echo 0)
-  else
-    hb=0
-  fi
-  age=$(( now - hb ))
-  [ "$age" -le "$STALE_S" ] && continue   # alive
-
-  # A previously-launched process still running? (rate-limit-waiting → let it recover)
-  if [ -f "$pid_file" ]; then
-    pid=$(cat "$pid_file" 2>/dev/null)
-    if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-      continue
+# ============================ (A) RESURRECTION ============================
+if [ -f "$REGISTRY" ]; then
+  tmp_reg=$(mktemp)
+  while IFS= read -r proj; do
+    [ -z "$proj" ] && continue
+    if [ ! -d "$proj" ] || [ ! -f "$proj/.autonomous" ]; then
+      log "deregister $proj (marker/dir gone)"; continue
     fi
-  fi
+    echo "$proj" >> "$tmp_reg"
 
-  # Min gap since last relaunch.
-  if [ -f "$last_file" ]; then
-    last=$(cat "$last_file" 2>/dev/null || echo 0)
-    [ $(( now - last )) -lt "$MIN_GAP_S" ] && continue
-  fi
+    k=$(key "$proj")
+    hb_file="$proj/.autonomous-heartbeat"
+    pid_file="$STATE_DIR/$k.pid"
+    last_file="$STATE_DIR/$k.last"
+    count_file="$STATE_DIR/$k.count"
 
-  # Daily cap.
-  cap_day=""; cap_n=0
-  if [ -f "$count_file" ]; then
-    read -r cap_day cap_n < "$count_file" 2>/dev/null
-  fi
-  [ "$cap_day" != "$today" ] && { cap_day="$today"; cap_n=0; }
-  if [ "$cap_n" -ge "$DAILY_CAP" ]; then
-    log "cap reached ($DAILY_CAP/day) $proj — not relaunching"
-    continue
-  fi
+    # Parse heartbeat "<epoch> <sid>"; fall back to file mtime.
+    hb_ts=0; hb_sid=""
+    if [ -f "$hb_file" ]; then
+      read -r hb_ts hb_sid < "$hb_file" 2>/dev/null
+      case "$hb_ts" in (''|*[!0-9]*) hb_ts=$(stat -f %m "$hb_file" 2>/dev/null || echo 0);; esac
+    fi
+    age=$(( now - hb_ts ))
+    [ "$age" -le "$STALE_S" ] && continue   # alive & working
 
-  if [ -z "$CLAUDE_BIN" ]; then
-    log "ERROR: 'claude' not on PATH — cannot relaunch $proj"
-    continue
-  fi
+    # A relaunch we previously started still running? (rate-limit-waiting) → wait.
+    if [ -f "$pid_file" ]; then
+      pid=$(cat "$pid_file" 2>/dev/null)
+      [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && continue
+    fi
+    # Min gap between relaunches.
+    if [ -f "$last_file" ]; then
+      last=$(cat "$last_file" 2>/dev/null || echo 0)
+      [ $(( now - last )) -lt "$MIN_GAP_S" ] && continue
+    fi
+    # Daily cap.
+    cap_day=""; cap_n=0
+    [ -f "$count_file" ] && read -r cap_day cap_n < "$count_file" 2>/dev/null
+    [ "$cap_day" != "$today" ] && { cap_day="$today"; cap_n=0; }
+    if [ "$cap_n" -ge "$DAILY_CAP" ]; then
+      log "cap $DAILY_CAP/day reached $proj — skip"; continue
+    fi
+    if [ -z "$CLAUDE_BIN" ]; then log "ERROR: claude not on PATH for $proj"; continue; fi
 
-  # Resume prompt.
-  if [ -f "$proj/.autonomous-prompt" ]; then
-    prompt=$(cat "$proj/.autonomous-prompt")
-  else
-    prompt="Resume autonomous work on this project (AUTONOMOUS OPERATION). Run /gsd-progress to orient, then self-driving loop. If a team exists, re-attach and ping teammates. Do not wait for me. Stop only via an AUTONOMOUS-HALT: line."
-  fi
+    if [ -f "$proj/.autonomous-prompt" ]; then
+      prompt=$(cat "$proj/.autonomous-prompt")
+    else
+      prompt="Resume autonomous work (AUTONOMOUS OPERATION). /gsd-progress, then self-driving loop. Re-attach and ping the team. A rate limit is not completion — continue. Stop only via AUTONOMOUS-HALT:."
+    fi
 
-  # Relaunch detached, headless, unattended. The cross-project guard + REFUSE
-  # rules constrain what it may do; skipping prompts is required for unattended.
-  ( cd "$proj" && nohup "$CLAUDE_BIN" -p "$prompt" --dangerously-skip-permissions \
-      >> "$proj/.autonomous.log" 2>&1 & echo $! > "$pid_file" )
-  echo "$now" > "$last_file"
-  echo "$today $(( cap_n + 1 ))" > "$count_file"
-  # Refresh heartbeat so we don't immediately relaunch again next tick.
-  date +%s > "$hb_file" 2>/dev/null
-  log "RELAUNCH $proj (heartbeat stale ${age}s, attempt $(( cap_n + 1 ))/$DAILY_CAP today, pid $(cat "$pid_file"))"
+    # Resume the SAME conversation when we know its id → keeps full context and
+    # continues a partial / rate-limited turn. Otherwise start a fresh print run.
+    if [ -n "$hb_sid" ] && [ "$hb_sid" != "null" ]; then
+      ( cd "$proj" && nohup "$CLAUDE_BIN" -p --resume "$hb_sid" "$prompt" \
+          --dangerously-skip-permissions >> "$proj/.autonomous.log" 2>&1 & echo $! > "$pid_file" )
+      mode="resume:$hb_sid"
+    else
+      ( cd "$proj" && nohup "$CLAUDE_BIN" -p "$prompt" \
+          --dangerously-skip-permissions >> "$proj/.autonomous.log" 2>&1 & echo $! > "$pid_file" )
+      mode="fresh"
+    fi
+    echo "$now" > "$last_file"
+    echo "$today $(( cap_n + 1 ))" > "$count_file"
+    echo "$now $hb_sid" > "$hb_file"   # refresh so we don't relaunch again next tick
+    log "RELAUNCH $proj ($mode, stale ${age}s, $(( cap_n + 1 ))/$DAILY_CAP today, pid $(cat "$pid_file"))"
+  done < "$REGISTRY"
+  mv "$tmp_reg" "$REGISTRY" 2>/dev/null || rm -f "$tmp_reg"
+fi
 
-done < "$REGISTRY"
-
-mv "$tmp_reg" "$REGISTRY" 2>/dev/null || rm -f "$tmp_reg"
+# ============================ (B) TEAM REAPER ============================
+# Archive teams with no file activity for > REAP_MIN minutes (spawned & forgotten).
+if [ -d "$TEAMS_DIR" ]; then
+  reap_age=$(( REAP_MIN * 60 ))
+  for team_path in "$TEAMS_DIR"/*/; do
+    name=$(basename "$team_path")
+    [ "$name" = "_archived" ] && continue
+    # Newest mtime across team dir + its task list.
+    newest=$(find "$team_path" "$TASKS_DIR/$name" -type f -exec stat -f '%m' {} \; 2>/dev/null | sort -rn | head -1)
+    [ -z "$newest" ] && newest=0
+    if [ $(( now - newest )) -gt "$reap_age" ]; then
+      dest="$ARCHIVE_DIR/${name}-$(date +%Y-%m-%d_%H%M)"
+      mkdir -p "$dest"
+      mv "$team_path" "$dest/team" 2>/dev/null
+      [ -d "$TASKS_DIR/$name" ] && mv "$TASKS_DIR/$name" "$dest/tasks" 2>/dev/null
+      log "REAPED team '$name' (idle $(( (now - newest) / 60 ))min) → $dest"
+    fi
+  done
+fi
 exit 0
