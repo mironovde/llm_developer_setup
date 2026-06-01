@@ -33,6 +33,10 @@ REAP_MIN=60          # team idle minutes before archiving a forgotten team
 mkdir -p "$STATE_DIR"
 now=$(date +%s)
 today=$(date +%Y-%m-%d)
+# Log rotation: keep the tail if it grew past ~2MB.
+if [ -f "$LOG" ] && [ "$(stat -f %z "$LOG" 2>/dev/null || echo 0)" -gt 2000000 ]; then
+  tail -300 "$LOG" > "$LOG.tmp" 2>/dev/null && mv "$LOG.tmp" "$LOG"
+fi
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOG"; }
 key() { printf '%s' "$1" | sed 's#[^A-Za-z0-9]#_#g'; }
 CLAUDE_BIN=$(command -v claude 2>/dev/null)
@@ -60,7 +64,27 @@ if [ -f "$REGISTRY" ]; then
       case "$hb_ts" in (''|*[!0-9]*) hb_ts=$(stat -f %m "$hb_file" 2>/dev/null || echo 0);; esac
     fi
     age=$(( now - hb_ts ))
-    [ "$age" -le "$STALE_S" ] && continue   # alive & working
+    [ "$age" -le "$STALE_S" ] && continue   # alive & working (heartbeat fresh)
+
+    # Cross-check liveness against the session transcript and derive the session id.
+    # The transcript path is ~/.claude/projects/<enc>/<session-id>.jsonl and is
+    # appended to as the session runs — a strong second liveness signal that also
+    # catches the case where the heartbeat hook didn't fire. Prevents spawning a
+    # DUPLICATE next to a live interactive session, and lets us --resume by id even
+    # when the heartbeat lacked one (first resurrection keeps full context).
+    enc=$(printf '%s' "$proj" | sed 's#[/_]#-#g')
+    tdir="$HOME/.claude/projects/$enc"
+    if [ -d "$tdir" ]; then
+      newest_jsonl=$(ls -t "$tdir"/*.jsonl 2>/dev/null | head -1)
+      if [ -n "$newest_jsonl" ]; then
+        tx_m=$(stat -f %m "$newest_jsonl" 2>/dev/null || echo 0)
+        [ $(( now - tx_m )) -le "$STALE_S" ] && continue   # transcript still active → live
+        # The transcript filename is ground truth for the latest session id —
+        # prefer it over a possibly-stale heartbeat sid (e.g. a session that
+        # predates the heartbeat hook and never wrote one).
+        hb_sid=$(basename "$newest_jsonl" .jsonl)
+      fi
+    fi
 
     # A relaunch we previously started still running? (rate-limit-waiting) → wait.
     if [ -f "$pid_file" ]; then

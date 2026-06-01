@@ -29,7 +29,9 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const MAX_LOOPS = 40;     // hard ceiling of auto-continues per session
-const STALL_LIMIT = 3;    // consecutive no-git-change stops → halt
+const STALL_LIMIT = 5;    // consecutive no-git-change stops → halt (research/planning
+                          // loops legitimately produce no commits for a few turns;
+                          // git status --porcelain already counts uncommitted edits)
 
 let input = '';
 const stdinTimeout = setTimeout(() => process.exit(0), 10000);
