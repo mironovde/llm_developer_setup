@@ -51,6 +51,11 @@ if [ -f "$REGISTRY" ]; then
     fi
     echo "$proj" >> "$tmp_reg"
 
+    # Agent emitted AUTONOMOUS-HALT (backlog done / needs user direction): pause
+    # resurrection until the user re-engages (UserPromptSubmit clears the flag).
+    # This is what stops the "resurrect → halt → resurrect" churn every few minutes.
+    [ -f "$proj/.autonomous-halt" ] && continue
+
     k=$(key "$proj")
     hb_file="$proj/.autonomous-heartbeat"
     pid_file="$STATE_DIR/$k.pid"

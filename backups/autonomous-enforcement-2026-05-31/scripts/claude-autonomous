@@ -21,7 +21,7 @@ cmd="${1:-status}"
 
 ensure_gitignore() {
   local gi="$proj/.gitignore"
-  for pat in ".autonomous" ".autonomous-heartbeat" ".autonomous-prompt" ".autonomous.log" ".autonomous.pid"; do
+  for pat in ".autonomous" ".autonomous-heartbeat" ".autonomous-prompt" ".autonomous-halt" ".autonomous.log" ".autonomous.pid"; do
     if [ -f "$gi" ] && ! grep -qxF "$pat" "$gi" 2>/dev/null; then echo "$pat" >> "$gi"; fi
     [ -f "$gi" ] || printf '%s\n' "$pat" >> "$gi"
   done
@@ -30,6 +30,7 @@ ensure_gitignore() {
 case "$cmd" in
   on)
     touch "$proj/.autonomous"
+    rm -f "$proj/.autonomous-halt"   # arm fresh, not halted
     date +%s > "$proj/.autonomous-heartbeat"
     if [ "${2:-}" != "" ]; then
       printf '%s\n' "$2" > "$proj/.autonomous-prompt"
@@ -51,7 +52,7 @@ EOF
     echo "   prompt: $proj/.autonomous-prompt   (edit to customize the resume brief)"
     ;;
   off)
-    rm -f "$proj/.autonomous" "$proj/.autonomous-heartbeat"
+    rm -f "$proj/.autonomous" "$proj/.autonomous-heartbeat" "$proj/.autonomous-halt"
     if [ -f "$REGISTRY" ]; then grep -vxF "$proj" "$REGISTRY" > "$REGISTRY.tmp" 2>/dev/null || true; mv "$REGISTRY.tmp" "$REGISTRY" 2>/dev/null || true; fi
     echo "🛑 autonomous OFF for: $proj"
     ;;

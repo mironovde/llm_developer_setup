@@ -69,8 +69,18 @@ function main(data) {
     fs.writeFileSync(path.join(cwd, '.autonomous-heartbeat'), Math.floor(Date.now() / 1000) + ' ' + sid);
   } catch {}
 
-  // --- escape: agent signalled a clean halt --------------------------------
-  if (lastMessageHasHalt(data.transcript_path)) allow();
+  // --- halt pause -----------------------------------------------------------
+  // A genuine AUTONOMOUS-HALT pauses the WHOLE machinery (driver loop + watchdog
+  // resurrection) until the user re-engages — otherwise a "backlog done, needs your
+  // direction" halt would be resurrected every few minutes, burning resources. The
+  // UserPromptSubmit hook clears `.autonomous-halt` when the user sends a new
+  // message, so work auto-resumes the moment direction is given.
+  const haltFlag = path.join(cwd, '.autonomous-halt');
+  if (safeExists(haltFlag)) allow();                 // already halted, waiting for user
+  if (lastMessageHasHalt(data.transcript_path)) {     // agent halts now → record + stop
+    try { fs.writeFileSync(haltFlag, Math.floor(Date.now() / 1000) + ' ' + (data.session_id || '')); } catch {}
+    allow();
+  }
 
   // --- circuit-breaker state ----------------------------------------------
   const sid = String(data.session_id || 'nosession').replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -86,13 +96,13 @@ function main(data) {
     writeJSON(stateFile, { loops: 0, stall: 0, sig });
     allow(); // ceiling hit — yield to the user
   }
+  // No file/git changes across STALL_LIMIT consecutive stops → the agent is either
+  // stuck or insisting it is done. Forcing more loops is exactly the churn the user
+  // warns against, so ALLOW the stop (do not keep fighting). The watchdog will
+  // resurrect a fresh session later if there is genuinely more to do.
   if (st.stall >= STALL_LIMIT) {
     writeJSON(stateFile, { loops: 0, stall: 0, sig });
-    block(
-      `AUTONOMOUS DRIVER: no file/git changes across ${STALL_LIMIT} loops — possible spin. ` +
-      `Take a DIFFERENT concrete action (new task from the backlog/TaskList), or, if work is ` +
-      `genuinely complete or blocked, emit a line "AUTONOMOUS-HALT: <reason>" to stop.`
-    );
+    allow();
   }
 
   writeJSON(stateFile, st);
@@ -137,25 +147,36 @@ function gitSignature(cwd) {
   }
 }
 
-// Read the tail of the transcript JSONL and check whether the most recent
-// assistant text contains the AUTONOMOUS-HALT escape token.
+// Detect whether the agent emitted the AUTONOMOUS-HALT escape in its recent
+// assistant output. Robust against transcript quirks that broke the naive v1:
+//   - the final assistant turn sits well above EOF (trailing system/meta entries:
+//     hook records, last-prompt, ai-title, mode, pr-link) — so scan a wide tail;
+//   - inspect the LAST FEW assistant messages, not just the first one found
+//     (a turn can be split across entries; v1 returned false too early);
+//   - inspect ONLY assistant-role entries — the loop directive WE inject contains
+//     the literal "AUTONOMOUS-HALT:" and is logged in `system` entries, so a naive
+//     substring search would falsely allow every stop after the first block;
+//   - require the token at the START of a line (optionally behind markdown
+//     markers), matching the protocol "a line that STARTS with AUTONOMOUS-HALT:".
+const HALT_RE = /(^|\n)[\s>*_`-]*AUTONOMOUS-HALT:/;
 function lastMessageHasHalt(transcriptPath) {
   if (!transcriptPath || !safeExists(transcriptPath)) return false;
   let text = '';
   try { text = fs.readFileSync(transcriptPath, 'utf8'); } catch { return false; }
   const lines = text.trim().split('\n');
-  // scan from the end, find the last assistant message, inspect its text
-  for (let i = lines.length - 1, seen = 0; i >= 0 && seen < 40; i--, seen++) {
+  let assistantSeen = 0;
+  // Scan up to the last 400 lines; inspect up to the last 6 assistant messages.
+  for (let i = lines.length - 1, scanned = 0; i >= 0 && scanned < 400 && assistantSeen < 6; i--, scanned++) {
     let obj;
     try { obj = JSON.parse(lines[i]); } catch { continue; }
-    const role = obj.role || (obj.message && obj.message.role) || obj.type;
+    const role = (obj.message && obj.message.role) || obj.role || obj.type;
     if (role !== 'assistant') continue;
+    assistantSeen++;
     const content = (obj.message && obj.message.content) || obj.content;
     let s = '';
     if (typeof content === 'string') s = content;
     else if (Array.isArray(content)) s = content.map(b => (typeof b === 'string' ? b : b.text || '')).join('\n');
-    if (/AUTONOMOUS-HALT:/.test(s)) return true;
-    return false; // only the latest assistant message matters
+    if (HALT_RE.test(s)) return true;
   }
   return false;
 }
