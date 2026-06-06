@@ -21,7 +21,7 @@ cmd="${1:-status}"
 
 ensure_gitignore() {
   local gi="$proj/.gitignore"
-  for pat in ".autonomous" ".autonomous-heartbeat" ".autonomous-prompt" ".autonomous-halt" ".autonomous.log" ".autonomous.pid"; do
+  for pat in ".autonomous" ".autonomous-direction" ".autonomous-heartbeat" ".autonomous-prompt" ".autonomous-halt" ".autonomous.log" ".autonomous.pid"; do
     if [ -f "$gi" ] && ! grep -qxF "$pat" "$gi" 2>/dev/null; then echo "$pat" >> "$gi"; fi
     [ -f "$gi" ] || printf '%s\n' "$pat" >> "$gi"
   done
@@ -51,20 +51,52 @@ EOF
     echo "   marker .autonomous + registered with watchdog (relaunch ~2min after a rate-limit fall)."
     echo "   prompt: $proj/.autonomous-prompt   (edit to customize the resume brief)"
     ;;
+  direction)
+    # Like `on`, plus authorize the agent to CHOOSE the product direction itself
+    # and record progress to the demo each cycle. "Needs direction" stops being a halt.
+    touch "$proj/.autonomous" "$proj/.autonomous-direction"
+    rm -f "$proj/.autonomous-halt"
+    date +%s > "$proj/.autonomous-heartbeat"
+    if [ "${2:-}" != "" ]; then
+      printf '%s\n' "$2" > "$proj/.autonomous-prompt"
+    else
+      cat > "$proj/.autonomous-prompt" <<'EOF'
+Develop this project autonomously and CHOOSE THE DIRECTION YOURSELF (you are authorized — do not ask me which).
+Mode: AUTONOMOUS OPERATION + DIRECTION-AUTONOMY. Spine: GSD (mode yolo).
+Loop: /gsd-progress to orient → if no clear next item, pick the HIGHEST-VALUE product direction by the rubric
+((Value×Reach)/Effort, security-first) and commit to it → plan→build→verify→secure→ship (atomic commits) → record.
+Periodically RECORD PROGRESS TO THE DEMO: append to DEMO.md (timestamp, chosen direction, unit shipped, result/metric,
+commit SHA; screenshot path if UI) after each shipped unit, and refresh the runnable demo if the project has one.
+Team from archetypes only; orchestrator never sleeps, pings the team, TeamDeletes finished teams.
+Security: read ~/.claude/SECURITY.md before auth/payments/PII work; backend is source of truth. Decide craft/technical
+choices yourself (research, try, measure, iterate). A rate limit / partial answer is NOT completion — back off and continue.
+Stop ONLY via 'AUTONOMOUS-HALT:' when all valuable work across every direction is exhausted, or a true user-only condition
+(security trade-off, irreversible deletion, public-API change, budget). "Needs business direction" is NOT a stop — you choose.
+EOF
+    fi
+    mkdir -p "$(dirname "$REGISTRY")"; touch "$REGISTRY"
+    grep -qxF "$proj" "$REGISTRY" || echo "$proj" >> "$REGISTRY"
+    ensure_gitignore
+    echo "🧭 autonomous DIRECTION mode ON for: $proj"
+    echo "   agent will choose & drive the direction itself and log progress to DEMO.md."
+    echo "   prompt: $proj/.autonomous-prompt"
+    ;;
   off)
-    rm -f "$proj/.autonomous" "$proj/.autonomous-heartbeat" "$proj/.autonomous-halt"
+    rm -f "$proj/.autonomous" "$proj/.autonomous-direction" "$proj/.autonomous-heartbeat" "$proj/.autonomous-halt"
     if [ -f "$REGISTRY" ]; then grep -vxF "$proj" "$REGISTRY" > "$REGISTRY.tmp" 2>/dev/null || true; mv "$REGISTRY.tmp" "$REGISTRY" 2>/dev/null || true; fi
     echo "🛑 autonomous OFF for: $proj"
     ;;
   status)
     if [ -f "$proj/.autonomous" ]; then
-      hb=$(cat "$proj/.autonomous-heartbeat" 2>/dev/null || echo 0)
+      read -r hb _ < "$proj/.autonomous-heartbeat" 2>/dev/null; : "${hb:=0}"
       age=$(( $(date +%s) - hb ))
-      echo "ON  $proj  (heartbeat ${age}s ago)"
+      mode="ON"; [ -f "$proj/.autonomous-direction" ] && mode="ON (direction-autonomy)"
+      halted=""; [ -f "$proj/.autonomous-halt" ] && halted="  [HALTED — waiting for your message]"
+      echo "$mode  $proj  (heartbeat ${age}s ago)$halted"
     else
       echo "OFF $proj"
     fi
     echo "--- registry ---"; [ -f "$REGISTRY" ] && cat "$REGISTRY" || echo "(empty)"
     ;;
-  *) echo "usage: claude-autonomous on|off|status [\"prompt\"]"; exit 1 ;;
+  *) echo "usage: claude-autonomous on|direction|off|status [\"prompt/goal\"]"; exit 1 ;;
 esac

@@ -58,6 +58,13 @@ Everything else → decide yourself, record the decision in the decision log, co
 
 A question is allowed ONLY for stop-and-ask conditions (via `AUTONOMOUS-HALT:`). Everything else is decided independently.
 
+### Direction-autonomy (on command, you choose the direction yourself)
+When the user gives the command (e.g. "выбери направление и веди" / "develop autonomously, pick the direction", or `claude-autonomous direction`), enter **DIRECTION-AUTONOMY**: you are pre-authorized to CHOOSE the product direction yourself — "needs business direction" STOPS being a stop-and-ask condition. If the user told you in-session, arm it (`claude-autonomous direction`) and begin.
+- Pick the highest-value direction by the rubric ((Value×Reach)/Effort, security-first), commit to it, drive it end-to-end, then pick the next. **Do not ask which direction.**
+- **Record progress to the demo periodically** — after each shipped unit, append to `DEMO.md` at the project root: `timestamp · chosen direction · unit shipped · result/metric · commit SHA · screenshot path (if UI)`. Refresh the runnable demo if the project has one. The demo is the user-facing proof of progress between check-ins.
+- Halt only when ALL valuable work across every direction is genuinely exhausted, or a true user-only condition (security / irreversible / public-API / budget).
+- Mechanism: the `.autonomous-direction` flag makes the driver swap in the direction directive (no direction-halt + demo cadence). Turn off with `claude-autonomous off`.
+
 ### The orchestrator does NOT sleep and keeps pinging the team (including after a rate-limit)
 - A team orchestrator **never goes idle while the backlog is open**. After each wave: check the shared TaskList → hand out the next tasks → ping the owners. Teammates only wake on an incoming message — the driver keeps the orchestrator from going silent.
 - **Rate-limit ≠ completion.** If you hit a limit: this is NOT a reason to stop the loop and NOT an `AUTONOMOUS-HALT`. Back off and continue. If the session crashed — the launchd watchdog relaunches it within ~2 minutes (by stale heartbeat) and the orchestrator reconnects to the existing team (`~/.claude/teams/<name>` is persistent) and keeps pinging.

@@ -108,23 +108,48 @@ function main(data) {
   writeJSON(stateFile, st);
 
   // --- the loop directive --------------------------------------------------
+  // Direction-autonomy: the user pre-authorized the agent to CHOOSE the product
+  // direction itself (flag .autonomous-direction). In that mode "needs direction"
+  // is NOT a halt, and the agent records progress to the demo each cycle.
+  const directionMode = safeExists(path.join(cwd, '.autonomous-direction'));
+
+  const prioritize = directionMode
+    ? '3. PRIORITIZE — security-first, then (Value×Reach)/Effort, then unblock-others. If no clear next item, ' +
+      'CHOOSE the highest-value product direction YOURSELF and commit to it (you are authorized — do not ask). ' +
+      'If teammate: claim the next UNCLAIMED task.\n'
+    : '3. PRIORITIZE — security-first, then (Value×Reach)/Effort, then unblock-others. If teammate: claim the next UNCLAIMED task.\n';
+
+  const record = directionMode
+    ? '5. RECORD to STATE.md AND append progress to the demo (DEMO.md + the runnable demo if the project has one): ' +
+      'chosen direction, unit shipped, result/metric, commit SHA. Then keep looping.\n'
+    : '5. RECORD to STATE.md, then keep looping.\n';
+
+  // Halt conditions: in direction-mode, "business direction" is NOT a halt.
+  const haltConds = directionMode
+    ? '(a) all genuinely valuable work across every direction is exhausted, or (b) a TRUE user-only condition: ' +
+      'security trade-off you cannot resolve safely, irreversible deletion of code you did not write, ' +
+      'public-API/contract change other services depend on, budget exceeded.'
+    : '(a) all roadmap/backlog work is genuinely complete, or (b) a TRUE user-only condition: ' +
+      'security trade-off you cannot resolve safely, irreversible deletion of code you did not write, ' +
+      'public-API/contract change other services depend on, business DIRECTION not derivable from code/docs, budget exceeded.';
+
   block(
-    'AUTONOMOUS MODE — do NOT stop to wait for a ping. Continue the self-driving loop NOW:\n' +
+    (directionMode
+      ? 'AUTONOMOUS MODE (DIRECTION-AUTONOMY: you ARE authorized to pick and drive the product direction yourself — do NOT halt for "needs direction"). '
+      : 'AUTONOMOUS MODE — ') +
+    'do NOT stop to wait for a ping. Continue the self-driving loop NOW:\n' +
     '1. ORIENT — re-read .planning/STATE.md / shared TaskList / backlog.\n' +
     '2. TEAM HEALTH (if you are the orchestrator) — you are the resurrection layer for teammates ' +
     '(the watchdog cannot relaunch in-harness teammates, only you). Check the shared TaskList: any task ' +
     'claimed but stale, or a teammate idle/unresponsive after a ping → RE-DISPATCH it or re-spawn that ' +
     'archetype. TeamDelete teams whose work is finished — never leave idle teammates accumulating.\n' +
-    '3. PRIORITIZE — security-first, then (Value×Reach)/Effort, then unblock-others. If teammate: claim the next UNCLAIMED task.\n' +
+    prioritize +
     '4. EXECUTE the next concrete unit: plan→build→verify→secure→ship, atomic commits.\n' +
-    '5. RECORD to STATE.md, then keep looping.\n' +
+    record +
     'Decide craft/technical choices YOURSELF (how to fix a model, which method, refactor approach, test design) — ' +
     'research, try, measure, iterate. Do NOT ask the user about anything you can resolve by investigation or experiment.\n' +
     'A rate limit / partial answer is NOT completion and NOT a halt — back off and continue. ' +
-    'ONLY stop by writing a line that STARTS with "AUTONOMOUS-HALT:" and ONLY when ' +
-    '(a) all roadmap/backlog work is genuinely complete, or (b) a TRUE user-only condition: ' +
-    'security trade-off you cannot resolve safely, irreversible deletion of code you did not write, ' +
-    'public-API/contract change other services depend on, business DIRECTION not derivable from code/docs, budget exceeded. ' +
+    'ONLY stop by writing a line that STARTS with "AUTONOMOUS-HALT:" and ONLY when ' + haltConds + ' ' +
     'On low context: checkpoint to STATE.md → /compact → continue.'
   );
 }
