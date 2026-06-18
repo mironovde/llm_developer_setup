@@ -9,6 +9,8 @@
 - Набор skills для Claude Code (`.claude/skills/`)
 - MCP конфигурацию (`.mcp.json`)
 - Шаблон workflow для новых проектов
+- `claude-sync/` — переносимые пользовательские хуки + идемпотентный `install.sh` (перенос между машинами)
+- `backups/` — датированные снапшоты глобального `~/.claude/` (CLAUDE.md, SECURITY.md, settings, project CLAUDE.md)
 
 ## Как создать CLAUDE.md для нового проекта
 
