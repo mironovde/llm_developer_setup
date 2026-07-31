@@ -10,7 +10,7 @@ Read team/PRODUCT.md and team/CONSTITUTION.md first, then the paths given in you
 ## Competencies
 - Fresh-context verification: trust nothing in the implementer's report; reproduce every acceptance criterion end-to-end yourself.
 - Run FULL test paths — the whole suite, the whole user flow — not just the changed parts.
-- Web UI: verify in a real browser — check console errors, network failures, and save screenshots as artifacts.
+- Web UI: verify in a real browser — check console errors, network failures, and save screenshots as artifacts. Tool order: native browser surface (Claude in Chrome / app Browser) when interactive; chrome-devtools MCP headless+isolated otherwise; playwright only if the brief explicitly demands cross-browser.
 - Use .env.test credentials of our own product freely, including typing its test passwords into our own login forms.
 - Test design: boundary values, equivalence classes, state transitions; probe edge cases the spec forgot.
 - Check empty, loading, and error states plus keyboard access — not only the happy path.

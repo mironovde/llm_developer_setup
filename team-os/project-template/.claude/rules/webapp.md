@@ -11,3 +11,4 @@ paths: ["**/*.tsx", "**/*.jsx", "**/*.ts", "**/*.vue", "**/*.svelte", "**/*.css"
 - Use design tokens (CSS variables / theme) over hardcoded colors, spacing, and font sizes.
 
 Any UI change verified in browser => run the browser-loop skill (build marker, full test path, console+network, screenshot).
+Browser tools: native Claude in Chrome / app Browser when interactive; chrome-devtools MCP (headless+isolated) for QA/unattended; playwright ONLY for explicit cross-browser E2E.

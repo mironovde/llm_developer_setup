@@ -7,6 +7,11 @@ description: Hard protocol for the web edit→test cycle — build marker, full 
 
 The classic failure: you edit, then test a STALE build, or drop the cycle halfway. This protocol makes both impossible. A Stop-hook blocks ending the turn while the loop is open.
 
+**Browser tool choice (in this order — never pick a tool just because its schema is visible):**
+1. Interactive session with the user around → the NATIVE surface: Claude in Chrome or the app's built-in Browser pane (zero setup, the user can watch).
+2. Headless work — QA subagents, autopilot, gym → chrome-devtools MCP with `--headless --isolated`. Never drive the user's personal browser unattended.
+3. playwright MCP — ONLY when the brief explicitly requires cross-browser E2E (WebKit/Firefox); enable via the project's mcp-snippet, then remove.
+
 Helper location: `HELPER=.claude/hooks/teamos-browser-loop.sh` if it exists in the project, else `HELPER=~/.claude/hooks/teamos-browser-loop.sh`. All commands below use `bash $HELPER …`.
 
 ## Protocol

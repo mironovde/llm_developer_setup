@@ -99,6 +99,10 @@
 9. MCP-вызовы >2 мин авто-уходят в фон (v2.1.212) — длинные браузерные операции не блокируют ход.
 10. Официальный маркетплейс: 276 плагинов, 39 от Anthropic (снапшот 31.07.2026): `ralph-loop`, `hookify`, `security-guidance`, `claude-security`, `session-report`, `project-artifact`, 11 LSP. Вердикты — §5.
 
+## 6a. Правка по обратной связи (01.08.2026)
+
+Наблюдение пользователя: агенты тянутся к Playwright MCP при живом нативном Claude in Chrome. Причины: legacy-сервер `playwright` в user-скоупе (`~/.claude.json`) + отсутствие явного порядка предпочтений. Решение: **playwright удалён из user-скоупа** (бэкап: `~/.claude/teamos-backups/removed-user-mcp-playwright.json`); порядок закодирован в browser-loop/qa/webapp-rule: нативная поверхность (Claude in Chrome / встроенный Browser) в интерактиве → chrome-devtools-mcp `--headless --isolated` для QA/автономных прогонов (личный браузер пользователя без присмотра не трогать никогда) → playwright только под явный кросс-браузерный E2E через снипет. Вердикт playwright-mcp понижен ADAPT → **ADAPT (по требованию, не held-in-scope)**. В user-скоупе остаются legacy-серверы blender, magic, memory, github, sequential-thinking, vibe_kanban — противоречат ADR-010, но могут обслуживать другие живые workflow пользователя → решение об удалении за пользователем.
+
 ## 7. Открытые вопросы → в `/research-refresh`
 
 - `--max-turns` в CLI: появится/подтвердится в >2.1.207 — перепроверить при обновлении CLI.

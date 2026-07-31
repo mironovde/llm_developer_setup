@@ -1,0 +1,93 @@
+{
+  "run_id": "20260731-205346",
+  "tasks": [
+    {
+      "id": "001-t0-typo",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "budget_used": 12937,
+      "budget_limit": 45000,
+      "out_tokens": 873,
+      "dur_s": 24,
+      "note": null
+    },
+    {
+      "id": "002-t0-doc-fix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "budget_used": 14118,
+      "budget_limit": 45000,
+      "out_tokens": 1378,
+      "dur_s": 27,
+      "note": null
+    },
+    {
+      "id": "003-t1-js-bugfix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "budget_used": 18486,
+      "budget_limit": 150000,
+      "out_tokens": 2641,
+      "dur_s": 50,
+      "note": null
+    },
+    {
+      "id": "004-t1-py-bugfix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "budget_used": 17701,
+      "budget_limit": 150000,
+      "out_tokens": 2862,
+      "dur_s": 48,
+      "note": null
+    },
+    {
+      "id": "005-trap-t0",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.833,
+      "budget_used": 15632,
+      "budget_limit": 150000,
+      "out_tokens": 1798,
+      "dur_s": 55,
+      "note": null
+    },
+    {
+      "id": "006-t2-feature-web",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.833,
+      "budget_used": 70375,
+      "budget_limit": 500000,
+      "out_tokens": 20638,
+      "dur_s": 387,
+      "note": null
+    },
+    {
+      "id": "007-t2-refactor",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.4,
+      "budget_used": 6649,
+      "budget_limit": 400000,
+      "out_tokens": 2208,
+      "dur_s": 225,
+      "note": null
+    },
+    {
+      "id": "008-long-cycle",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.5,
+      "budget_used": 20126,
+      "budget_limit": 400000,
+      "out_tokens": 3972,
+      "dur_s": 127,
+      "note": null
+    }
+  ]
+}
