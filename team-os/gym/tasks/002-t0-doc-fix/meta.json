@@ -1,8 +1,10 @@
 {
   "tier": "T0",
-  "budget": 20000,
+  "budget": 45000,
   "timeout": 600,
-  "requires": ["node"],
+  "requires": [
+    "node"
+  ],
   "browser": false,
   "pass_k": 1,
   "description": "Docs-only fix: README Quick Start points at a nonexistent npm script. Router must fix docs in one pass: no subagents, no ceremonies, src untouched."

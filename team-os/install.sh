@@ -88,6 +88,28 @@ for m in "${MAPPINGS[@]}"; do
   case "$rel" in *.sh|teamos/bin/*) chmod +x "$dest" ;; esac
 done
 
+# Preserve machine-personal keys from the just-backed-up settings.json (plugins, theme, env extras).
+# Team OS keys win on conflict; env objects are merged (Team OS overrides same-name vars).
+OLD_SETTINGS="$BACKUP_DIR/settings.json"
+NEW_SETTINGS="$CLAUDE_HOME/settings.json"
+if [ -f "$OLD_SETTINGS" ] && command -v jq >/dev/null 2>&1; then
+  TMPJ="$(mktemp)"
+  if jq -s '
+    .[0] as $old | .[1] as $new
+    | $new
+    | .env = (($old.env // {}) + ($new.env // {}))
+    | reduce ("enabledPlugins","theme","effortLevel","agentPushNotifEnabled","remoteControlAtStartup",
+              "skipDangerousModePermissionPrompt","skipWorkflowUsageWarning","forceLoginMethod") as $k
+        (.; if ($old[$k] != null) then .[$k] = $old[$k] else . end)
+  ' "$OLD_SETTINGS" "$NEW_SETTINGS" > "$TMPJ" 2>/dev/null && jq -e . "$TMPJ" >/dev/null 2>&1; then
+    mv "$TMPJ" "$NEW_SETTINGS"
+    echo "personal settings preserved: enabledPlugins/theme/effort/notifications + env merged (Team OS wins conflicts)."
+  else
+    rm -f "$TMPJ"
+    echo "WARN: personal-settings merge skipped (jq merge failed); pristine Team OS settings installed." >&2
+  fi
+fi
+
 mkdir -p "$CLAUDE_HOME/teamos"
 printf '%s\n' "$SRC_ROOT" > "$CLAUDE_HOME/teamos/repo-path"
 
