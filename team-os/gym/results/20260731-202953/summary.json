@@ -1,0 +1,120 @@
+{
+  "run_id": "20260731-202953",
+  "tasks": [
+    {
+      "id": "001-t0-typo",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "budget_used": 11136,
+      "budget_limit": 45000,
+      "out_tokens": 670,
+      "dur_s": 21,
+      "note": null
+    },
+    {
+      "id": "002-t0-doc-fix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "budget_used": 11214,
+      "budget_limit": 45000,
+      "out_tokens": 738,
+      "dur_s": 30,
+      "note": null
+    },
+    {
+      "id": "003-t1-js-bugfix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.8,
+      "budget_used": 11977,
+      "budget_limit": 150000,
+      "out_tokens": 693,
+      "dur_s": 21,
+      "note": null
+    },
+    {
+      "id": "004-t1-py-bugfix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.6,
+      "budget_used": 12301,
+      "budget_limit": 150000,
+      "out_tokens": 1129,
+      "dur_s": 30,
+      "note": null
+    },
+    {
+      "id": "005-trap-t0",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.833,
+      "budget_used": 15511,
+      "budget_limit": 150000,
+      "out_tokens": 2215,
+      "dur_s": 51,
+      "note": null
+    },
+    {
+      "id": "006-t2-feature-web",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.6667,
+      "budget_used": 53869,
+      "budget_limit": 500000,
+      "out_tokens": 14547,
+      "dur_s": 400,
+      "note": null
+    },
+    {
+      "id": "007-t2-refactor",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.333,
+      "budget_used": 28163,
+      "budget_limit": 400000,
+      "out_tokens": 6715,
+      "dur_s": 118,
+      "note": null
+    },
+    {
+      "id": "008-long-cycle",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.833,
+      "budget_used": 19347,
+      "budget_limit": 400000,
+      "out_tokens": 3855,
+      "dur_s": 83,
+      "note": null
+    },
+    {
+      "id": "009-t1-security",
+      "status": "fail",
+      "check": "fail",
+      "judge_pass_rate": 0.833,
+      "budget_used": 26116,
+      "budget_limit": 200000,
+      "out_tokens": 6261,
+      "dur_s": 124,
+      "note": null
+    },
+    {
+      "id": "010-ios-sim",
+      "status": "skip",
+      "check": "skip",
+      "judge_pass_rate": null,
+      "budget_used": null,
+      "budget_limit": 200000,
+      "out_tokens": null,
+      "dur_s": null,
+      "note": "missing capability: xcodebuild"
+    }
+  ],
+  "totals": {
+    "pass": 8,
+    "fail": 1,
+    "skip": 1
+  }
+}

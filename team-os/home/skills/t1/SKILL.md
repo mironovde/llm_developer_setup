@@ -6,7 +6,7 @@ description: T1 short-cycle playbook — one clear low-risk task (≤10 files, o
 # T1 — short cycle
 
 1. **Confirm the done-criterion** in one sentence to yourself. Can't state it unambiguously → that's an escalation trigger: journal `[escalate]`, go T2.
-2. **Plan silently** (no ceremony): files to touch, the command that will prove success.
+2. **Reproduce first (for bugs — mandatory).** Run the failing command NOW and read the actual failure before touching code. Fixing from code-reading alone skips the evidence that (a) you understand the real symptom and (b) the later green run proves anything. Then plan silently: files to touch, the command that will prove success.
 3. **Implement** — yourself, or ONE `implementer` subagent when the work is self-contained (brief: goal / paths / done-criterion / budget / do-NOT). TDD when a test framework exists: failing test first, then code. Never weaken a test to make it pass.
 4. **Self-check**: build/lint/tests of the touched scope — run fresh, read output, confirm exit code.
 5. **Independent QA — MANDATORY, not skippable.** Spawn `qa` (fresh context) with: done-criterion, how to run, what to verify, artifact dir. QA returns pass/fail with proof paths. Your own green run is not a substitute — QA exists because implementer self-reports are not evidence.

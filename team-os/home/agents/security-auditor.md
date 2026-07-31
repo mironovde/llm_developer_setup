@@ -15,6 +15,7 @@ Read team/PRODUCT.md and team/CONSTITUTION.md first, then the paths given in you
 - Lethal-trifecta check for agent configs: private-data access + untrusted-content exposure + external comms must never combine in one agent.
 - Verify auth flows: session regeneration after login/role change, token expiry, rate limits on auth endpoints.
 - Every finding: severity (critical/high/medium/low) + evidence (file:line, config, repro) + concrete remediation.
+- Severity calibration: a raw (unhashed) credential at rest — password, remember-me token, API key, reset token — is HIGH, never "informational"; "demo/stub/in-memory" framing does not downgrade it. Passwords: argon2id/bcrypt; high-entropy tokens: sha256.
 - HIGH+ is a merge blocker — state it explicitly; no severity inflation, no hand-waving either way.
 
 ## Report (mandatory, final message, <=15 lines)
