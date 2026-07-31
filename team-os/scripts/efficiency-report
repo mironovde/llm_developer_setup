@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# efficiency-report — aggregate team/metrics.jsonl. Zero LLM tokens.
+# Usage: efficiency-report [project_dir] [--days N]
+set -euo pipefail
+
+DIR="."
+DAYS=7
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --days) DAYS="${2:?--days needs a number}"; shift 2 ;;
+    *) DIR="$1"; shift ;;
+  esac
+done
+
+M="$DIR/team/metrics.jsonl"
+if [ ! -s "$M" ]; then
+  echo "efficiency-report: no data at $M" >&2
+  exit 1
+fi
+
+SINCE="$(date -u -v-"${DAYS}"d +%FT%TZ 2>/dev/null || date -u -d "-${DAYS} days" +%FT%TZ)"
+
+jq -rs --arg since "$SINCE" '
+  def n(f): (map(f // 0) | add) // 0;
+  map(select((.ts // "") >= $since)) as $r
+  | if ($r | length) == 0 then "no runs since \($since)"
+    else
+      ($r | n(.in_tok)) as $in
+      | ($r | n(.out_tok)) as $out
+      | ($r | n(.cache_read)) as $cr
+      | ($r | n(.cache_create)) as $cc
+      | ($r | n(.cost_usd)) as $cost
+      | "EFFICIENCY since \($since)\n"
+        + "total : runs \($r | length) · in \($in) · out \($out) · cache_read \($cr) · cache_create \($cc) · cost_usd \(($cost * 100 | round) / 100)\n"
+        + "cache : \(if ($in + $cr) > 0 then (($cr * 100 / ($in + $cr)) | round) else 0 end)% of input served from cache\n"
+        + "\nby tier:\n"
+        + ($r | group_by(.tier // "?") | map(
+            "  \(.[0].tier // "?"): runs \(length) · in \(n(.in_tok)) · out \(n(.out_tok)) · fails \(map(select(.outcome != "ok")) | length)"
+          ) | join("\n"))
+        + "\n\nby mode:\n"
+        + ($r | group_by(.mode // "?") | map(
+            "  \(.[0].mode // "?"): runs \(length) · in \(n(.in_tok)) · out \(n(.out_tok))"
+          ) | join("\n"))
+        + "\n\nby outcome:\n"
+        + ($r | group_by(.outcome // "?") | map("  \(.[0].outcome // "?"): \(length)") | join("\n"))
+        + "\n\ntop 5 burners:\n"
+        + ($r | sort_by(-((.out_tok // 0) + (.in_tok // 0))) | .[:5] | map(
+            "  \(.task // "?") [\(.tier // "?")/\(.mode // "?")] in \(.in_tok // 0) out \(.out_tok // 0) → \(.outcome // "?")"
+          ) | join("\n"))
+    end
+' "$M"

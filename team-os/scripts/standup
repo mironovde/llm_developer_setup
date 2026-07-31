@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# standup — deterministic sprint status. Zero LLM tokens.
+# Usage: standup [project_dir]
+set -euo pipefail
+
+DIR="${1:-.}"
+TEAM="$DIR/team"
+if [ ! -d "$TEAM" ]; then
+  echo "standup: no team/ directory in $DIR" >&2
+  exit 1
+fi
+
+hr() { printf -- '----------------------------------------\n'; }
+title() { printf '\n%s\n' "$1"; hr; }
+
+printf 'STANDUP · %s · %s\n' "$(date -u +%FT%H:%MZ)" "$(cd "$DIR" && pwd)"
+
+title "SPRINT"
+if [ -f "$TEAM/SPRINT.md" ]; then
+  head -1 "$TEAM/SPRINT.md" | sed 's/^# //'
+  grep -E '^> ' "$TEAM/SPRINT.md" | head -1 || true
+  grep -E '^\|' "$TEAM/SPRINT.md" | grep -vE '^\|[-| ]+\|$' | head -40 || true
+else
+  echo "(no SPRINT.md)"
+fi
+
+title "STATUS"
+if [ -f "$TEAM/SPRINT.md" ]; then
+  grep -E '^\|' "$TEAM/SPRINT.md" | grep -oE '\b(todo|doing|review|qa|done|blocked)\b' | sort | uniq -c | sort -rn || echo "(no tasks)"
+fi
+
+title "BLOCKED"
+if [ -f "$TEAM/SPRINT.md" ]; then
+  grep -E '^\|.*\| *blocked *\|' "$TEAM/SPRINT.md" || echo "(none)"
+fi
+
+title "JOURNAL (last 8)"
+if [ -f "$TEAM/JOURNAL.md" ]; then
+  grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2}T' "$TEAM/JOURNAL.md" | tail -8 || echo "(empty)"
+else
+  echo "(no JOURNAL.md)"
+fi
+
+title "TOKENS TODAY"
+M="$TEAM/metrics.jsonl"
+if [ -s "$M" ]; then
+  jq -rs --arg d "$(date -u +%F)" '
+    map(select((.ts // "") | startswith($d)))
+    | if length == 0 then "(no runs today)"
+      else "runs \(length) · in \(map(.in_tok // 0) | add) · out \(map(.out_tok // 0) | add) · cache_read \(map(.cache_read // 0) | add) · fails \(map(select(.outcome != "ok")) | length)"
+      end' "$M"
+else
+  echo "(no metrics yet)"
+fi
