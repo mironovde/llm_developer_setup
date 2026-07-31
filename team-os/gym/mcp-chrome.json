@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "chrome-devtools-mcp@1.6.0", "--headless", "--isolated", "--viewport", "1280x720", "--categoryEmulation=false", "--categoryPerformance=false"]
+    }
+  }
+}

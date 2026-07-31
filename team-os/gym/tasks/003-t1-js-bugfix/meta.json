@@ -1,0 +1,9 @@
+{
+  "tier": "T1",
+  "budget": 150000,
+  "timeout": 1200,
+  "requires": ["node"],
+  "browser": false,
+  "pass_k": 1,
+  "description": "Off-by-one bug with a failing test. T1: fix without touching tests + independent QA verification."
+}

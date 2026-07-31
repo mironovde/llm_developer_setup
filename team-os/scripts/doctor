@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# Team OS doctor — config sanity on top of the built-in /doctor. Zero LLM tokens.
+# Usage: doctor [project_dir]
+set -u
+
+DIR="${1:-.}"
+CLAUDE_HOME="${CLAUDE_HOME:-$HOME/.claude}"
+OK=0; WARN=0; FAIL=0
+ok()   { OK=$((OK+1));   printf 'OK   %s\n' "$1"; }
+warn() { WARN=$((WARN+1)); printf 'WARN %s\n' "$1"; }
+fail() { FAIL=$((FAIL+1)); printf 'FAIL %s\n' "$1"; }
+
+echo "== Team OS doctor =="
+
+# --- toolchain / capabilities (universal config, per-machine capabilities) ---
+command -v claude >/dev/null 2>&1 && ok "claude CLI $(claude --version 2>/dev/null | head -1)" || fail "claude CLI not found"
+command -v jq >/dev/null 2>&1 && ok "jq present" || fail "jq missing (hooks and scripts need it): brew install jq"
+command -v python3 >/dev/null 2>&1 && ok "python3 present" || fail "python3 missing (autopilot reset-parser needs it)"
+command -v node >/dev/null 2>&1 && ok "node present" || warn "node missing — JS projects and chrome-devtools-mcp (npx) unavailable"
+xcodebuild -version >/dev/null 2>&1 && ok "xcodebuild functional (iOS capability ON)" || warn "xcodebuild not functional — iOS work and iOS gym task will SKIP on this machine (install Xcode to enable; the /usr/bin shim alone is not enough)"
+{ [ -d "/Applications/Google Chrome.app" ] || command -v google-chrome >/dev/null 2>&1; } && ok "Chrome present (browser-loop capability ON)" || warn "Chrome missing — chrome-devtools-mcp and browser gym tasks will SKIP"
+
+# --- installed home config ---
+if [ -f "$CLAUDE_HOME/CLAUDE.md" ]; then
+  if grep -q "Team OS" "$CLAUDE_HOME/CLAUDE.md"; then
+    L=$(wc -l < "$CLAUDE_HOME/CLAUDE.md" | tr -d ' ')
+    [ "$L" -le 200 ] && ok "global CLAUDE.md is Team OS ($L lines, under 200)" || warn "global CLAUDE.md is Team OS but $L lines (>200 — trim it)"
+  else
+    warn "global CLAUDE.md is NOT Team OS (install.sh not run, or another config active)"
+  fi
+else
+  warn "no global CLAUDE.md"
+fi
+
+if [ -f "$CLAUDE_HOME/settings.json" ]; then
+  jq -e . "$CLAUDE_HOME/settings.json" >/dev/null 2>&1 && ok "settings.json valid JSON" || fail "settings.json is INVALID JSON"
+  # every hook command referenced must exist and be executable
+  for cmd in $(jq -r '[.hooks[]?[]?.hooks[]?.command] | .[]' "$CLAUDE_HOME/settings.json" 2>/dev/null); do
+    f="${cmd/#\~/$HOME}"
+    case "$f" in *' '*) f="${f%% *}";; esac
+    if [ -f "$f" ]; then
+      [ -x "$f" ] && ok "hook exists+exec: $(basename "$f")" || fail "hook not executable: $f (chmod +x)"
+    else
+      fail "hook referenced but missing: $f"
+    fi
+  done
+else
+  warn "no ~/.claude/settings.json"
+fi
+
+# --- skills / agents sanity ---
+for s in "$CLAUDE_HOME"/skills/*/SKILL.md; do
+  [ -e "$s" ] || continue
+  d="$(basename "$(dirname "$s")")"
+  n="$(sed -n 's/^name:[[:space:]]*//p' "$s" | head -1)"
+  [ -z "$n" ] || [ "$n" = "$d" ] && : || warn "skill name/dir mismatch: $d vs $n"
+done
+ok "skills scanned: $(ls -d "$CLAUDE_HOME"/skills/*/ 2>/dev/null | wc -l | tr -d ' ')"
+
+DUP=$(ls "$CLAUDE_HOME"/agents/*.md 2>/dev/null | xargs -I{} basename {} .md | sort | uniq -d)
+[ -z "$DUP" ] && ok "no duplicate agent names in ~/.claude/agents" || fail "duplicate agents: $DUP"
+
+# --- hook speed (must stay <300ms; they run on the hot path) ---
+if [ -x "$CLAUDE_HOME/hooks/teamos-test-output-filter.sh" ]; then
+  START=$(python3 -c 'import time; print(int(time.time()*1000))')
+  printf '{"tool_input":{"command":"ls"},"tool_response":{"stdout":"x"}}' | "$CLAUDE_HOME/hooks/teamos-test-output-filter.sh" >/dev/null 2>&1
+  END=$(python3 -c 'import time; print(int(time.time()*1000))')
+  MS=$((END-START))
+  [ "$MS" -lt 300 ] && ok "filter hook fast (${MS}ms)" || warn "filter hook slow (${MS}ms)"
+fi
+
+# --- project checks (when run inside a Team OS project) ---
+if [ -d "$DIR/team" ]; then
+  A="$(sed -n 's/^autonomy:[[:space:]]*\(L[0-3]\).*/\1/p' "$DIR/team/CONSTITUTION.md" 2>/dev/null | head -1)"
+  case "$A" in L0|L1|L2|L3) ok "autonomy level: $A" ;; *) warn "no valid autonomy level in team/CONSTITUTION.md" ;; esac
+  if [ -s "$DIR/team/metrics.jsonl" ]; then
+    BAD=$(tail -20 "$DIR/team/metrics.jsonl" | grep -cv '^{' || true)
+    [ "$BAD" -eq 0 ] && ok "metrics.jsonl well-formed (tail)" || warn "metrics.jsonl has $BAD malformed tail lines"
+  fi
+  if [ -f "$DIR/team/artifacts/.browser-loop.json" ]; then
+    warn "browser-loop marker is OPEN — a loop was not closed (loop-guard will block stops)"
+  fi
+  [ -f "$DIR/team/HALT" ] && warn "team/HALT present: $(head -1 "$DIR/team/HALT")"
+else
+  echo "(no team/ in $DIR — project checks skipped)"
+fi
+
+# --- gym baseline ---
+REPO="$(cat "$CLAUDE_HOME/teamos/repo-path" 2>/dev/null)"
+if [ -n "${REPO:-}" ] && [ -f "$REPO/gym/results/baseline.json" ]; then
+  ok "gym baseline present ($(jq -r '.run_id // "?"' "$REPO/gym/results/baseline.json" 2>/dev/null))"
+else
+  warn "no gym baseline — config changes cannot be validated (run: /gym all --baseline)"
+fi
+
+echo "== doctor: $OK ok, $WARN warn, $FAIL fail =="
+[ "$FAIL" -eq 0 ]

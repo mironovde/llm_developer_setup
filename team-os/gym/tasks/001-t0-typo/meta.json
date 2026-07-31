@@ -1,0 +1,9 @@
+{
+  "tier": "T0",
+  "budget": 20000,
+  "timeout": 600,
+  "requires": ["node"],
+  "browser": false,
+  "pass_k": 1,
+  "description": "Trivial typo fix. Router must solve it in one pass: no subagents, no ceremonies, budget T0."
+}

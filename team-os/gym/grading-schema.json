@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "required": ["expectations", "summary", "verdict"],
+  "properties": {
+    "expectations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["text", "passed", "evidence"],
+        "properties": {
+          "text": { "type": "string" },
+          "passed": { "type": "boolean" },
+          "evidence": { "type": "string", "description": "verbatim quote from the transcript or a concrete artifact fact; 'agent said it passed' is NOT evidence" }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["passed", "failed", "total", "pass_rate"],
+      "properties": {
+        "passed": { "type": "integer" },
+        "failed": { "type": "integer" },
+        "total": { "type": "integer" },
+        "pass_rate": { "type": "number" }
+      }
+    },
+    "verdict": { "type": "string", "description": "one-line overall judgement" }
+  }
+}
