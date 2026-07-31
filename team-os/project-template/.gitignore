@@ -1,0 +1,16 @@
+# Secrets — examples are committed, real values are not
+.env
+.env.test
+.env.*.local
+
+# Dependencies & build output
+node_modules/
+dist/
+__pycache__/
+
+# OS noise
+.DS_Store
+
+# Team artifacts (screenshots, reports) — keep the directory, ignore contents
+team/artifacts/*
+!team/artifacts/.gitkeep
