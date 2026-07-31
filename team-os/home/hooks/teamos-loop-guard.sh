@@ -51,5 +51,5 @@ fi
 TMP="$(mktemp)"
 jq '.blocks = ((.blocks // 0) + 1)' "$MARKER" > "$TMP" && mv "$TMP" "$MARKER"
 
-echo "BLOCKED: browser edit-test loop is still open. Missing proofs: $MISSING. Finish the loop: rebuild and confirm the build marker, run the full test path, check console/network, save a screenshot to team/artifacts/, record each with '~/.claude/hooks/teamos-browser-loop.sh prove <key> <path-or-value>', then '~/.claude/hooks/teamos-browser-loop.sh close'. Do not abandon the cycle." >&2
+echo "BLOCKED: browser edit-test loop is still open. Missing proofs: $MISSING. Finish the loop: rebuild and confirm the build marker, run the full test path, check console/network, save a screenshot to team/artifacts/, record each with 'bash <hooks-dir>/teamos-browser-loop.sh prove <key> <path-or-value>' and then 'close' (helper lives in .claude/hooks/ of the project or ~/.claude/hooks/). Do not abandon the cycle." >&2
 exit 2

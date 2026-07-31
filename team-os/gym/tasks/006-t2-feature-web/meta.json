@@ -1,0 +1,9 @@
+{
+  "tier": "T2",
+  "budget": 500000,
+  "timeout": 2400,
+  "requires": ["node", "chrome"],
+  "browser": true,
+  "pass_k": 1,
+  "description": "Web UI feature with a build step. T2: browser-loop end to end — rebuild before verifying, fresh build-id, live filter check in the browser, console check, screenshot artifact, loop closed."
+}

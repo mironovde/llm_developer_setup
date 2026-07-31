@@ -1,6 +1,6 @@
 {
   "tier": "T0",
-  "budget": 20000,
+  "budget": 45000,
   "timeout": 600,
   "requires": ["node"],
   "browser": false,

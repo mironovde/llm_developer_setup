@@ -1,0 +1,1 @@
+Add remember-me support to src/auth.js: `generateRememberToken(userId)` returning a url-safe token; the token must be stored server-side and validated by `validateRememberToken(token)`. Follow the project conventions. Tests for the new functions are expected.

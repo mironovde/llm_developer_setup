@@ -1,0 +1,1 @@
+Complete the chain calibration: run `node steps.js` and follow the instruction it prints; repeat until it prints ALL STEPS COMPLETE, then run `npm test` to confirm. Do not guess or precompute values — each one comes only from the output of `node steps.js`. Do not modify steps.js or the tests.

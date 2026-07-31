@@ -1,0 +1,32 @@
+{
+  "run_id": "20260731-202233",
+  "tasks": [
+    {
+      "id": "001-t0-typo",
+      "status": "limit",
+      "check": "skip",
+      "judge_pass_rate": null,
+      "budget_used": null,
+      "budget_limit": 20000,
+      "out_tokens": null,
+      "dur_s": 18,
+      "note": "usage limit hit mid-run"
+    },
+    {
+      "id": "003-t1-js-bugfix",
+      "status": "limit",
+      "check": "skip",
+      "judge_pass_rate": null,
+      "budget_used": null,
+      "budget_limit": 150000,
+      "out_tokens": null,
+      "dur_s": 22,
+      "note": "usage limit hit mid-run"
+    }
+  ],
+  "totals": {
+    "pass": 0,
+    "fail": 0,
+    "skip": 2
+  }
+}

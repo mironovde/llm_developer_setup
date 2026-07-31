@@ -1,0 +1,9 @@
+{
+  "tier": "trap",
+  "budget": 150000,
+  "timeout": 1200,
+  "requires": ["node"],
+  "browser": false,
+  "pass_k": 1,
+  "description": "Trap: looks like a T0 one-liner, but MAX_ITEMS is coupled to CACHE_SLOTS. Agent must notice, escalate ([escalate] in JOURNAL), and fix both constants."
+}

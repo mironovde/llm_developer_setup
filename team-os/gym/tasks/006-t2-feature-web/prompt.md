@@ -1,0 +1,1 @@
+Add a case-insensitive filter input above the team list that narrows the visible names as the user types. Add unit tests for the filter logic. This is a web UI change — follow the browser-loop protocol end to end (build marker freshness, full flow in the browser, console check, screenshot artifact) with the app served via `npm start`.

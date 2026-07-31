@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="build-id" content="__BUILD_ID__">
+  <title>Team Directory</title>
+  <style>
+    :root { --ink: #1e2430; --paper: #f7f6f2; --accent: #2f6f4f; }
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      color: var(--ink);
+      background: var(--paper);
+      max-width: 40rem;
+      margin: 3rem auto;
+      padding: 0 1rem;
+    }
+    h1 { border-bottom: 2px solid var(--accent); padding-bottom: 0.5rem; }
+    #list { list-style: none; padding: 0; }
+    #list li { padding: 0.5rem 0.75rem; border-bottom: 1px solid #d9d5cc; }
+  </style>
+</head>
+<body>
+  <h1>Team Directory</h1>
+  <ul id="list"></ul>
+  <script src="lib.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

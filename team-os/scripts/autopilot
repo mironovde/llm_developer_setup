@@ -44,8 +44,12 @@ if [ "$SELFTEST" -eq 1 ]; then
     if ! [ "$v" -gt "$now" ] 2>/dev/null; then echo "FAIL: $name=$v not in future"; fails=$((fails+1)); else echo "OK: $name=+$(( (v-now)/60 ))min"; fi
   done
   T=$(mktemp)
-  printf '{"type":"assistant","message":"working"}\n{"type":"rate_limit_event","status":"rejected","info":"session"}\n' > "$T"
+  printf '{"type":"assistant","message":"working"}\n{"type":"rate_limit_event","rate_limit_info":{"status":"rejected","resetsAt":9999999999,"rateLimitType":"five_hour"}}\n' > "$T"
   detect_limit "$T" >/dev/null && echo "OK: structural limit detected" || { echo "FAIL: structural limit missed"; fails=$((fails+1)); }
+  RE="$(reset_epoch_from_transcript "$T")"
+  [ "$RE" = "9999999999" ] && echo "OK: resetsAt extracted" || { echo "FAIL: resetsAt=$RE"; fails=$((fails+1)); }
+  printf '{"type":"rate_limit_event","rate_limit_info":{"status":"allowed","resetsAt":1785540600,"rateLimitType":"five_hour","overageStatus":"rejected"}}\n{"type":"result","is_error":false}\n' > "$T"
+  detect_limit "$T" >/dev/null && { echo "FAIL: false positive on informational rate_limit_event (real-world regression case)"; fails=$((fails+1)); } || echo "OK: no false positive on status=allowed event"
   printf '{"type":"assistant"}\n{"type":"result","is_error":true,"result":"You have hit your session limit · resets 3:45pm"}\n' > "$T"
   detect_limit "$T" >/dev/null && echo "OK: text limit detected" || { echo "FAIL: text limit missed"; fails=$((fails+1)); }
   printf '{"type":"user","tool_result":"file says usage limit reached inside code"}\n{"type":"result","is_error":false}\n' > "$T"
@@ -114,7 +118,10 @@ while :; do
 
   # Limit handling: not a failure, wait for the window and continue (does not consume progress counters).
   if LIMIT_LINE="$(detect_limit "$TRANSCRIPT")" || { [ -s "$STATE_DIR/iter-$ITER.err" ] && LIMIT_LINE="$(detect_limit "$STATE_DIR/iter-$ITER.err")"; }; then
-    RESET_EPOCH="$(parse_reset_epoch "$LIMIT_LINE")"
+    RESET_EPOCH="$(reset_epoch_from_transcript "$TRANSCRIPT")"
+    if ! [ "${RESET_EPOCH:-0}" -gt "$(date +%s)" ] 2>/dev/null; then
+      RESET_EPOCH="$(parse_reset_epoch "$LIMIT_LINE")"
+    fi
     WAIT=$(( RESET_EPOCH - $(date +%s) ))
     [ "$WAIT" -lt 60 ] && WAIT=60
     [ "$WAIT" -gt 21600 ] && WAIT=21600

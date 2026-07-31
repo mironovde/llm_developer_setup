@@ -1,0 +1,1 @@
+`swift test` fails: splitBill divides the bill among the wrong number of people (see its doc comment in Sources/Lib/Calc.swift for the intended behavior). Fix the bug; do not change the tests — they encode the correct behavior.

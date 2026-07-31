@@ -1,0 +1,9 @@
+{
+  "tier": "T1",
+  "budget": 200000,
+  "timeout": 1800,
+  "requires": ["xcodebuild"],
+  "browser": false,
+  "pass_k": 1,
+  "description": "Swift off-by-one bugfix with a failing XCTest suite. T1: reproduce, fix Sources only, fresh verification. Auto-skips on machines without Xcode."
+}

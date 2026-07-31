@@ -1,0 +1,9 @@
+{
+  "tier": "T2",
+  "budget": 400000,
+  "timeout": 2400,
+  "requires": ["node"],
+  "browser": false,
+  "pass_k": 1,
+  "description": "Monolith-to-modules refactor. T2: visible plan, public API preserved via strict export test, ADR recorded, atomic commits."
+}

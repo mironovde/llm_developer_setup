@@ -39,24 +39,35 @@ budget_used() { # $1=result_json → integer
   printf '%s' "$1" | jq -r '((.usage.input_tokens // 0) + (.usage.cache_creation_input_tokens // 0) + (.usage.output_tokens // 0))' 2>/dev/null || echo 0
 }
 
-# Detect a usage-limit hit in a transcript (frankbria 4-layer pattern, structural first).
-# Prints the matching line (if text layer) and returns 0 on limit, 1 otherwise.
+# Detect a usage-limit hit in a transcript (structural first; text fallback).
+# CAVEAT (found in calibration): EVERY run emits an informational rate_limit_event with
+# rate_limit_info.status="allowed" and a resetsAt epoch — only status="rejected" means a hit,
+# and generic patterns like `limit.*resets` false-positive on that JSON. Parse structurally.
+# Prints the matching line and returns 0 on limit, 1 otherwise.
 detect_limit() { # $1=transcript_file
   local f="$1"
   [ -f "$f" ] || return 1
-  # L1 structural: rate_limit_event with rejected status
-  if grep '"rate_limit_event"' "$f" 2>/dev/null | tail -1 | grep -qE '"status"[[:space:]]*:[[:space:]]*"rejected"'; then
+  # L1 structural: rate_limit_event with status=rejected
+  local st
+  st="$( { jq -r 'select(.type? == "rate_limit_event") | .rate_limit_info.status // empty' "$f" 2>/dev/null || true; } | tail -1)"
+  if [ "$st" = "rejected" ]; then
     grep '"rate_limit_event"' "$f" | tail -1
     return 0
   fi
-  # L2/L3 text: filter out echoed user/tool_result content to avoid false positives
+  # L2 text fallback: filter out echoed user/tool_result content AND informational rate_limit_event lines
   local tail_filtered
-  tail_filtered="$(tail -40 "$f" 2>/dev/null | grep -vE '"type"[[:space:]]*:[[:space:]]*"user"|"tool_result"|"tool_use_id"')"
-  if printf '%s' "$tail_filtered" | grep -qiE "hit your session limit|usage limit reached|limit.*resets|out of extra usage|Request rejected \(429\)|5.hour.*limit"; then
-    printf '%s\n' "$tail_filtered" | grep -iE "hit your session limit|usage limit reached|limit.*resets|out of extra usage|Request rejected \(429\)|5.hour.*limit" | tail -1
+  tail_filtered="$(tail -40 "$f" 2>/dev/null | grep -vE '"type"[[:space:]]*:[[:space:]]*"user"|"tool_result"|"tool_use_id"|"rate_limit_event"')"
+  if printf '%s' "$tail_filtered" | grep -qiE "hit your (session|weekly|5-hour) limit|usage limit reached|out of extra usage|Request rejected \(429\)"; then
+    printf '%s\n' "$tail_filtered" | grep -iE "hit your (session|weekly|5-hour) limit|usage limit reached|out of extra usage|Request rejected \(429\)" | tail -1
     return 0
   fi
   return 1
+}
+
+# Exact reset epoch from the transcript's last rate_limit_event (empty if absent).
+# Strictly better than text-parsing "resets 3:45pm" — use this first.
+reset_epoch_from_transcript() { # $1=transcript_file
+  { jq -r 'select(.type? == "rate_limit_event") | .rate_limit_info.resetsAt // empty' "$1" 2>/dev/null || true; } | tail -1
 }
 
 # Parse "resets 3:45pm" / "resets 9pm" / "resets 21:15" from a limit message → epoch seconds.

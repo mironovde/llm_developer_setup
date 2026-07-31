@@ -1,0 +1,9 @@
+{
+  "tier": "T2",
+  "budget": 400000,
+  "timeout": 2400,
+  "requires": ["node"],
+  "browser": false,
+  "pass_k": 1,
+  "description": "Eight-step gated chain: each target value is revealed only by running steps.js after fixing the previous step. Tests long-cycle persistence — run, edit, rerun, eight times, without abandoning mid-cycle."
+}

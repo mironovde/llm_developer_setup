@@ -1,0 +1,1 @@
+Refactor src/utils.js into focused modules (strings, arrays, dates) while keeping the public API of src/utils.js intact — it may become a re-export index. All tests must stay green; do not change them. Record the structural decision as an ADR in team/DECISIONS.md.

@@ -7,19 +7,21 @@ description: Hard protocol for the web edit→test cycle — build marker, full 
 
 The classic failure: you edit, then test a STALE build, or drop the cycle halfway. This protocol makes both impossible. A Stop-hook blocks ending the turn while the loop is open.
 
+Helper location: `HELPER=.claude/hooks/teamos-browser-loop.sh` if it exists in the project, else `HELPER=~/.claude/hooks/teamos-browser-loop.sh`. All commands below use `bash $HELPER …`.
+
 ## Protocol
 
-1. **Open the loop**: `~/.claude/hooks/teamos-browser-loop.sh open "<task>"` — from the project root (needs team/).
+1. **Open the loop**: `bash $HELPER open "<task>"` — from the project root (needs team/).
 2. **Build marker.** The page must expose which build it serves. If the project has no marker, add a dev-only stamp once (e.g. `<meta name="build-id" content="...">`, a `data-build` attr on body, or a console log with a timestamp/hash injected at build). Marker changes on every build.
 3. **Rebuild** after your edit. Read the build output (the filter hook keeps the signal lines).
 4. **Confirm freshness**: load the page via the browser MCP, read the served marker, compare with the fresh build's marker. Mismatch → you are testing a stale build; fix serving before any conclusions.
-   → `teamos-browser-loop.sh prove build_marker "<marker value>"`
+   → `bash $HELPER prove build_marker "<marker value>"`
 5. **Run the FULL user path** — the whole scenario the change belongs to, not just the changed element. Login flows: use `.env.test` credentials of our product freely (that is what they exist for).
-   → save evidence to `team/artifacts/<slug>-test.md`, then `prove test_pass team/artifacts/<slug>-test.md`
+   → save evidence to `team/artifacts/<slug>-test.md`, then `bash $HELPER prove test_pass team/artifacts/<slug>-test.md`
 6. **Console + network**: read browser console messages and failed network requests. New errors → fix and go back to step 3.
-   → `prove console_clean "<summary, e.g. '0 errors, 0 failed requests'>"`
-7. **Screenshot** of the final state → `team/artifacts/<slug>.png` → `prove screenshot team/artifacts/<slug>.png`
-8. **Close**: `teamos-browser-loop.sh close` — fails if any proof is missing.
+   → `bash $HELPER prove console_clean "<summary, e.g. '0 errors, 0 failed requests'>"`
+7. **Screenshot** of the final state → save to `team/artifacts/<slug>.png` (if the browser tool cannot write a file, save a full DOM/text snapshot as `team/artifacts/<slug>.txt` instead) → `bash $HELPER prove screenshot team/artifacts/<slug>.png`
+8. **Close**: `bash $HELPER close` — fails if any proof is missing.
 
 ## Rules
 - Any fix after step 4 → repeat FROM STEP 3 (rebuild). Never re-test without rebuilding.
