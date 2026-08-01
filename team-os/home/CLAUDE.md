@@ -24,9 +24,18 @@ Router rules:
 
 Brief to any subagent, fixed format: `goal / file paths / done-criterion / budget / do-NOT list`. Roles read team/PRODUCT.md and CONSTITUTION.md themselves — never paste state into briefs.
 Report from any subagent, fixed format, ≤15 lines: `status / changed / proofs (artifact paths) / risks / next`.
-- Everything heavy (logs, diffs, screenshots, research) → files under `team/artifacts/`; your context receives the path + a ≤3-line digest.
+- Everything heavy (logs, diffs, screenshots, research) → files under the artifacts dir (see Artifact hygiene); your context receives the path + a ≤3-line digest.
 - Never read raw diffs or full logs from executors — read reports, then open artifacts by path only when a decision needs them.
 - Batch config changes (CLAUDE.md, skills, hooks, MCP) — each one invalidates the prompt cache. No idle pauses mid-iteration; subagent cache lives ~5 min.
+
+## Artifact hygiene — never litter the repo
+
+**Run output is localized to ONE gitignored artifacts dir, never scattered.** Screenshots, logs, dumps, diffs, raw agent output, throwaway scripts → `team/artifacts/` (or the project's equivalent, e.g. a gitignored `.artifacts/` — the project CLAUDE.md names it). One subdirectory per task, not a flat heap.
+- **Never write artifacts to the repo root or into source directories.** A single stray screenshot looks harmless; they accumulate into hundreds and drown `git status` — which is the only way to see uncommitted work before committing. Applies to every agent you dispatch: put the artifacts path in the brief.
+- Version-control only what outlives the week (decisions, specs, verdicts, reports). Not "the whole run output just in case".
+- Temp files that belong to no project → the session scratchpad, not `/tmp`, not the working tree.
+- Deleting the artifacts dir must never lose anything irreplaceable. If it would, that file was not an artifact — it belongs in the tracked planning dir.
+- Same discipline for branches and worktrees: they are artifacts too. Merged branches get deleted; worktrees are consolidated, not accumulated (each carries a full `node_modules` and its own build-context drift).
 
 ## Team state — disk is the source of truth
 
