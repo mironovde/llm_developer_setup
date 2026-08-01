@@ -28,6 +28,14 @@ Report from any subagent, fixed format, ≤15 lines: `status / changed / proofs 
 - Never read raw diffs or full logs from executors — read reports, then open artifacts by path only when a decision needs them.
 - Batch config changes (CLAUDE.md, skills, hooks, MCP) — each one invalidates the prompt cache. No idle pauses mid-iteration; subagent cache lives ~5 min.
 
+## Team state — disk is the source of truth
+
+`team/` in the project root: PRODUCT.md · CONSTITUTION.md (autonomy, budgets) · BACKLOG.md (strategic) · SPRINT.md (current iteration + proofs) · DECISIONS.md (ADR) · JOURNAL.md (one-line events) · metrics.jsonl · specs/ · solutions/ (lessons) · artifacts/.
+- Any new session resumes from files alone: read SPRINT.md + last 5 JOURNAL lines, then act. Do not re-read everything, do not ask the user to retell history.
+- Operational micro-tasks → native Tasks (TaskCreate/TaskUpdate, they survive resume). Strategic items → BACKLOG/SPRINT. No third tracker.
+- Every key decision → ADR via skill `decide`, in the same iteration. The user may veto retroactively → mark vetoed, journal, replan.
+- JOURNAL line format: `YYYY-MM-DDTHH:MMZ [tier] [event] text` (events: start|plan|escalate|deescalate|block|unblock|budget-alert|ship|halt|veto|retro).
+
 ## Artifact hygiene — never litter the repo
 
 **Run output is localized to ONE gitignored artifacts dir, never scattered.** Screenshots, logs, dumps, diffs, raw agent output, throwaway scripts → `team/artifacts/` (or the project's equivalent, e.g. a gitignored `.artifacts/` — the project CLAUDE.md names it). One subdirectory per task, not a flat heap.
@@ -36,14 +44,6 @@ Report from any subagent, fixed format, ≤15 lines: `status / changed / proofs 
 - Temp files that belong to no project → the session scratchpad, not `/tmp`, not the working tree.
 - Deleting the artifacts dir must never lose anything irreplaceable. If it would, that file was not an artifact — it belongs in the tracked planning dir.
 - Same discipline for branches and worktrees: they are artifacts too. Merged branches get deleted; worktrees are consolidated, not accumulated (each carries a full `node_modules` and its own build-context drift).
-
-## Team state — disk is the source of truth
-
-`team/` in the project root: PRODUCT.md · CONSTITUTION.md (autonomy, budgets) · BACKLOG.md (strategic) · SPRINT.md (current iteration + proofs) · DECISIONS.md (ADR) · JOURNAL.md (one-line events) · metrics.jsonl · specs/ · solutions/ (lessons) · artifacts/.
-- Any new session resumes from files alone: read SPRINT.md + last 5 JOURNAL lines, then act. Do not re-read everything, do not ask the user to retell history.
-- Operational micro-tasks → native Tasks (TaskCreate/TaskUpdate, they survive resume). Strategic items → BACKLOG/SPRINT. No third tracker.
-- Every key decision → ADR via skill `decide`, in the same iteration. The user may veto retroactively → mark vetoed, journal, replan.
-- JOURNAL line format: `YYYY-MM-DDTHH:MMZ [tier] [event] text` (events: start|plan|escalate|deescalate|block|unblock|budget-alert|ship|halt|veto|retro).
 
 ## Verification — non-negotiable
 
