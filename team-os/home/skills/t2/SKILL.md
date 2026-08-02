@@ -36,4 +36,4 @@ Skill `verify` (fresh evidence) → conventional commit(s) → push/PR per repo 
 One lesson worth keeping? → skill `retro` in lite mode (single lesson to team/solutions/). Real process failure → add it to gym candidates.
 
 Budget: fixed in SPRINT.md at Stage 2. Overrun → stop, `[budget-alert]`, escalate or ask.
-Never: skipping QA/review because "it's simple" (then it was T1 — deescalate honestly), shipping with a known HIGH+ security finding, silent scope growth (journal `[escalate]` instead).
+Never: skipping QA/review because "it's simple" (then it was T1 — deescalate honestly), shipping with a known HIGH+ security finding, silent scope growth (journal `[escalate]` instead), ending the feature with "want me to…?" for in-mandate work — commit, queue leftovers as Tasks/BACKLOG lines, report done.

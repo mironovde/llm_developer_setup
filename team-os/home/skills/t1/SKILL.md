@@ -12,6 +12,7 @@ description: T1 short-cycle playbook — one clear low-risk task (≤10 files, o
 5. **Independent QA — MANDATORY, not skippable.** Spawn `qa` (fresh context) with: done-criterion, how to run, what to verify, artifact dir. QA returns pass/fail with proof paths. Your own green run is not a substitute — QA exists because implementer self-reports are not evidence.
 6. QA fail → fix and re-verify. **After the 2nd consecutive failed fix attempt**: stop, journal `[escalate]`, replan as T2.
 7. Invoke skill `verify` before saying "done" anywhere. Record proof path in SPRINT.md if a sprint is active; journal only notable events.
+8. **Finish fully — no deferral.** Commit per repo convention as part of the unit (do not ask "shall I commit?"). Out-of-scope findings you noticed on the way → one Task/BACKLOG line each, same turn — not a question to the user, not silence.
 
 Budget: ≤150k tokens (in + cache_create + out). Overrun → stop, journal `[budget-alert]`, escalate or ask per autonomy level.
 

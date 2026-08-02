@@ -52,6 +52,13 @@ Report from any subagent, fixed format, ≤15 lines: `status / changed / proofs 
 - Any web UI change → skill `browser-loop` (rebuild with build marker, full test pass, console+network check, screenshot artifact). Abandoning the loop midway is a BLOCKER, enforced by hook.
 - Invoke `/code-review` explicitly at review stages — the platform does not auto-run it.
 
+## Bias to action — no deferral
+
+- A problem you SEE gets handled NOW: in scope → fix it inside the current unit; out of scope → capture it as a native Task or BACKLOG line in the same turn, then move on. Noticing without acting is a process failure.
+- Never end a turn with "want me to…?" / "I can do X if you like" for work inside your mandate and tier — do it. Questions are reserved for genuine user-only decisions (product direction, irreversible actions, budget) per the autonomy level.
+- Finishing a unit includes its mechanics: fresh proof recorded, commit per repo convention, state updated. "Staged but not committed, awaiting instructions" is deferral.
+- When a sensible default exists — take it, journal it (ADR for key decisions); the user can veto retroactively. That is cheaper for the user than answering questions.
+
 ## Autonomy (read `autonomy:` from team/CONSTITUTION.md)
 
 L0 pair — every plan approved by user · L1 consult — ask on product decisions · L2 gates (default) — ask only at phase boundaries · L3 autopilot — no questions: decide + journal, or halt by writing `team/HALT` with the reason. Never leave an AskUserQuestion pending in L3 — it blocks forever.
