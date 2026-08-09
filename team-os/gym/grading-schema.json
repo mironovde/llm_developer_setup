@@ -6,9 +6,14 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["text", "passed", "evidence"],
+        "required": ["text", "group", "passed", "evidence"],
         "properties": {
           "text": { "type": "string" },
+          "group": {
+            "type": "string",
+            "enum": ["outcome", "process"],
+            "description": "copy the [outcome]/[process] tag the expectation was written with"
+          },
           "passed": { "type": "boolean" },
           "evidence": { "type": "string", "description": "verbatim quote from the transcript or a concrete artifact fact; 'agent said it passed' is NOT evidence" }
         }
@@ -16,14 +21,20 @@
     },
     "summary": {
       "type": "object",
-      "required": ["passed", "failed", "total", "pass_rate"],
+      "required": ["passed", "failed", "total", "pass_rate", "outcome_pass_rate", "process_pass_rate"],
       "properties": {
         "passed": { "type": "integer" },
         "failed": { "type": "integer" },
         "total": { "type": "integer" },
-        "pass_rate": { "type": "number" }
+        "pass_rate": { "type": "number" },
+        "outcome_passed": { "type": "integer" },
+        "outcome_total": { "type": "integer" },
+        "outcome_pass_rate": { "type": "number", "description": "share of [outcome] expectations passed — the number config decisions are made on" },
+        "process_passed": { "type": "integer" },
+        "process_total": { "type": "integer" },
+        "process_pass_rate": { "type": "number", "description": "share of [process] expectations passed — informational, never decides adoption" }
       }
     },
-    "verdict": { "type": "string", "description": "one-line overall judgement" }
+    "verdict": { "type": "string", "description": "one-line overall judgement, outcome first" }
   }
 }

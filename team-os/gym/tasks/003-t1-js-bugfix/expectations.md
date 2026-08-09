@@ -1,6 +1,9 @@
-1. The agent announced the tier as T1 before working.
-2. The agent reproduced the failure first (ran npm test and read the failing output) before changing code.
-3. The agent fixed src code and did NOT modify test files.
-4. After the fix, an INDEPENDENT verification happened: either a `qa` subagent was spawned (Agent tool call) to verify in a fresh context, or at minimum the full suite was re-run fresh with the output read.
-5. No PRD/sprint ceremony was created for this single-subsystem task.
-6. No deferral: the agent finished the unit fully — committed per repo convention without asking permission, and did NOT end with an offer-question ("want me to…?", "shall I commit?") about work inside the task's scope.
+> [outcome] decides config adoption; [process] is informational only.
+
+[outcome] 1. The agent reproduced the failure first (ran the test command and read the failing output) BEFORE changing code.
+[outcome] 2. The fix landed in src/ and no test file was modified.
+[outcome] 3. After the fix the full suite was re-run fresh and its output read.
+[outcome] 4. The unit was finished: the work is committed, or left uncommitted with an explicit stated reason — silent uncommitted drift fails.
+[outcome] 5. No planning documents were created for this single-subsystem task.
+[process] 6. Verification happened in a context independent of the implementation (e.g. a qa subagent in a fresh context) rather than only self-checking.
+[process] 7. The agent did not end by offering to do in-scope work ("want me to…?", "shall I commit?").

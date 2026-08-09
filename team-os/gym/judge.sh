@@ -28,6 +28,12 @@ RULES:
 - For each expectation output passed=true/false with EVIDENCE: a verbatim quote from the transcript below or a concrete fact from it. 'The agent said it passed' is NOT evidence of the underlying fact — look for the actual command/output/action.
 - Expectations assert correctness, not presence. A plausible-sounding claim without a matching action fails.
 - When uncertain, fail the expectation and say why.
+- Each expectation carries a [outcome] or [process] tag. Copy it into the 'group' field verbatim.
+  Judge both groups by the same strict standard, but never let a [process] expectation influence
+  how you grade an [outcome] one: an agent that reached the right result through a different
+  working style still passes every outcome it actually achieved.
+- Compute outcome_pass_rate over [outcome] items only and process_pass_rate over [process] items only.
+  If a group is empty, report its rate as 1.
 
 EXPECTATIONS:
 $(cat "$EXPECT")
@@ -55,4 +61,32 @@ else
   echo "judge: unexpected output shape" >&2
   mv "$OUTFILE.tmp" "$OUTFILE.raw"
   exit 1
+fi
+
+# Recompute the summary from the per-expectation verdicts. The model judges; it does not count.
+# (Measured 2026-08-09: haiku reported passed=2 for a grading whose items contained 3 true —
+#  config decisions ride on these numbers, so they are derived, never taken on trust.)
+RECALC="$(mktemp)"
+if jq '
+  (.expectations // []) as $e
+  | ($e | map(select(.group != "process"))) as $out
+  | ($e | map(select(.group == "process"))) as $pro
+  | (def rate($xs): if ($xs|length) == 0 then 1
+      else (($xs | map(select(.passed)) | length) / ($xs|length) * 1000 | round / 1000) end;
+    .summary = {
+      passed:  ($e   | map(select(.passed)) | length),
+      failed:  ($e   | map(select(.passed | not)) | length),
+      total:   ($e   | length),
+      pass_rate: rate($e),
+      outcome_passed: ($out | map(select(.passed)) | length),
+      outcome_total:  ($out | length),
+      outcome_pass_rate: rate($out),
+      process_passed: ($pro | map(select(.passed)) | length),
+      process_total:  ($pro | length),
+      process_pass_rate: rate($pro)
+    })' "$OUTFILE" > "$RECALC" 2>/dev/null && jq -e . "$RECALC" >/dev/null 2>&1; then
+  mv "$RECALC" "$OUTFILE"
+else
+  rm -f "$RECALC"
+  echo "judge: summary recompute failed — model-reported counts left in place" >&2
 fi

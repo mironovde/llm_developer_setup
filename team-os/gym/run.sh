@@ -88,12 +88,13 @@ capability_ok() { # $1=requirement → 0/1
   esac
 }
 
-add_summary() { # id status check judge_rate budget_used budget_limit tokens_out dur note
+add_summary() { # id status check judge_rate budget_used budget_limit tokens_out dur note process_rate
   local tmp
   tmp="$(mktemp)"
-  jq --arg id "$1" --arg st "$2" --arg ck "$3" --arg jr "$4" --arg bu "$5" --arg bl "$6" --arg to "$7" --arg du "$8" --arg no "$9" '
+  jq --arg id "$1" --arg st "$2" --arg ck "$3" --arg jr "$4" --arg bu "$5" --arg bl "$6" --arg to "$7" --arg du "$8" --arg no "$9" --arg pr "${10:-}" '
     .tasks += [{id: $id, status: $st, check: $ck,
       judge_pass_rate: (if $jr == "" then null else ($jr|tonumber) end),
+      process_pass_rate: (if $pr == "" then null else ($pr|tonumber) end),
       budget_used: (if $bu == "" then null else ($bu|tonumber) end),
       budget_limit: (if $bl == "" then null else ($bl|tonumber) end),
       out_tokens: (if $to == "" then null else ($to|tonumber) end),
@@ -218,10 +219,14 @@ run_task_once() { # $1=task_name $2=attempt → sets GLOBALS: T_STATUS T_CHECK T
   fi
 
   # judge
-  T_JR=""
+  T_JR=""; T_PR=""
   if [ "$JUDGE" -eq 1 ] && [ -f "$tdir/expectations.md" ]; then
     bash "$GYM/judge.sh" "$rundir/transcript.jsonl" "$tdir/expectations.md" "$rundir/grading.json" || true
-    [ -f "$rundir/grading.json" ] && T_JR="$(jq -r '.summary.pass_rate // empty' "$rundir/grading.json" 2>/dev/null)"
+    if [ -f "$rundir/grading.json" ]; then
+      # judge_pass_rate = OUTCOME rate: the only judge number config adoption may depend on.
+      T_JR="$(jq -r '.summary.outcome_pass_rate // .summary.pass_rate // empty' "$rundir/grading.json" 2>/dev/null)"
+      T_PR="$(jq -r '.summary.process_pass_rate // empty' "$rundir/grading.json" 2>/dev/null)"
+    fi
   fi
 
   if [ "$T_CHECK" = "pass" ]; then T_STATUS="pass"; else T_STATUS="fail"; fi
@@ -236,10 +241,10 @@ for task in "${TASKS[@]}"; do
   PASSK="$(jq -r '.pass_k // 1' "$GYM/tasks/$task/meta.json" 2>/dev/null || echo 1)"
   N=$RUNS
   [ "$PASSK" -gt "$N" ] && N=$PASSK
-  FINAL="pass"; CHECKS=""; JRS=""; BUS=""; TOKS=""; DURS=""; NOTE=""
+  FINAL="pass"; CHECKS=""; JRS=""; PRS=""; BUS=""; TOKS=""; DURS=""; NOTE=""
   for a in $(seq 1 "$N"); do
     run_task_once "$task" "$([ "$N" -gt 1 ] && echo "$a" || echo "")"
-    CHECKS="$T_CHECK"; JRS="$T_JR"; BUS="$T_BU"; TOKS="$T_TOK"; DURS="$T_DUR"; NOTE="$T_NOTE"
+    CHECKS="$T_CHECK"; JRS="$T_JR"; PRS="${T_PR:-}"; BUS="$T_BU"; TOKS="$T_TOK"; DURS="$T_DUR"; NOTE="$T_NOTE"
     if [ "$T_STATUS" = "skip" ] || [ "$T_STATUS" = "limit" ]; then FINAL="$T_STATUS"; break; fi
     if [ "$T_STATUS" = "fail" ]; then FINAL="fail"; break; fi   # pass^k: first fail kills
   done
@@ -248,7 +253,7 @@ for task in "${TASKS[@]}"; do
     fail) OVERALL_FAIL=$((OVERALL_FAIL+1)) ;;
     *) OVERALL_SKIP=$((OVERALL_SKIP+1)) ;;
   esac
-  add_summary "$task" "$FINAL" "$CHECKS" "$JRS" "$BUS" "$([ -f "$GYM/tasks/$task/meta.json" ] && jq -r '.budget // 150000' "$GYM/tasks/$task/meta.json")" "$TOKS" "$DURS" "$NOTE"
+  add_summary "$task" "$FINAL" "$CHECKS" "$JRS" "$BUS" "$([ -f "$GYM/tasks/$task/meta.json" ] && jq -r '.budget // 150000' "$GYM/tasks/$task/meta.json")" "$TOKS" "$DURS" "$NOTE" "$PRS"
 done
 
 TMP="$(mktemp)"
@@ -257,7 +262,9 @@ jq --arg p "$OVERALL_PASS" --arg f "$OVERALL_FAIL" --arg s "$OVERALL_SKIP" \
 
 echo
 echo "== gym $RUN_ID [$VARIANT]: pass=$OVERALL_PASS fail=$OVERALL_FAIL skip=$OVERALL_SKIP =="
-jq -r '.tasks[] | "\(.id): \(.status) (check=\(.check) judge=\(.judge_pass_rate // "n/a") budget=\(.budget_used // "?")/\(.budget_limit // "?"))"' "$SUMMARY"
+jq -r '.tasks[] | "\(.id): \(.status) (check=\(.check) outcome=\(.judge_pass_rate // "n/a") process=\(.process_pass_rate // "n/a") budget=\(.budget_used // "?")/\(.budget_limit // "?"))"' "$SUMMARY"
+TOTAL_BUDGET=$(jq -r '[.tasks[].budget_used // 0] | add' "$SUMMARY")
+echo "total tokens: $TOTAL_BUDGET"
 
 if [ "$DRY" -eq 1 ]; then rm -rf "$OUT"; echo "(dry-run: no results kept)"; exit 0; fi
 
