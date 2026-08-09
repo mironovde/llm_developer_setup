@@ -4,37 +4,37 @@
       "text": "The agent rebuilt BEFORE verifying and confirmed the SERVED page no longer carries the `INIT_BUILD` marker — it read the served output rather than assuming the build took effect.",
       "group": "outcome",
       "passed": true,
-      "evidence": "TOOL_USE: Bash {\"command\":\"npm run build 2>&1\"} followed by TOOL_USE: Bash {\"command\":\"curl -s http://localhost:4173/ | grep build-id\"} and TOOL_USE: mcp__chrome-devtools__evaluate_script. Assistant statement: \"Build marker matches the fresh build (`1786294406539-m7of7i`).\" — read the actual served output, not assumed."
+      "evidence": "Agent ran `npm run build` producing build-id `1786294406539-m7of7i`, then invoked `mcp__chrome-devtools__evaluate_script` to read `document.querySelector('meta[name=\"build-id\"]').content` from the served page, which returned the exact fresh build ID: `\"1786294406539-m7of7i\"` — not INIT_BUILD. Agent explicitly confirmed: 'Build marker matches the fresh build.'"
     },
     {
       "text": "The agent exercised the filter on the real served page (typed a query and observed the list narrow), not by code inspection alone.",
       "group": "outcome",
       "passed": true,
-      "evidence": "TOOL_USE: mcp__chrome-devtools__fill {\"uid\":\"1_2\",\"value\":\"al\",\"includeSnapshot\":true} with assistant observation: \"Filtering to \\\"al\\\" correctly narrowed to only \\\"Alice Johnson\\\".\" Repeated with \"BOR\" and verified \"Boris Petrov\" matched case-insensitively on the served page."
+      "evidence": "Agent filled filter input with \"al\" and snapshot showed only Alice Johnson visible. Then filled with \"BOR\" and only Boris Petrov appeared. Then filled with \"carol\" and only Carol Nguyen appeared. Then filled with \"zzz\" showing empty list. Each action was a real chrome-devtools fill + snapshot cycle on the live page, not code reading."
     },
     {
       "text": "The agent checked the browser console and network for errors after exercising the flow.",
       "group": "outcome",
       "passed": true,
-      "evidence": "TOOL_USE: mcp__chrome-devtools__list_console_messages {} and TOOL_USE: mcp__chrome-devtools__list_network_requests {} called after filter exercises. Assistant: \"The only console/network issue is a `favicon.ico` 404 — a pre-existing browser default request unrelated to the filter feature.\""
+      "evidence": "Agent invoked `mcp__chrome-devtools__list_console_messages {}` which returned 1 error (favicon 404, unrelated). Agent invoked `mcp__chrome-devtools__list_network_requests {}` which showed the three app requests all succeeded (200). In QA phase, agent checked again: console_messages returned no errors, network showed 3 successful requests with no app failures."
     },
     {
       "text": "Unit tests covering the filter logic were added and the full suite re-run fresh with its output read.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Edit added test cases ('filterNames matches case...') to tests/lib.test.js. TOOL_USE: Bash {\"command\":\"npm test 2>&1\"}. Assistant: \"All 7 tests pass.\" QA phase confirmed again: `npm test` → 7/7 pass."
+      "evidence": "Agent edited tests/lib.test.js and added four new filter tests. Then ran `npm test 2>&1` with fresh output showing: `✔ filterNames matches case-insensitively (0.516708ms)` and `✔ filterNames matches substrings anywhere in the name (0.039958ms)` and 3 more filter tests, totaling `ℹ tests 7 ℹ pass 7 ℹ fail 0`. QA re-ran the suite fresh showing identical 7/7 pass."
     },
     {
       "text": "Evidence of the working page was kept as a file (screenshot, or a DOM/text snapshot when screenshots are unavailable).",
       "group": "outcome",
       "passed": true,
-      "evidence": "TOOL_USE: mcp__chrome-devtools__take_screenshot {\"filePath\":\"team/artifacts/filter-input/filter-input.png\"} and TOOL_USE: Write {\"file_path\":\"...team/artifacts/filter-input/filter-input-test.md\",\"content\":\"# Filter input — browser test log...\"} — screenshots and test log written to artifacts."
+      "evidence": "Agent took two screenshots: `mcp__chrome-devtools__take_screenshot` saved to `team/artifacts/filter-input/filter-input.png` and later to `team/artifacts/filter-qa/filter-cleared-full-list.png`. Git commit log shows: 'create mode 100644 team/artifacts/filter-input/filter-input.png' and 'create mode 100644 team/artifacts/filter-qa/filter-cleared-full-list.png'."
     },
     {
       "text": "The agent followed an explicit edit→build→verify protocol and closed it, leaving no abandoned loop marker.",
       "group": "process",
       "passed": true,
-      "evidence": "1. Edit phase: src/lib.js, src/app.js, src/index.html, tests/lib.test.js modified. 2. Build: `npm run build` run. 3. Verify: browser-loop opened, build marker confirmed, filter exercised, console/network checked. 4. Close: TOOL_USE: Bash {\"command\":\"HELPER=.claude/hooks/teamos-browser-loop.sh; bash $HELPER close 2>&1\"}. Assistant: \"Loop closed with all four proofs.\" Then proceeded to final cleanup and commit without abandoned marker."
+      "evidence": "Agent invoked `Skill {\"skill\":\"browser-loop\"}` to open the loop. Built with `npm run build`. Verified with chrome-devtools. Closed explicitly with `bash $HELPER close` which returned: 'browser-loop CLOSED. Proofs: build_marker: 1786294406539-m7of7i test_pass: team/artifacts/filter-input/filter-input-test.md console_clean: 0 app errors, 0 failed app-asset requests; 1 unrelated pre-existing favicon 404 screenshot: team/artifacts/filter-input/filter-input.png' — all four required proofs recorded."
     }
   ],
   "summary": {
@@ -49,5 +49,5 @@
     "process_total": 1,
     "process_pass_rate": 1
   },
-  "verdict": "All 6 expectations passed. The agent rebuilt before verification, read actual served output (build marker confirmed), exercised the filter on the live page with observed narrowing, checked console/network, added and re-ran 7 unit tests, captured screenshots/logs as artifacts, and closed the browser-loop protocol cleanly before commit.\""
+  "verdict": "All outcome expectations passed: agent rebuilt, verified fresh build-id on served page, exercised filter on real DOM with narrowing, checked console/network clean, added tests (7/7 pass), kept screenshot artifacts. Browser-loop protocol closed with full proofs — configuration ready for adoption.\""
 }

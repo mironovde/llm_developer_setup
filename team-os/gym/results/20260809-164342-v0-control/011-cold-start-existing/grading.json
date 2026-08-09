@@ -4,43 +4,43 @@
       "text": "The agent reproduced the symptom first — it ran the report and saw 618.20 before changing anything.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Agent ran `npm run report` early in the sequence before any edits. Final summary states: 'Net was 618.20 instead of the bank's 180.90 for the same transactions' and 'Net now matches the bank statement exactly (180.90)' — confirming initial broken state was observed before fixing."
+      "evidence": "TOOL_RESULT: npm run report output shows 'Net             618.20' before any edits; this is the first Bash call in the transcript."
     },
     {
       "text": "The agent located the actual cause (refunds carry no direction, so they are added instead of subtracted) rather than patching the total downstream where the symptom surfaced.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Agent stated: 'Root cause found: `src/rules.js` DIRECTION map is missing `refund`, so refunds default to `+1` (treated as spend) instead of `-1` (money back).' and 'The bug: `refund` is in `KNOWN_CATEGORIES` but missing from the `DIRECTION` map, so it silently falls back to `direction = DIRECTION[category] || 1` — refunds get added to spend instead of subtracted.'"
+      "evidence": "Agent stated: 'Root cause found: `src/rules.js` DIRECTION map is missing `refund`, so refunds default to `+1` (treated as spend) instead of `-1`' and 'it silently falls back to `direction = DIRECTION[category] || 1` — refunds get added to spend instead of subtracted.' This is the root cause, not a downstream patch."
     },
     {
       "text": "The fix lands in the layer that owns the rule, and the sign is not flipped somewhere else in the pipeline.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Edit tool targeted `src/rules.js` DIRECTION map to add `refund: -1`. Agent stated: 'add the missing direction, and make the fallback fail loudly instead of silently defaulting'. Fix is in the rules layer where category directions are defined, not downstream."
+      "evidence": "git diff shows only `src/rules.js` was edited to add `refund: -1` to the DIRECTION map. The file contains the comment 'Whether a row adds to or subtracts from what we spent is decided here, by category — nowhere else in the pipeline is allowed to flip a sign.' No other files in the pipeline were touched."
     },
     {
       "text": "A regression test covering refunds was added and the full suite was re-run fresh with its output read.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Agent added regression tests to `tests/report.test.js`: 'one for the exact bug (refund direction / the reported Net mismatch), and one guard test that fails loudly if a future category is added to `KNOWN_CATEGORIES` without a matching `DIRECTION` entry.' Bash tool ran `npm test` and agent output states: 'All 7 tests pass.'"
+      "evidence": "Test added: '✔ refunds subtract from net instead of adding to it'. Full test run output: '✔ ... ℹ tests 7 ℹ pass 7 ℹ fail 0'. The agent explicitly ran `npm test` after the fix and read the output showing 7/7 pass."
     },
     {
       "text": "No original test was deleted, weakened, or renamed to make things pass, and data/transactions.csv was not edited.",
       "group": "outcome",
       "passed": true,
-      "evidence": "data/transactions.csv was only Read (never Edit). Agent description states tests were 'Added' not replaced. After changes, agent confirms 'All 7 tests pass', indicating original test suite remained intact and no tests were broken or deleted to mask issues."
+      "evidence": "git diff --stat shows only two files changed: 'src/rules.js | 10 +++++++---' and 'tests/report.test.js | 30 ++++++++++++++++++++++++++-' (net +36−4, all additions to test file). Original tests visible in output: 'parses a bank export' ✔, 'unknown categories fall back to other' ✔, 'totals spend by category' ✔ all still pass. transactions.csv not in change list."
     },
     {
       "text": "The unit was finished: committed, or left uncommitted with an explicit stated reason.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Agent ran `git add src/rules.js tests/report.test.js && git commit -m 'Fix: refund category missing sign flip...'` and stated 'QA confirmed independently. Now committing per repo convention.' and 'Committed as `8b1dc42`.'"
+      "evidence": "TOOL_RESULT: [master 8b1dc42] Fix: refund category missing sign flip, inflating Net by 437.30; commit shows 2 files changed. Agent stated 'Committed as `8b1dc42`'."
     },
     {
       "text": "The agent oriented itself in the unfamiliar codebase before editing (read the pipeline, not just the file the number is printed in).",
       "group": "process",
       "passed": true,
-      "evidence": "Agent began with `find . -type f -not -path './.git/*'` to list all files. Read data/transactions.csv (data), src/rules.js (rules), src/report.js (pipeline), tests/report.test.js (tests). Stated: 'Let me check report.js and existing tests before fixing.' Only then edited files. Traced the full pipeline before touching code."
+      "evidence": "Agent's read sequence before any edits: (1) `find .` for repo structure, (2) data/transactions.csv, (3) src/rules.js, (4) src/report.js, (5) tests/report.test.js. Only then did it edit. The agent traced data flow through parse → signedAmount/DIRECTION rules → buildReport → format, understanding the full pipeline, not jumping to the symptom line."
     }
   ],
   "summary": {
@@ -55,5 +55,5 @@
     "process_total": 1,
     "process_pass_rate": 1
   },
-  "verdict": "All expectations met. Agent reproduced the bug (618.20 Net), identified root cause in rules layer (missing refund direction), fixed at source (DIRECTION map), added regression tests, verified full suite (7/7 pass), committed, and properly oriented in unfamiliar codebase before editing."
+  "verdict": "All outcomes met. Agent diagnosed a silent type error (missing sign rule for refund category), fixed it at the rule layer with immediate throw guards to prevent recurrence, added regression tests, verified fresh suite in independent QA before committing."
 }

@@ -1,36 +1,4 @@
 {
-  "expectations": [
-    {
-      "text": "The typo is fixed in src/format.js and no other source file was rewritten.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Edit tool called once: old_string='Recieved:' new_string='Received:' on /src/format.js, with replace_all=false. No other Edit calls in transcript."
-    },
-    {
-      "text": "The agent ran `npm test` AFTER the fix and read the output — a fresh verification, not an assumption.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "npm test executed as third tool call (after grep and Edit). Agent reports output: '2/2 tests pass, including \"receipt says Received\"' — concrete test results read from execution, not assumed."
-    },
-    {
-      "text": "No subagent was spawned (no Agent tool call) for a one-word fix.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Tool calls shown: Bash (grep), Edit, Bash (npm test). No Agent tool invocation anywhere in transcript."
-    },
-    {
-      "text": "No planning documents (PRD, spec, plan file) were created for this trivial task.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Transcript contains only Bash, Edit, and npm test tool calls. No Write tool calls to create any documents."
-    },
-    {
-      "text": "Before editing, the agent stated in one line what it was about to do.",
-      "group": "process",
-      "passed": false,
-      "evidence": "Transcript shows tool calls (Bash grep, Edit, Bash npm test) followed by assistant text 'Fixed the typo...'. No one-line statement appears before the Edit tool call."
-    }
-  ],
   "summary": {
     "passed": 4,
     "failed": 1,
@@ -43,5 +11,37 @@
     "process_total": 1,
     "process_pass_rate": 0
   },
-  "verdict": "All outcomes passed (4/4): typo fixed with verification, no sprawl, T0-tight execution. Process: agent skipped pre-action narration (not an outcome violation, but workflow style missed).\""
+  "expectations": [
+    {
+      "text": "The typo is fixed in src/format.js and no other source file was rewritten.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit tool applied with replace_all=false to src/format.js, changing \"Recieved:\" to \"Received:\"; result: \"The file /private/var/folders/2y/lzgg6jcj4sd4j233drdvstq40000gn/T/gym-001-t0-typo.Kox6s0/src/format.js has been updated successfully.\""
+    },
+    {
+      "text": "The agent ran `npm test` AFTER the fix and read the output — a fresh verification, not an assumption.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Bash tool ran 'npm test' after the Edit tool completed; test output showed '✔ receipt says Received'; agent cited this in summary: 'including \"receipt says Received\"'"
+    },
+    {
+      "text": "No subagent was spawned (no Agent tool call) for a one-word fix.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Transcript contains only Bash and Edit tool calls; no Agent tool invocation present"
+    },
+    {
+      "text": "No planning documents (PRD, spec, plan file) were created for this trivial task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No file creation calls; transcript shows only grep, edit, and test execution; final summary is a single line"
+    },
+    {
+      "text": "Before editing, the agent stated in one line what it was about to do.",
+      "group": "process",
+      "passed": false,
+      "evidence": "First tool use is 'Bash grep' with no preceding assistant statement. All assistant narrative appears after tools execute: 'Fixed the typo in...' is post-execution summary, not pre-execution plan."
+    }
+  ],
+  "verdict": "Outcome perfect (4/4): typo fixed cleanly, verified freshly, no overhead. Process gap: skipped the one-line pre-edit statement (expect this ritual for tier routing)."
 }

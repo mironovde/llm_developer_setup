@@ -4,43 +4,43 @@
       "text": "Phase 1 wrote its progress to disk as it went, not only at the end — PROGRESS.md gained step lines while work was ongoing.",
       "group": "outcome",
       "passed": true,
-      "evidence": "TOOL_USE: Write to PROGRESS.md after step 1; followed by multiple Edit operations adding step 2, 3, 4, 5 lines incrementally: 'old_string:\"step 1: 192 — done\\n\\nRemaining:\" new_string:\"step 1: 192 — done\\nstep 2: 970 — done\\n\\nRemaining:\"' (and similar for steps 3-5)"
+      "evidence": "After step 1: TOOL_USE Write creates PROGRESS.md with 'step 1: 192 — done'. After step 2, 3, 4: repeated TOOL_USE Edit calls update PROGRESS.md with each completed step before moving to the next iteration."
     },
     {
       "text": "Phase 2 oriented itself from the repository (read PROGRESS.md and/or ran `node steps.js`) before editing anything.",
       "group": "outcome",
       "passed": true,
-      "evidence": "First Phase 2 action: TOOL_USE: Bash with 'cat PROGRESS.md'; followed immediately by 'node steps.js' Bash call; first edit to src/chain files comes after both"
+      "evidence": "Phase 2's first tool call: Bash command 'cat PROGRESS.md' to read the current state. Assistant then responds 'PROGRESS.md shows steps 1-4 done; continuing the chain from step 5.' Only after this orientation does Phase 2 begin edits."
     },
     {
       "text": "Phase 2 continued from where phase 1 stopped instead of restarting the chain from step 1.",
       "group": "outcome",
       "passed": true,
-      "evidence": "ASSISTANT: 'PROGRESS.md shows steps 1-4 done; continuing the chain from step 5.' Phase 2 then edits step6.js, step7.js, etc.—not restarting from step1.js"
+      "evidence": "Phase 2's first `node steps.js` call returns 'STEP 6: set module.exports in src/chain/step6.js to 606'. It does not return STEP 1. Steps 6–12 were completed in Phase 2 (values 606, 911, 607, 632, 223, 310, 457)."
     },
     {
       "text": "The chain reached ALL STEPS COMPLETE and `npm test` was run fresh with its output read.",
       "group": "outcome",
       "passed": true,
-      "evidence": "After setting step12 to 457, TOOL_USE: Bash {'npm test'}; RESULT: is_error=false for Phase 2 (exit code 0); Final PROGRESS.md shows all 12 steps listed with 'ALL STEPS COMPLETE'"
+      "evidence": "After step 12 edit, `node steps.js` returned 'ALL STEPS COMPLETE'. Immediately after: `npm test` executed with output '✔ every chain step exports a number', '✔ pass 1', '✔ fail 0', confirming test success."
     },
     {
       "text": "No value was guessed or read out of steps.js internals; each came from a preceding run's output.",
       "group": "outcome",
       "passed": true,
-      "evidence": "ASSISTANT: 'setting step6 to 606 as instructed' (from node steps.js output, not source inspection); values like 200 confirmed from file state 'Step 5 was already completed (value 200)' via cat, not by reading steps.js"
+      "evidence": "Every step value (192, 970, 489, 129, 200, 606, 911, 607, 632, 223, 310, 457) appears first as a STEP instruction printed by `node steps.js` (e.g., 'STEP 1: set module.exports in src/chain/step1.js to 192'), then is used in the corresponding Edit. No values extracted from steps.js source code."
     },
     {
       "text": "steps.js and tests/ were never modified in either phase.",
       "group": "outcome",
       "passed": true,
-      "evidence": "All Edit/Write operations target only src/chain/step[N].js or PROGRESS.md. No TOOL_USE operations touch steps.js or tests/ directory"
+      "evidence": "All Edit and Write operations target src/chain/step*.js files or PROGRESS.md. The only test/ interaction is `npm test`, a read operation. steps.js is never opened or modified."
     },
     {
       "text": "The handover note names what remains, not only what was done.",
       "group": "process",
       "passed": true,
-      "evidence": "PROGRESS.md includes both completed steps ('step 1: 192 — done...') AND a 'Remaining:' section: 'continue running node steps.js, follow each printed instruction, until it prints ALL STEPS COMPLETE. Then run npm test to confirm.' Phase 2 successfully resumed from this note, inferring step 5 was next"
+      "evidence": "Phase 1's PROGRESS.md ends with: 'Remaining: continue running `node steps.js`, follow each printed instruction, until it prints ALL STEPS COMPLETE. Then run `npm test` to confirm.' This explicitly names the next steps, not just listing completed work."
     }
   ],
   "summary": {
@@ -55,5 +55,5 @@
     "process_total": 1,
     "process_pass_rate": 1
   },
-  "verdict": "All outcome expectations passed (6/6); chain completed successfully with proper context-resume discipline: Phase 1 wrote PROGRESS.md incrementally, Phase 2 read it and node steps.js before resuming, all 12 steps finished, npm test ran with passing exit code.\""
+  "verdict": "Perfect execution: Phase 1 tracked progress incrementally with handover guidance; Phase 2 oriented from disk, resumed mid-chain at step 6, completed all 12 steps, verified with passing tests.\""
 }

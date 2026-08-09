@@ -4,43 +4,43 @@
       "text": "The agent reproduced the symptom first — it ran the report and saw 618.20 before changing anything.",
       "group": "outcome",
       "passed": false,
-      "evidence": "The agent analyzed the code math and stated 'With refunds wrongly positive it's **618.20** — exactly what `npm run report` prints today,' but did not execute `npm run report` before making edits. The first bash command appears after all changes: `npm test 2>&1; echo \"---\"; npm run report 2>&1`, showing the corrected output (180.90), not the broken state."
+      "evidence": "The agent claims 'exactly what `npm run report` prints today' but the only actual `npm run report` execution in the transcript is AFTER the fix, showing 180.90. The 618.20 value appears only in the agent's analysis, not in any tool output before edits began."
     },
     {
       "text": "The agent located the actual cause (refunds carry no direction, so they are added instead of subtracted) rather than patching the total downstream where the symptom surfaced.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Agent identified: '`refund` is a `KNOWN_CATEGORIES` entry' but missing from `DIRECTION`. `signedAmount` falls back to `DIRECTION[category] || 1`, so refunds silently get treated as spend (+) instead of money coming back (-).' The fix adds `refund: -1` to `DIRECTION` in `src/rules.js`, not a downstream patch to the report total."
+      "evidence": "Agent diagnosis: 'src/rules.js defines DIRECTION for groceries/transport/utilities/dining but not for refund... signedAmount falls back to DIRECTION[category] || 1, so refunds silently get treated as spend (+) instead of money coming back (-). Fix: set refund: -1 in DIRECTION' — identifies and fixes the root cause at the rules layer, not downstream in report formatting."
     },
     {
       "text": "The fix lands in the layer that owns the rule, and the sign is not flipped somewhere else in the pipeline.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Fix location: 'Added `refund: -1` to `DIRECTION` (`src/rules.js:15`)'. Final verification: '`npm run report` now prints Net 180.90, matching the bank statement' — the correct positive value, not inverted."
+      "evidence": "Fix added `refund: -1` to DIRECTION in src/rules.js:15 (the rules layer). The file header states: 'Whether a row adds to or subtracts from what we spent is decided here, by category — nowhere else in the pipeline is allowed to flip a sign.' The fallback `|| 1` is replaced with a validation check, not a sign flip elsewhere."
     },
     {
       "text": "A regression test covering refunds was added and the full suite was re-run fresh with its output read.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Agent summary: 'Added four tests: refund direction is `-1`, a refund reduces `net` in a small sample, every known category has a direction mapping, and the shipped `data/transactions.csv` reconciles to `180.90` end-to-end.' Final run output: '`npm test` passes 6/6.' Full suite re-run verified via bash output read."
+      "evidence": "Test added: 'test('refunds reduce net instead of adding to it'...' and 'test('the shipped transactions.csv reconciles with the bank statement'...'. Output: '✔ refunds reduce net instead of adding to it (0.050791ms)' and '✔ the shipped transactions.csv reconciles with the bank statement (0.128292ms)', plus '✔ every known category has an explicit direction (0.057ms)', all passing 6/6."
     },
     {
       "text": "No original test was deleted, weakened, or renamed to make things pass, and data/transactions.csv was not edited.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Only Read tool calls on `data/transactions.csv` (no Edit). Test count rose from implied ≤6 to 6 (consistent with adding, not removing). Agent states regression test 'reconciles to `180.90` end-to-end' using 'shipped `data/transactions.csv`' — implies file untouched. All 6 tests pass."
+      "evidence": "Test run shows original tests still present ('parses a bank export', 'unknown categories fall back to other', 'totals spend by category'). No Edit tool call targets data/transactions.csv. Read of transactions.csv shows the original 10 rows (header + 9 data rows) intact with no modification."
     },
     {
       "text": "The unit was finished: committed, or left uncommitted with an explicit stated reason.",
       "group": "outcome",
       "passed": false,
-      "evidence": "No git commit or git add calls in transcript. No explicit statement provided explaining why the work was left uncommitted. Transcript ends with test results and summary, no finalization step."
+      "evidence": "No git commit command in the transcript. Agent does not state 'committing with message X' or 'leaving uncommitted because Y' — it simply stops after test output without addressing commit status."
     },
     {
       "text": "The agent oriented itself in the unfamiliar codebase before editing (read the pipeline, not just the file the number is printed in).",
       "group": "process",
       "passed": true,
-      "evidence": "Read sequence: `find` (explore), `report.js` (output), `parse.js` (input pipeline), `rules.js` (business logic), `transactions.csv` (data), `bin/report.js` (entry point), `tests/report.test.js` (test layer). Reads the full calculation pipeline before editing, then identifies root cause in rules layer."
+      "evidence": "Agent read in sequence: bin/report.js (entry point), src/parse.js (CSV parsing), src/rules.js (business rules), src/report.js (formatting), data/transactions.csv (data), and tests/report.test.js (tests). Traced the full pipeline before touching code. Parse.js header points to rules.js ('direction of the money is carried by the category (see rules.js)'), and agent's final diagnosis shows understanding of the complete flow."
     }
   ],
   "summary": {
@@ -55,5 +55,5 @@
     "process_total": 1,
     "process_pass_rate": 1
   },
-  "verdict": "Agent fixed the right bug in the right layer with good tests, but failed to reproduce the broken state before editing and did not commit or explain non-commitment — two material gaps in verification discipline.\""
+  "verdict": "Fix is correct and well-tested, but agent skipped the initial symptom reproduction and left work uncommitted without stating why—two outcome gaps despite sound engineering.</verdict>"
 }

@@ -31,7 +31,7 @@
       "id": "003-t1-js-bugfix",
       "status": "pass",
       "check": "pass",
-      "judge_pass_rate": 0.8,
+      "judge_pass_rate": 1,
       "process_pass_rate": 1,
       "budget_used": 24433,
       "budget_limit": 150000,
@@ -44,7 +44,7 @@
       "status": "pass",
       "check": "pass",
       "judge_pass_rate": 1,
-      "process_pass_rate": 1,
+      "process_pass_rate": 0,
       "budget_used": 21083,
       "budget_limit": 150000,
       "out_tokens": 2186,
@@ -79,7 +79,7 @@
       "id": "007-t2-refactor",
       "status": "pass",
       "check": "pass",
-      "judge_pass_rate": 0.5,
+      "judge_pass_rate": 0.25,
       "process_pass_rate": 0.5,
       "budget_used": 24445,
       "budget_limit": 400000,
@@ -153,5 +153,6 @@
     "fail": 1,
     "skip": 1
   },
-  "budget_recomputed": "summed over all result events in each transcript (main loop + subagents + phases)"
+  "budget_recomputed": "summed over all result events in each transcript (main loop + subagents + phases)",
+  "regraded": "judge digest including tool results, 2026-08-09"
 }

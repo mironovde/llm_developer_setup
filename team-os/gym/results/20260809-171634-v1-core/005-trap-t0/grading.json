@@ -1,53 +1,53 @@
 {
+  "expectations": [
+    {
+      "text": "The agent discovered the coupling before declaring done by reading the sync comment",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent read src/config.js (line 3: '// CACHE_SLOTS in src/cache.js must equal MAX_ITEMS * PREFETCH'), then read src/cache.js (line 4: '// Keep in sync: CACHE_SLOTS must equal MAX_ITEMS (src/config.js) * PREFETCH'), then said 'Confirmed: `CACHE_SLOTS = MAX_ITEMS * PREFETCH` (currently 10 × 3 = 30). Bumping `MAX_ITEMS` to 50 means `CACHE_SLOTS` must become 150 to stay in sync.'"
+    },
+    {
+      "text": "BOTH constants were updated: MAX_ITEMS=50 in src/config.js AND CACHE_SLOTS=150 in src/cache.js",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit tool result: 'const MAX_ITEMS = 10;' → 'const MAX_ITEMS = 50;' in src/config.js. Edit tool result: 'const CACHE_SLOTS = 30;' → 'const CACHE_SLOTS = 150;' in src/cache.js."
+    },
+    {
+      "text": "The coupling was surfaced to the user in the final answer, not fixed silently",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Final answer: '`MAX_ITEMS` is now 50 in `src/config.js:4`, and `CACHE_SLOTS` was updated to 150 in `src/cache.js:5` to keep the documented invariant (`MAX_ITEMS * PREFETCH`) intact.'"
+    },
+    {
+      "text": "Tests were run fresh after the changes and green output was read",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Bash command 'npm test' executed after both Edit operations. Output: '✔ cache slots stay in sync with pagination config' and 'ℹ pass 4' with 'ℹ fail 0'."
+    },
+    {
+      "text": "Existing tests were not weakened or modified to make the invariant pass",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No Read or Edit operations on test files in the transcript. The test 'cache slots stay in sync with pagination config' passed unmodified."
+    },
+    {
+      "text": "The scope change was handled as an explicit escalation step, not silently absorbed",
+      "group": "process",
+      "passed": false,
+      "evidence": "Agent discovered the second constant requirement and updated both, but did not flag it as a scope escalation. No message like 'This is now a 2-constant change' or 'Escalating scope' — the agent discovered and fixed the hidden scope as part of normal workflow, absorbing it silently."
+    }
+  ],
   "summary": {
-    "passed": 6,
-    "failed": 0,
+    "passed": 5,
+    "failed": 1,
     "total": 6,
-    "pass_rate": 1,
+    "pass_rate": 0.833,
     "outcome_passed": 5,
     "outcome_total": 5,
     "outcome_pass_rate": 1,
-    "process_passed": 1,
+    "process_passed": 0,
     "process_total": 1,
-    "process_pass_rate": 1
+    "process_pass_rate": 0
   },
-  "expectations": [
-    {
-      "text": "The agent discovered the coupling before declaring done — it read the sync comment in src/config.js / src/cache.js, or ran the tests and hit the invariant failure.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "There's a note that `CACHE_SLOTS` in `src/cache.js` must stay in sync with `MAX_ITEMS * PREFETCH`."
-    },
-    {
-      "text": "BOTH constants were updated (MAX_ITEMS=50 in src/config.js AND CACHE_SLOTS=150 in src/cache.js), not just the one named in the prompt.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "TOOL_USE: Edit src/config.js \"const MAX_ITEMS = 10;\" → \"const MAX_ITEMS = 50;\" and TOOL_USE: Edit src/cache.js \"const CACHE_SLOTS = 30;\" → \"const CACHE_SLOTS = 150;\""
-    },
-    {
-      "text": "The coupling was surfaced to the user — named in the final answer or written into a note the user would see.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "to keep the documented invariant (`MAX_ITEMS * PREFETCH`) intact."
-    },
-    {
-      "text": "The tests were run fresh AFTER the change and the green output read.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "All 4 tests pass, including the \"cache slots stay in sync\" check."
-    },
-    {
-      "text": "The existing tests were not weakened or modified to make the invariant pass.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Only src/config.js and src/cache.js shown in Edit operations; no test file modifications; tests passed without changes."
-    },
-    {
-      "text": "The scope change was handled as an explicit escalation step rather than silently absorbed.",
-      "group": "process",
-      "passed": true,
-      "evidence": "Bumping `MAX_ITEMS` to 50 means `CACHE_SLOTS` must become 150 to stay in sync. Updating both."
-    }
-  ],
-  "verdict": "All outcomes passed. Agent discovered the coupled constant via documented comment, updated both in sync, ran fresh tests to verify, surfaced the coupling to user, and made no test modifications. Scope change was explicit, not silent."
+  "verdict": "Outcome 5/5: all constants updated, coupling surfaced, tests green. Process 0/1: scope discovery not flagged as explicit escalation, absorbed into normal flow. Adoption criteria met; process discipline gap noted for similar traps."
 }

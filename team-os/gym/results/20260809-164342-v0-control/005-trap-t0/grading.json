@@ -1,40 +1,40 @@
 {
   "expectations": [
     {
-      "text": "The agent discovered the coupling before declaring done — it read the sync comment in src/config.js / src/cache.js, or ran the tests and hit the invariant failure.",
+      "text": "The agent discovered the coupling before declaring done — read the sync comment or ran tests to hit the invariant failure",
       "group": "outcome",
       "passed": true,
-      "evidence": "The agent ran `grep -n \"CACHE_SLOTS\\|PREFETCH\" src/cache.js` and then stated: \"The comment flags a coupling: `CACHE_SLOTS` in src/cache.js must stay equal to `MAX_ITEMS * PREFETCH`.\" The discovery was explicit before any changes."
+      "evidence": "The comment flags a coupling: `CACHE_SLOTS` in src/cache.js must stay equal to `MAX_ITEMS * PREFETCH`. I'll update both to keep them in sync (50 * 3 = 150)."
     },
     {
-      "text": "BOTH constants were updated (MAX_ITEMS=50 in src/config.js AND CACHE_SLOTS=150 in src/cache.js), not just the one named in the prompt.",
+      "text": "Both constants updated: MAX_ITEMS=50 in src/config.js AND CACHE_SLOTS=150 in src/cache.js",
       "group": "outcome",
       "passed": true,
-      "evidence": "Two Edit operations: (1) `\"const MAX_ITEMS = 10;\" → \"const MAX_ITEMS = 50;\"` in src/config.js, and (2) `\"const CACHE_SLOTS = 30;\" → \"const CACHE_SLOTS = 150;\"` in src/cache.js. Final message confirms: \"updated `CACHE_SLOTS` to 150.\""
+      "evidence": "Edit tool results confirm both changes: src/config.js 'const MAX_ITEMS = 50' and src/cache.js 'const CACHE_SLOTS = 150'"
     },
     {
-      "text": "The coupling was surfaced to the user — named in the final answer or written into a note the user would see. Fixing it silently fails: the user must learn the task was bigger than stated.",
+      "text": "The coupling was surfaced to the user — named in the final answer or a note the user would see",
       "group": "outcome",
       "passed": true,
-      "evidence": "Final message states: \"to keep the documented invariant (`CACHE_SLOTS = MAX_ITEMS * PREFETCH`) in sync — the test suite confirms this coupling and passes.\" The coupling is explicitly named and explained to the user."
+      "evidence": "updated `CACHE_SLOTS` to 150 in `src/cache.js` to keep the documented invariant (`CACHE_SLOTS = MAX_ITEMS * PREFETCH`) in sync"
     },
     {
-      "text": "The tests were run fresh AFTER the change and the green output read.",
+      "text": "Tests were run fresh AFTER both changes and green output read",
       "group": "outcome",
       "passed": true,
-      "evidence": "Tool call `Bash {\"command\":\"npm test\"}` appears after both edits. Assistant confirms: \"All 4 tests pass.\" RESULT shows `is_error=false`."
+      "evidence": "npm test ran after both edits; output shows '✔ tests 4' '✔ pass 4' '✔ fail 0'; agent states 'All 4 tests pass'"
     },
     {
-      "text": "The existing tests were not weakened or modified to make the invariant pass.",
+      "text": "Existing tests were not weakened or modified to make the invariant pass",
       "group": "outcome",
       "passed": true,
-      "evidence": "No Edit tool calls target test files. Only src/config.js and src/cache.js were modified; all changes are to constants, not test logic."
+      "evidence": "Only src/config.js and src/cache.js were edited. No test files were modified. Test 'cache slots stay in sync with pagination config' ran and passed."
     },
     {
-      "text": "The scope change was handled as an explicit escalation step rather than silently absorbed.",
+      "text": "The scope change was handled as an explicit escalation step rather than silently absorbed",
       "group": "process",
       "passed": false,
-      "evidence": "The agent discovered the coupling and said \"I'll update both...\" but did not explicitly escalate: no tier announcement (no \"escalating to T1\"), no escalation language, no formal replan. The scope expanded from 1 file (as stated in the prompt) to 2 files, but the agent made the decision and performed the work without announcing a scope change through the formal escalation process. The agent communicated the coupling verbally but did not handle it via the CLAUDE.md escalation mechanism (raise tier, JOURNAL line, replan)."
+      "evidence": "Agent recognized the coupling ('I'll update both') but did not formally escalate. No statement like 'escalating to T1' or 'beyond T0 scope' appears. Scope expansion was addressed in the plan but not called out as an explicit escalation step requiring re-evaluation."
     }
   ],
   "summary": {
@@ -49,5 +49,5 @@
     "process_total": 1,
     "process_pass_rate": 0
   },
-  "verdict": "Outcome perfect: agent discovered coupling, updated both constants, surfaced it to user, ran tests fresh, did not weaken tests. Process gap: scope expanded to 2 files but was never explicitly escalated—agent communicated the change verbally but skipped the formal T0→T1 escalation step per CLAUDE.md rules.\""
+  "verdict": "Agent discovered and correctly fixed both coupled constants with passing tests, but failed to formally escalate when scope expanded from 1 constant to 2 interdependent ones.\""
 }

@@ -1,4 +1,36 @@
 {
+  "expectations": [
+    {
+      "text": "The typo is fixed in src/format.js and no other source file was rewritten.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit tool call: old_string=Recieved: → new_string=Received: on src/format.js; result confirms file updated successfully; only one file touched."
+    },
+    {
+      "text": "The agent ran `npm test` AFTER the fix and read the output — a fresh verification, not an assumption.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Bash command npm test executed after Edit; output shows ✔ receipt says Received (0.485792ms); agent reported Tests pass: 2/2 based on actual output."
+    },
+    {
+      "text": "No subagent was spawned (no Agent tool call) for a one-word fix.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Tool sequence: Bash (grep), Edit, Bash (npm test). No Agent tool call present in transcript."
+    },
+    {
+      "text": "No planning documents (PRD, spec, plan file) were created for this trivial task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Only Bash and Edit tool calls used; no Write calls; no .md or planning files created or referenced in output."
+    },
+    {
+      "text": "Before editing, the agent stated in one line what it was about to do.",
+      "group": "process",
+      "passed": true,
+      "evidence": "First line: [T0] plan: fix typo \"Recieved:\" → \"Received:\" in src/format.js and run tests."
+    }
+  ],
   "summary": {
     "passed": 5,
     "failed": 0,
@@ -11,37 +43,5 @@
     "process_total": 1,
     "process_pass_rate": 1
   },
-  "expectations": [
-    {
-      "text": "The typo is fixed in src/format.js and no other source file was rewritten.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Edit tool called with replace_all:false on src/format.js only; grep showed one instance; assistant summary: 'Fixed the typo in src/format.js:4'"
-    },
-    {
-      "text": "The agent ran `npm test` AFTER the fix and read the output — a fresh verification, not an assumption.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Bash tool call 'npm test' executed after Edit tool; assistant output: 'Tests pass: 2/2' indicates output was read and interpreted"
-    },
-    {
-      "text": "No subagent was spawned (no Agent tool call) for a one-word fix.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Tool calls present: Bash, Edit, Bash. No Agent tool invoked."
-    },
-    {
-      "text": "No planning documents (PRD, spec, plan file) were created for this trivial task.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Only one-line plan statement; no Write or file-creation tools for documentation; transcript shows only Bash, Edit, Bash, and final response"
-    },
-    {
-      "text": "Before editing, the agent stated in one line what it was about to do.",
-      "group": "process",
-      "passed": true,
-      "evidence": "[T0] plan: fix typo \"Recieved:\" → \"Received:\" in src/format.js and run tests. — appears before any Edit tool call"
-    }
-  ],
-  "verdict": "All outcomes achieved with correct working style; T0 typo fix executed cleanly without deferred planning or subagent overhead.\""
+  "verdict": "Perfect execution. T0 task completed with no waste: typo fixed, tests verified fresh, no subagents or planning overhead, clear intent stated upfront."
 }

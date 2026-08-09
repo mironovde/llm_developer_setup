@@ -4,37 +4,37 @@
       "text": "The agent verified the real command (checked package.json scripts or ran it) instead of guessing.",
       "group": "outcome",
       "passed": true,
-      "evidence": "The agent ran `cat /private/var/folders/2y/lzgg6jcj4sd4j233drdvstq40000gn/T/gym-002-t0-doc-fix.8VDvya/package.json` to read the package.json file, confirming that the script is `test`, not `tst`."
+      "evidence": "cat package.json output shows: `\"scripts\": { \"test\": \"node --test tests/*.test.js\" }`, confirming the correct script name is `test`, not `tst`."
     },
     {
       "text": "README.md was fixed; src/, tests/ and package.json are untouched — in particular no `tst` alias was added to package.json instead of fixing the docs.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Tool calls show only one file edited: README.md via Edit with old_string=\"npm run tst\" and new_string=\"npm test\". No modifications to package.json or other files."
+      "evidence": "Edit tool call modified only README.md with `\"old_string\":\"npm run tst\",\"new_string\":\"npm test\"`. No modifications to package.json, src/, or tests/ directories."
     },
     {
       "text": "The fix is minimal: the `--verbose` documentation and other README sections were left intact, not rewritten.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Edit call used replace_all=false with a precise old_string and new_string, targeting only the exact typo without rewriting the entire file or surrounding content."
+      "evidence": "Edit shows a single targeted string replacement. The Read output confirms `--verbose` documentation (line 26) and all other sections remain in the README untouched."
     },
     {
       "text": "The agent ran `npm test` AFTER the fix and read the output.",
       "group": "outcome",
       "passed": true,
-      "evidence": "TOOL_USE Bash shows `npm test` was run after the Edit tool call. Assistant output states: \"Verified with `npm test` — 2/2 tests pass.\" demonstrating the output was read."
+      "evidence": "`npm test` command executed after Edit, with output showing `✔ lowercases and hyphenates words (0.531625ms)` and `ℹ pass 2` `ℹ fail 0` confirming all tests pass."
     },
     {
       "text": "No planning documents were created for this trivial task.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Tool calls show only Bash (grep, cat, npm test) and Edit/Read operations. No Write, TaskCreate, or file-creation calls for planning/PRD/decision docs."
+      "evidence": "Transcript contains only: Bash (grep), Read, Bash (cat), Edit, Bash (npm test). No planning files, SPRINT.md updates, or design documents created."
     },
     {
       "text": "Before editing, the agent stated in one line what it was about to do.",
       "group": "process",
       "passed": true,
-      "evidence": "ASSISTANT output: \"The correct script is `test`, not `tst`. Fixing the README.\" appears before the Edit tool call, in one sentence."
+      "evidence": "Assistant text immediately before Edit: \"The correct script is `test`, not `tst`. Fixing the README.\""
     }
   ],
   "summary": {
@@ -49,5 +49,5 @@
     "process_total": 1,
     "process_pass_rate": 1
   },
-  "verdict": "All expectations met: agent verified the command, fixed README.md precisely, did not rewrite or touch other files, tested the fix and read output, avoided planning docs, and pre-announced the fix.\""
+  "verdict": "All expectations pass. Agent verified the real command in package.json, fixed only README.md with a minimal change, tested post-fix, and took no planning shortcuts.\""
 }

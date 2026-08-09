@@ -1,4 +1,42 @@
 {
+  "expectations": [
+    {
+      "text": "The agent rebuilt BEFORE verifying and confirmed the SERVED page no longer carries the `INIT_BUILD` marker — it read the served output rather than assuming the build took effect.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent ran `npm run build` (produced `1786296158889-k031ek`), then used `mcp__chrome-devtools__evaluate_script` to query the served page's meta[build-id] tag: `\"1786296158889-k031ek\"`. Confirmed match via explicit statement: 'Matches the build we just produced'."
+    },
+    {
+      "text": "The agent exercised the filter on the real served page (typed a query and observed the list narrow), not by code inspection alone.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent filled input with 'BORIS' and took snapshot showing only 'Boris Petrov' in list. Filled with 'zzz' and snapshot showed empty list. Cleared via keyboard (Ctrl+A, Backspace) and snapshot showed full 6-name list restored. Multiple DOM snapshots demonstrate filter narrowing/restoring observed in real time."
+    },
+    {
+      "text": "The agent checked the browser console and network for errors after exercising the flow.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "`mcp__chrome-devtools__list_console_messages` returned 1 error (favicon 404). `mcp__chrome-devtools__list_network_requests` showed 4 requests, only favicon.ico was 404. Agent explicitly noted: 'The only console error is a 404 for favicon.ico — unrelated to the app... No errors from app.js/lib.js.'"
+    },
+    {
+      "text": "Unit tests covering the filter logic were added and the full suite re-run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent added 4 filter tests to lib.test.js (case-insensitive, substring matching, empty query, no-match cases). Final `npm test` output read verbatim: '✔ filterNames matches case-insensitively... ✔ filterNames matches substrings... ✔ filterNames with empty or whitespace... ✔ filterNames with no matches... ℹ tests 7... ℹ pass 7... ℹ fail 0...'"
+    },
+    {
+      "text": "Evidence of the working page was kept as a file (screenshot, or a DOM/text snapshot when screenshots are unavailable).",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent took screenshot to `.artifacts/team-directory-filter-active.png` via `mcp__chrome-devtools__take_screenshot`, also created evidence log at `.artifacts/filter-input-test.md`. Recorded proof: 'screenshot = .artifacts/team-directory-filter-active.png'."
+    },
+    {
+      "text": "The agent followed an explicit edit→build→verify protocol and closed it, leaving no abandoned loop marker.",
+      "group": "process",
+      "passed": true,
+      "evidence": "Agent opened loop with `bash $HELPER open`, then edited files → built (`npm run build`) → verified via browser → explicitly closed with `bash $HELPER close`, receiving confirmation: 'browser-loop CLOSED. Proofs: build_marker... test_pass... console_clean... screenshot...'"
+    }
+  ],
   "summary": {
     "passed": 6,
     "failed": 0,
@@ -11,43 +49,5 @@
     "process_total": 1,
     "process_pass_rate": 1
   },
-  "expectations": [
-    {
-      "text": "The agent rebuilt BEFORE verifying and confirmed the SERVED page no longer carries the `INIT_BUILD` marker — it read the served output rather than assuming the build took effect.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Agent ran `npm run build 2>&1`, then evaluated `() => document.querySelector('meta[name=\"build-id\"]').content` on the live served page via chrome-devtools. Statement: \"Matches the build we just produced (`1786296158889-k031ek`).\" — reading from actual DOM, not assumption."
-    },
-    {
-      "text": "The agent exercised the filter on the real served page (typed a query and observed the list narrow), not by code inspection alone.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Agent typed \"BORIS\" via `mcp__chrome-devtools__fill {\"uid\":\"1_2\",\"value\":\"BORIS\"}`, took snapshot, and stated: \"Case-insensitive uppercase query correctly narrows to just 'Boris Petrov'.\" Repeated with no-match query \"zzz\" and full-list restore. All on live localhost:4173 via browser interactions, not code review."
-    },
-    {
-      "text": "The agent checked the browser console and network for errors after exercising the flow.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Agent called `mcp__chrome-devtools__list_console_messages {}` and `mcp__chrome-devtools__list_network_requests {}` explicitly, then reported: \"The only console error is a 404 for `favicon.ico` — unrelated to the app and pre-existing browser behavior, not a regression from this change. No errors from `app.js`/`lib.js`.\""
-    },
-    {
-      "text": "Unit tests covering the filter logic were added and the full suite re-run fresh with its output read.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Agent edited `lib.test.js` to add `filterNames` import and new test cases. Ran `npm test 2>&1` twice (early: \"All 7 tests pass\"; end-of-task: \"7/7 passing via `npm test`\"). Output was captured and read, not assumed."
-    },
-    {
-      "text": "Evidence of the working page was kept as a file (screenshot, or a DOM/text snapshot when screenshots are unavailable).",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Agent saved `.artifacts/team-directory-filter-active.png` (screenshot of filter narrowing results) and `.artifacts/filter-input-test.md` (detailed evidence log with build marker, user path, and outcomes). Evidence is file-persisted."
-    },
-    {
-      "text": "The agent followed an explicit edit→build→verify protocol and closed it, leaving no abandoned loop marker.",
-      "group": "process",
-      "passed": true,
-      "evidence": "Agent opened browser-loop with `bash $HELPER open \"Add case-insensitive filter input above team list\"`, then edited code, rebuilt, verified in browser, ran tests, created evidence. Closed explicitly with `bash $HELPER close`. Statement: \"Loop closed with all proofs recorded.\" No abandoned marker."
-    }
-  ],
-  "verdict": "All 5 outcome expectations met (build verified with served build-id, filter exercised on live page, console/network checked, unit tests added & re-run with output read, evidence kept as files); browser-loop protocol closed cleanly."
+  "verdict": "Agent completed feature with full browser verification: filter added and wired, 7/7 unit tests pass, served build-id fresh (verified via devtools), filter exercised on real page (narrowing confirmed via snapshots), console clean (favicon-only 404), loop closed with all proofs recorded.\""
 }
