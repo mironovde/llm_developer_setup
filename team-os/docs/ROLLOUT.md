@@ -58,3 +58,25 @@ cp -R ~/.claude/teamos-backups/<ts>/. ~/.claude/
 Отставные скиллы и роли (t1/t2/t3, tier, verify, decide, autonomy, standup, research-refresh,
 architect, code-reviewer, pm, ux-designer, visual-designer, devops) удалялись отдельно от
 установщика — их бэкап лежит в `~/.claude/teamos-backups/<ts>-retired/`.
+
+## Раскатка на проекты (сделано 2026-08-09)
+
+Новый закон состояния звучит «`NOTES.md` или установленный эквивалент проекта». Без явного
+названия эквивалента агент завёл бы лишний `NOTES.md` рядом с уже используемым слоем. В каждом
+активном проекте эквивалент назван прямо:
+
+| Проект | Слой состояния | Коммит |
+|---|---|---|
+| crm_npf | GSD `.planning/` (план) + `team/` (спринт, доказательства) | `9743754f` |
+| obsidian_planner | `.planning/` + `team/` — оба живые | `5967453` |
+| fin_planner | `team/`; CLAUDE.md создан с нуля (его не было) | `adf2b5d` |
+| fin_planner_2 | `team/`; CLAUDE.md создан с нуля, добавлены pnpm-команды | `c61bc5b` |
+| delo_yasno_2 | `.planning/STATE.md`; строка добавлена в существующую таблицу соответствий | `7c2b0afd` |
+| risk-platform-2 | `.planning/` | `25ab82c` |
+| interior-design | `.planning/` | `6a55981` |
+
+`.artifacts/` добавлен в `.gitignore` шести проектов (в `delo_yasno_2` уже был).
+
+Каждый коммит содержит **только** `CLAUDE.md` и `.gitignore` — в `interior-design` рядом лежало
+40+ чужих незакоммиченных файлов, в `risk-platform-2` — правки `.planning/`; ничего из этого не
+затронуто. Откат любого: `git -C <проект> revert <хеш>`.
