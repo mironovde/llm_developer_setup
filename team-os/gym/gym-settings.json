@@ -61,6 +61,15 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/teamos-commit-guard.sh\"",
+            "timeout": 10
+          }
+        ]
       }
     ]
   }
