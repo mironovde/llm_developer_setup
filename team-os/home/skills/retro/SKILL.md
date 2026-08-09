@@ -1,26 +1,19 @@
 ---
 name: retro
-description: Retrospective + compound step — turn metrics and journal into lessons, config hypotheses (Gym-gated), and new golden tasks. Invoke after each sprint, after autopilot night runs, every ~5 cycles, or in lite mode after a notable T2.
+description: Turn what actually happened into one lesson and at most three config hypotheses — each of which must survive the gym before adoption. Invoke after a long run or a notable failure.
 ---
 
-# Retro — the self-improvement loop
+# Retro
 
-Fresh data is injected below at invocation time:
-
-## Efficiency (last 7 days)
+## Recent runs
 !`bash ~/.claude/teamos/bin/efficiency-report . --days 7 2>/dev/null || echo "(no metrics yet)"`
 
-## Journal tail
-!`grep -E '^[0-9]{4}-' team/JOURNAL.md 2>/dev/null | tail -20 || echo "(no journal)"`
-
-## Full mode (sprint close, night run)
-1. **Analyze** the data above: where did tokens burn (top burners vs value delivered)? which escalations/reverts/budget-alerts repeated? what blocked and why?
-2. **Lessons**: for the single most valuable insight, write ONE lesson file `team/solutions/<category>/<slug>.md` (categories: process|debugging|architecture|tooling|product) with frontmatter `date, category, symptoms, applies_when` and a body: what happened → root cause → what to do next time. One lesson per retro — batching dilutes them. Lessons are read at T2/T3 design time (grep by keywords), so write searchable symptoms.
-3. **Config hypotheses** (≤3): concrete changes to CLAUDE.md/skills/hooks/budgets that the data supports. Each hypothesis → validated in Gym against baseline BEFORE adoption (pass-rate AND tokens must not regress; regression → discard). Never adopt a config change on impressions.
-4. **Gym candidates**: every real process failure this cycle (broken loop, stale-build test, budget blowout, wrong-tier triage) → append to `team/solutions/gym-candidates.md`: symptom, how to reproduce as a fixture, what check would catch it. The test set grows from real failures.
-5. Journal one `[retro]` line: key numbers + decisions.
-
-## Lite mode (after a notable T2)
-Only step 2 (one lesson) + step 4 if a process failure occurred. Skip the analysis ceremony.
-
-Never: adopt config changes without a Gym pass; write multi-lesson dumps; let a "we'll remember" insight go unrecorded.
+1. **Read the data above and the tail of NOTES.md.** Where did the tokens go, and what did they buy?
+   What failed twice? What was blocked and why?
+2. **One lesson.** Write the single most valuable insight to `.notes/lessons/<slug>.md`: what happened,
+   the root cause, what to do differently. One per retro — a batch of five dilutes all five.
+3. **At most three config hypotheses**, each concrete enough to test: a line to add, a line to delete,
+   a budget to change. Every one goes through the gym against the current baseline before adoption.
+   Outcome pass-rate must not regress and tokens must not grow. No exceptions for good-sounding ideas.
+4. **Every real process failure becomes a golden task** — symptom, how to reproduce it as a fixture,
+   what check would have caught it. The suite grows from actual failures, not imagined ones.

@@ -1,7 +1,11 @@
 {
-  "name": "v0-control",
-  "description": "Current Team OS config, unchanged — the control arm of the simplification experiment.",
+  "name": "installed",
+  "description": "The installed config — v1-core-r2 as measured on 2026-08-09, plus the security-auditor role kept for delo_yasno_2 which requires it by name.",
   "claude_md": "CLAUDE.md",
-  "copy": ["agents", "skills", "hooks"],
-  "seed_team": true
+  "copy": [
+    "agents",
+    "skills",
+    "hooks"
+  ],
+  "seed_team": false
 }

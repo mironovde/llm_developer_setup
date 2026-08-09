@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent ran `node steps.js` FIRST and read its instruction before editing any chain file.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "First tool call: `Bash {\"command\":\"node steps.js\"}` with result `STEP 1: set module.exports in src/chain/step1.js to 7`. Edit follows only after this instruction was received."
+    },
+    {
+      "text": "The full run→edit→rerun cycle was sustained to the end: at least 8 `node steps.js` runs interleaved with edits, never abandoned or handed back mid-way.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Nine `node steps.js` runs total: initial run → step1 instruction; after step1 edit → step2 instruction; after step2 → step3; after step3 → step4; after step4 → step5; after step5 → step6; after step6 → step7; after step7 → step8; after step8 → `ALL STEPS COMPLETE`. Cycle completed without interruption."
+    },
+    {
+      "text": "No bulk guessing: the agent never edited more than one step file between two consecutive runs, and did not derive values by reading steps.js internals instead of running it.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Every run (steps 1–8) is followed by exactly one edit. Values (7, 234, 271, 418, 975, 242, 519, 106) are all sourced from `STEP N:` output lines in `node steps.js` results, never from reading the source file."
+    },
+    {
+      "text": "steps.js and tests/ were never modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "All Edit operations target only `/src/chain/step[1-8].js`. No Edit tool calls to steps.js or tests/chain.test.js appear in the transcript."
+    },
+    {
+      "text": "A fresh final verification happened: `node steps.js` printing ALL STEPS COMPLETE and a green `npm test`, both outputs read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "`node steps.js` final result: `ALL STEPS COMPLETE`. `npm test` result: `✔ chain calibration is complete` with `pass 1` and `fail 0`. Agent confirms: 'npm test passes (1/1, `chain calibration is complete`)'"
+    },
+    {
+      "text": "Progress was tracked outside the agent's own context (task list, notes file, or commits) so an interrupted run could resume.",
+      "group": "process",
+      "passed": false,
+      "evidence": "No task list, notes file, or git commits created during the run. Transcript shows only direct edits to step files and command execution; no persistent progress artifact for resumption after interruption."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.833,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcome: all 5 expectations passed — full cycle executed correctly with all 8 steps delivered and verified. Process: no external progress tracking created for resumption after interruption.\""
+}

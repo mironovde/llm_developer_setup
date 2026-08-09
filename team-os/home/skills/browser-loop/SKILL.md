@@ -1,34 +1,35 @@
 ---
 name: browser-loop
-description: Hard protocol for the web edit→test cycle — build marker, full test path, console+network check, screenshot proof. Invoke for ANY web UI change that gets verified in a browser. Abandoning the loop is a blocker (hook-enforced).
+description: Protocol for verifying a web UI change in a real browser — rebuild, confirm the served build is the new one, run the whole user path, check console and network, keep a screenshot. Invoke for any web UI change you intend to call working.
 ---
 
 # Browser edit-test loop
 
-The classic failure: you edit, then test a STALE build, or drop the cycle halfway. This protocol makes both impossible. A Stop-hook blocks ending the turn while the loop is open.
+The failure this prevents is specific and common: you edit, then verify against a stale build, and
+conclude the change works. The second failure is dropping the cycle halfway and reporting anyway.
 
-**Browser tool choice (in this order — never pick a tool just because its schema is visible):**
-1. Interactive session with the user around → the NATIVE surface: Claude in Chrome or the app's built-in Browser pane (zero setup, the user can watch).
-2. Headless work — QA subagents, autopilot, gym → chrome-devtools MCP with `--headless --isolated`. Never drive the user's personal browser unattended.
-3. playwright MCP — ONLY when the brief explicitly requires cross-browser E2E (WebKit/Firefox); enable via the project's mcp-snippet, then remove.
+**Tool choice:** with the user present, use the native surface (Claude in Chrome or the app's built-in
+browser pane). Unattended work — subagents, headless runs — uses chrome-devtools MCP with
+`--headless --isolated`; never drive the user's own browser unattended. Reach for playwright only when
+the brief actually requires cross-browser coverage.
 
-Helper location: `HELPER=.claude/hooks/teamos-browser-loop.sh` if it exists in the project, else `HELPER=~/.claude/hooks/teamos-browser-loop.sh`. All commands below use `bash $HELPER …`.
+Helper: `HELPER=.claude/hooks/teamos-browser-loop.sh` in the project, else `~/.claude/hooks/…`.
+It keeps a marker in `.artifacts/` and a Stop hook refuses to end the turn while the loop is open.
 
-## Protocol
+1. `bash $HELPER open "<task>"`
+2. **Build marker.** The page must say which build it serves — a `<meta name="build-id">`, a `data-build`
+   attribute, a stamped console line. If the project has none, add a dev-only one once.
+3. **Rebuild** after the edit and read the build output.
+4. **Confirm freshness**: load the page, read the served marker, compare it with the build you just
+   produced. A mismatch means you are looking at a stale build — fix serving before concluding anything.
+   → `bash $HELPER prove build_marker "<value>"`
+5. **Run the whole user path**, not just the changed control. Test credentials in `.env.test` exist to
+   be used. → evidence to `.artifacts/<slug>-test.md`, then `prove test_pass <path>`
+6. **Console + network**: read console messages and failed requests. New errors → fix, return to step 3.
+   → `prove console_clean "<summary>"`
+7. **Screenshot** the final state → `.artifacts/<slug>.png` (a DOM/text snapshot if the tool cannot write
+   files) → `prove screenshot <path>`
+8. `bash $HELPER close` — fails while any proof is missing.
 
-1. **Open the loop**: `bash $HELPER open "<task>"` — from the project root (needs team/).
-2. **Build marker.** The page must expose which build it serves. If the project has no marker, add a dev-only stamp once (e.g. `<meta name="build-id" content="...">`, a `data-build` attr on body, or a console log with a timestamp/hash injected at build). Marker changes on every build.
-3. **Rebuild** after your edit. Read the build output (the filter hook keeps the signal lines).
-4. **Confirm freshness**: load the page via the browser MCP, read the served marker, compare with the fresh build's marker. Mismatch → you are testing a stale build; fix serving before any conclusions.
-   → `bash $HELPER prove build_marker "<marker value>"`
-5. **Run the FULL user path** — the whole scenario the change belongs to, not just the changed element. Login flows: use `.env.test` credentials of our product freely (that is what they exist for).
-   → save evidence to `team/artifacts/<slug>-test.md`, then `bash $HELPER prove test_pass team/artifacts/<slug>-test.md`
-6. **Console + network**: read browser console messages and failed network requests. New errors → fix and go back to step 3.
-   → `bash $HELPER prove console_clean "<summary, e.g. '0 errors, 0 failed requests'>"`
-7. **Screenshot** of the final state → save to `team/artifacts/<slug>.png` (if the browser tool cannot write a file, save a full DOM/text snapshot as `team/artifacts/<slug>.txt` instead) → `bash $HELPER prove screenshot team/artifacts/<slug>.png`
-8. **Close**: `bash $HELPER close` — fails if any proof is missing.
-
-## Rules
-- Any fix after step 4 → repeat FROM STEP 3 (rebuild). Never re-test without rebuilding.
-- The loop closes in the same work session it opened. Blocked externally (server down, missing creds) → journal `[block]` with the reason, close the loop as blocked in SPRINT.md — do not leave it half-done silently.
-- QA briefs for web tasks must include this protocol; QA's report carries the four proofs.
+Any fix after step 4 restarts at step 3. Never re-test without rebuilding. Blocked from outside (server
+down, missing credentials): say so explicitly and close the loop as blocked — do not leave it hanging.

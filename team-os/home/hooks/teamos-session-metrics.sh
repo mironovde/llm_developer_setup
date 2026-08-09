@@ -7,11 +7,14 @@ CWD="$(printf '%s' "$IN" | jq -r '.cwd // empty' 2>/dev/null)"
 SID="$(printf '%s' "$IN" | jq -r '.session_id // empty' 2>/dev/null)"
 [ -z "$CWD" ] && exit 0
 
-# Nearest team/ dir upward.
+# Where telemetry goes: an existing team/ (projects still on that layer), otherwise .artifacts/
+# in the nearest repo. Without the fallback this hook only ever fired in the 4 projects that
+# have team/, so `retro` had no data anywhere else.
 DIR="$CWD"
 TEAM=""
 for _ in 1 2 3 4 5; do
   if [ -d "$DIR/team" ]; then TEAM="$DIR/team"; break; fi
+  if [ -d "$DIR/.git" ]; then TEAM="$DIR/.artifacts"; mkdir -p "$TEAM" 2>/dev/null; break; fi
   [ "$DIR" = "/" ] && break
   DIR="$(dirname "$DIR")"
 done

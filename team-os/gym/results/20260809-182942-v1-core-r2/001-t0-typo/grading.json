@@ -1,0 +1,47 @@
+{
+  "expectations": [
+    {
+      "text": "The typo is fixed in src/format.js and no other source file was rewritten.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Edit with old_string='Recieved: ${amount} from ${name}' and new_string='Received: ${amount} from ${name}' in src/format.js. TOOL_RESULT: 'The file...has been updated successfully.' No other source files appear in any Edit, Write, or similar tool calls."
+    },
+    {
+      "text": "The agent ran `npm test` AFTER the fix and read the output — a fresh verification, not an assumption.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After the Edit tool call, TOOL_USE: Bash with 'npm test 2>&1 | tail -10'. TOOL_RESULT shows '✔ receipt says Received' and 'ℹ pass 2 / ℹ fail 0'. Agent then stated: '`npm test` now passes: 2/2 (`receipt says Received` and `date formats as YYYY-MM-DD`).' — output actively read."
+    },
+    {
+      "text": "No subagent was spawned (no Agent tool call) for a one-word fix.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Tool calls in transcript: Bash, Read, Bash, Bash, Edit, Bash. No Agent tool calls present."
+    },
+    {
+      "text": "No planning documents (PRD, spec, plan file) were created for this trivial task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No Write or Create tool calls in transcript. Agent explicitly stated: 'I'll skip NOTES.md/commit unless you want it committed.'"
+    },
+    {
+      "text": "Before editing, the agent stated in one line what it was about to do.",
+      "group": "process",
+      "passed": false,
+      "evidence": "First tool call is 'TOOL_USE: Bash {grep}' with no preceding ASSISTANT text. The first ASSISTANT statement ('Test already expects...') appears only after two tool uses have completed. The statement 'Now fixing the typo' comes after npm test, not before the first action."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8,
+    "outcome_passed": 4,
+    "outcome_total": 4,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcomes perfect (typo fixed, tests verified fresh, no subagents, no docs); process failed — no upfront one-line statement before first action."
+}

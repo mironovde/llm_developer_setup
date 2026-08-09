@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent ran the tests BEFORE refactoring to establish a green baseline, and re-ran them fresh AFTER, reading both outputs.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "Agent's first action after reading files: 'A: Now I'll split it into focused modules...' — immediately proceeds to create/write new files. No npm test run appears before any edits. Tests are only run AFTER refactoring is complete ('TOOL_USE: Bash {\"command\":\"cd ... && npm test\"}'); no before baseline shown."
+    },
+    {
+      "text": "The helpers were genuinely moved: each implementation now lives in exactly one focused module, with no copy left behind in the original file.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "New src/utils.js contains only re-export logic (const strings = require('./utils/strings'); ... module.exports = {...strings, ...arrays, ...dates}). Agent confirms via mechanical verification: 'ALL 8 FUNCTION SOURCES BYTE-IDENTICAL' and shows reads of strings.js, arrays.js, dates.js each containing implementations. git diff shows src/utils.js reduced from 107 lines to 18 lines (net -89 lines)."
+    },
+    {
+      "text": "The public API of src/utils.js is unchanged and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "npm test output: '✔ public API surface is exactly the documented set'. Mechanical verification: 'OLD keys: [\"slugify\",\"truncate\",\"capitalize\",\"chunk\",\"unique\",\"groupBy\",\"formatDate\",\"daysBetween\"] NEW keys: [\"slugify\",\"truncate\",\"capitalize\",\"chunk\",\"unique\",\"groupBy\",\"formatDate\",\"daysBetween\"] EXTRA: [] MISSING: []'. Test file: 'git status --porcelain tests/' shows empty, 'git diff --stat tests/' shows empty."
+    },
+    {
+      "text": "The unit was finished: atomic commits, or an explicit stated reason for leaving the work uncommitted.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "git commit completed: '[master 82cb4cf] Split utils.js into strings/arrays/dates modules'. Followed by 'Текущая ветка: master нечего коммитить, нет изменений в рабочем каталоге' confirming clean state."
+    },
+    {
+      "text": "Before the first edit the agent produced a visible plan or file map (which helper goes where).",
+      "group": "process",
+      "passed": false,
+      "evidence": "Agent's progression: reads files → 'A: Now I'll split it into focused modules under `src/utils/`...' → immediately invokes Write operations to create strings.js, arrays.js, dates.js. No preceding statement mapping functions to modules (e.g., 'strings.js: slugify, truncate, capitalize'). The agent moves directly from understanding the problem to implementation without stating the plan aloud."
+    },
+    {
+      "text": "The structural decision was recorded somewhere durable, naming at least one alternative that was rejected.",
+      "group": "process",
+      "passed": false,
+      "evidence": "ADR-001 was added (confirmed by agent: 'ADR-001 recorded in `team/DECISIONS.md`'). Visible diff excerpt: '## ADR-001: Split src/utils.js into focused modules' with 'Status: accepted' and 'Context: `src/utils.js` had grown into...' — the rest is truncated with '...' in the Edit tool result. No verbatim evidence of alternatives (e.g., 'Rejected: keep monolithic + namespace; Rejected: split into individual files') appears in the shown output."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 3,
+    "total": 6,
+    "pass_rate": 0.5,
+    "outcome_passed": 3,
+    "outcome_total": 4,
+    "outcome_pass_rate": 0.75,
+    "process_passed": 0,
+    "process_total": 2,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcome: 75% (3/4 pass) — green tests, API intact, atomic commit. Process: 0% (0/2) — no pre-edit plan stated, no alternatives documented in ADR."
+}

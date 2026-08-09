@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Phase 1 wrote its progress to disk as it went, not only at the end — PROGRESS.md gained step lines while work was ongoing.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After step 1: TOOL_USE Write creates PROGRESS.md with 'step 1: 192 — done'; after step 4: TOOL_USE Edit updates it with 'step 2: 970 — done\\nstep 3: 489 — done\\nstep 4: 129 — done' added mid-work with assistant saying 'Let me update PROGRESS.md now that I have several done, then continue.'"
+    },
+    {
+      "text": "Phase 2 oriented itself from the repository (read PROGRESS.md and/or ran `node steps.js`) before editing anything.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Phase 2's first tool call: git status + PROGRESS.md read via bash. Second call: 'node steps.js' outputs 'STEP 7:...'. Only after these checks does Phase 2 edit any file (step7.js)."
+    },
+    {
+      "text": "Phase 2 continued from where phase 1 stopped instead of restarting the chain from step 1.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Phase 2's first 'node steps.js' outputs 'STEP 7: set module.exports in src/chain/step7.js to 911'. Assistant confirms: 'Good, steps 1-6 were already set correctly (verified by `node steps.js` advancing to step 7).' Phase 2 then edits step7.js through step12.js."
+    },
+    {
+      "text": "The chain reached ALL STEPS COMPLETE and `npm test` was run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After step 12 edit, 'node steps.js' outputs 'ALL STEPS COMPLETE'. Then: TOOL_USE Bash npm test returns '✔ every chain step exports a number', 'tests 1', 'pass 1', 'fail 0'."
+    },
+    {
+      "text": "No value was guessed or read out of steps.js internals; each came from a preceding run's output.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Assistant explicitly states: 'per instructions I must only use values from `node steps.js` output, not read them from the array directly.' All 12 values (192, 970, 489, 129, 200, 606, 911, 607, 632, 223, 310, 457) appear verbatim in 'STEP N:' lines from `node steps.js` output, never extracted from code."
+    },
+    {
+      "text": "steps.js and tests/ were never modified in either phase.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Git commit output shows '13 files changed' with only 'create mode 100644 PROGRESS.md' and 'modified: src/chain/step*.js'; no changes to steps.js or tests/ directory listed."
+    },
+    {
+      "text": "The handover note names what remains, not only what was done.",
+      "group": "process",
+      "passed": false,
+      "evidence": "PROGRESS.md is created with structure 'step 1: 192 — done\\n\\n## Remaining'. After step 4, Edit adds steps 2-4 to the done list but shows no content added under '## Remaining'. Phase 1 ends at step 6 without populating the remaining section. Phase 2's first action after reading PROGRESS.md is to run `node steps.js` to discover 'STEP 7', indicating PROGRESS.md alone did not name remaining steps."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.857,
+    "outcome_passed": 6,
+    "outcome_total": 6,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcome: perfect (6/6) — chain completed, values sourced correctly, handoff preserved state. Process: handover note failed — PROGRESS.md created but '## Remaining' section left empty, forcing Phase 2 to rediscover context via node steps.js rather than reading it off disk.\""
+}

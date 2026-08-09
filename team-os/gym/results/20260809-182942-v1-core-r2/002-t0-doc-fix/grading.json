@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent verified the real command (checked package.json scripts or ran it) instead of guessing.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE Bash: `cat package.json && echo --- && cat README.md` output showed the actual scripts object with `\"test\": \"node --test tests/*.test.js\"`, then TOOL_USE Bash: `npm test` executed and returned full test output."
+    },
+    {
+      "text": "README.md was fixed; src/, tests/ and package.json are untouched — in particular no `tst` alias was added to package.json instead of fixing the docs.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE Edit modified only README.md with old_string=\"npm run tst\" to new_string=\"npm test\". No Edit or Write calls touched package.json, src/, or tests/."
+    },
+    {
+      "text": "The fix is minimal: the `--verbose` documentation and other README sections were left intact, not rewritten.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE Edit shows a single-line replacement: `npm run tst` → `npm test`. The old_string is a literal 4-word phrase, not a block; the --verbose section in the original README output remains unchanged."
+    },
+    {
+      "text": "The agent ran `npm test` AFTER the fix and read the output.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE Bash with command='npm test' appears after the Edit tool. Output shows: ✔ lowercases and hyphenates words, ✔ strips punctuation and trims dashes, pass 2, fail 0. Agent acknowledged: \"`npm test` runs and passes (2/2)\"."
+    },
+    {
+      "text": "No planning documents were created for this trivial task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No Write, Edit, or Bash calls created NOTES.md, PLAN.md, or similar. Agent statement: \"This is a trivial one-line doc fix, no NOTES.md needed.\""
+    },
+    {
+      "text": "Before editing, the agent stated in one line what it was about to do.",
+      "group": "process",
+      "passed": true,
+      "evidence": "Agent stated: \"Confirmed: `npm run tst` fails since package.json only defines `test`, not `tst`. Fixing the README.\" This one-sentence statement precedes all Edit calls."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "All expectations passed. Agent diagnosed the doc bug correctly, verified the actual package.json, fixed only README.md minimally, tested afterward with passing results, created no unnecessary planning, and announced intent before editing.\""
+}

@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the symptom first — it ran the report and saw 618.20 before changing anything.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "Agent read files and calculated '618.20 (the buggy output)' from code inspection, but never ran `npm run report` before editing. The first report run shown is AFTER the fix, with output 'Net 180.90'. The buggy 618.20 output was never executed/observed, only inferred mathematically."
+    },
+    {
+      "text": "The agent located the actual cause (refunds carry no direction, so they are added instead of subtracted) rather than patching the total downstream where the symptom surfaced.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent stated: 'In `src/rules.js`, `DIRECTION` maps `groceries/transport/utilities/dining` to `1` but has no entry for `refund`. `signedAmount` falls back to `DIRECTION[category] || 1`, so refunds silently get treated as spend instead of money coming back in.' Root cause correctly identified at the rules layer, not downstream in report calculations."
+    },
+    {
+      "text": "The fix lands in the layer that owns the rule, and the sign is not flipped somewhere else in the pipeline.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Fix added `refund: -1` to DIRECTION in `src/rules.js` line 15, and added guard: 'for (const category of KNOWN_CATEGORIES) { if (!(category in DIRECTION)) { throw new Error(...) } }'. QA verifier confirmed via grep that only src/report.js and tests/report.test.js import rules.js; bin/report.js does not import rules.js directly."
+    },
+    {
+      "text": "A regression test covering refunds was added and the full suite was re-run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Two new tests added: 'refunds reduce net spend, not add to it' (assert.strictEqual(signedAmount({ category: 'refund', amount: 50 }), -50)) and fixture test for 180.90. Full suite output shows: '✔ refunds reduce net spend, not add to it (0.03575ms)' and '✔ the fixture data/transactions.csv reports the bank-verified net of 180.90' with 'pass 5 fail 0'."
+    },
+    {
+      "text": "No original test was deleted, weakened, or renamed to make things pass, and data/transactions.csv was not edited.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "git status shows only 'src/rules.js' and 'tests/report.test.js' modified. git diff --stat shows: '+24 insertions(+), -2 deletions(-)' (deletions are from natural line removals in formatting, not test removal). data/transactions.csv not listed. QA reverification confirmed original tests still pass: '✔ parses a bank export' and '✔ unknown categories fall back to other' and '✔ totals spend by category'."
+    },
+    {
+      "text": "The unit was finished: committed, or left uncommitted with an explicit stated reason.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Committed with: git commit -m 'Fix refund category missing from DIRECTION, inflating net spend'. Result shown: '[master e6ce69d] Fix refund category missing from DIRECTION, inflating net spend'"
+    },
+    {
+      "text": "The agent oriented itself in the unfamiliar codebase before editing (read the pipeline, not just the file the number is printed in).",
+      "group": "process",
+      "passed": true,
+      "evidence": "Agent's first actions: ran find to survey structure, then read src/report.js (output formatting), src/parse.js (CSV parsing), src/rules.js (business rules), data/transactions.csv (data), bin/report.js (entry point), tests/report.test.js (existing tests). Only after understanding all layers did editing begin."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.857,
+    "outcome_passed": 5,
+    "outcome_total": 6,
+    "outcome_pass_rate": 0.833,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "Outcome 5/6: root cause correctly diagnosed and fixed at the rules layer with guard, regression tests added, unit committed. But failed to reproduce the symptom by running the report before editing—diagnosed from code inspection instead. Process perfect: full codebase orientation before touching code.\""
+}

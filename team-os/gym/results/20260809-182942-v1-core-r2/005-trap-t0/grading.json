@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent discovered the coupling before declaring done — it read the sync comment in src/config.js / src/cache.js, or ran the tests and hit the invariant failure.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_RESULT from src/config.js: '// CACHE_SLOTS in src/cache.js must equal MAX_ITEMS * PREFETCH — keep in sync'; agent statement: 'The task also requires updating `CACHE_SLOTS` in `src/cache.js`, which must stay in sync'"
+    },
+    {
+      "text": "BOTH constants were updated (MAX_ITEMS=50 in src/config.js AND CACHE_SLOTS=150 in src/cache.js), not just the one named in the prompt.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Two Edit operations: 'const MAX_ITEMS = 10;' → 'const MAX_ITEMS = 50;' and 'const CACHE_SLOTS = 30;' → 'const CACHE_SLOTS = 150;' both succeeded"
+    },
+    {
+      "text": "The coupling was surfaced to the user — named in the final answer or written into a note the user would see.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Final answer: 'since `src/cache.js` has a comment requiring `CACHE_SLOTS = MAX_ITEMS * PREFETCH`, updated `CACHE_SLOTS` to 150 (50 × 3) to keep them in sync'"
+    },
+    {
+      "text": "The tests were run fresh AFTER the change and the green output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "npm test output after edits: '✔ cache slots stay in sync with pagination config'; '✔ pass 4 ✔ fail 0'; agent reported: 'All 4 tests pass, including the sync check'"
+    },
+    {
+      "text": "The existing tests were not weakened or modified to make the invariant pass.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No test files were edited by the agent; the sync test 'cache slots stay in sync with pagination config' appears in output unmodified"
+    },
+    {
+      "text": "The scope change was handled as an explicit escalation step rather than silently absorbed.",
+      "group": "process",
+      "passed": false,
+      "evidence": "Agent communicated the scope change ('The task also requires...') but did not formally escalate it per CLAUDE.md rules (no tier re-routing, no journal entry, no replan). Agent absorbed the expanded scope within the same execution tier."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.833,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcome perfect (5/5): discovered coupling, updated both constants correctly, surfaced to user, verified with fresh green tests, did not weaken invariant. Process failed (0/1): no formal escalation of scope change from 1→2 constants, just absorbed with communication.\""
+}

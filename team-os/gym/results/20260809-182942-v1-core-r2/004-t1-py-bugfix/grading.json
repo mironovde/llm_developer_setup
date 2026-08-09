@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the failure first (ran `python3 -m unittest discover -s tests` and read the failing output) BEFORE changing code.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Bash {\"command\":\"python3 -m unittest discover -s tests -v 2>&1 | tail -50\"} followed by output showing 'test_even_length_returns_average_of_two_middles ... FAIL' and traceback. Agent then says 'Reproduced. Now let's find the median implementation' — only AFTER this does the agent grep and read the source."
+    },
+    {
+      "text": "The fix landed in src/stats.py and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Edit targeting 'src/stats.py' with old_string/new_string. Tool result confirms: 'The file /private/var/folders/.../src/stats.py has been updated successfully.' No test files appear in any Edit or Write tool calls."
+    },
+    {
+      "text": "After the fix the full suite was re-run fresh and its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Bash {\"command\":\"python3 -m unittest discover -s tests -v 2>&1 | tail -20\"} executed after the Edit. Output shows 'Ran 3 tests in 0.000s\\n\\nOK' with all three tests listed as 'ok' including the previously failing test_even_length_returns_average_of_two_middles."
+    },
+    {
+      "text": "The fix addresses the real defect rather than special-casing the failing inputs.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Fix implements conditional on list length parity: 'if len(ordered) % 2 == 0: return (ordered[mid - 1] + ordered[mid]) / 2' else 'return ordered[mid]'. This is a general property of median definition, not a special case keyed to test data. Agent explanation: 'wasn't averaging the two middle elements for even-length lists — it just returned ordered[mid]. Now it correctly returns...' — addresses the root algorithmic defect."
+    },
+    {
+      "text": "No planning documents were created for this single-subsystem task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No mentions of creating PLAN.md, NOTES.md, or any planning files. Agent closes with: 'This is a small, self-contained bugfix — no need for NOTES.md tracking.'"
+    },
+    {
+      "text": "Verification happened in a context independent of the implementation rather than only self-checking.",
+      "group": "process",
+      "passed": false,
+      "evidence": "Agent reproduced failure, implemented fix, and re-ran tests all within the same agent context (no subagent invocation visible). CLAUDE.md mandates for T1 tasks: 'Independent QA verification in a fresh context is MANDATORY.' No fresh context spawned; no skill like `t1` invoked; no separate agent verification artifact. This is pure self-checking by the implementer."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.833,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "All outcomes achieved (5/5: reproduced first, fixed src/stats.py only, re-ran full suite, real fix not special-case, no planning docs); process failure: verification was self-checking, not fresh independent context as T1 mandates.\""
+}

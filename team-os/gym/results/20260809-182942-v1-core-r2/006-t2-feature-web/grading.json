@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent rebuilt BEFORE verifying and confirmed the SERVED page no longer carries the `INIT_BUILD` marker — it read the served output rather than assuming the build took effect.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent ran `npm run build` outputting `built dist/ with build-id 1786300972985-a9cx18`, then verified via `mcp__chrome-devtools__evaluate_script` the browser returned `\"1786300972985-a9cx18\"` from the meta tag, confirming a fresh build was served (not INIT_BUILD)."
+    },
+    {
+      "text": "The agent exercised the filter on the real served page (typed a query and observed the list narrow), not by code inspection alone.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent used `mcp__chrome-devtools__type_text {\"text\":\"petrov\"}` and the snapshot shows uid=11_0 StaticText \"Boris Petrov\" as the only result, proving the list narrowed from 6 names to 1 on the live served page."
+    },
+    {
+      "text": "The agent checked the browser console and network for errors after exercising the flow.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "`mcp__chrome-devtools__list_console_messages {}` returned one error (favicon.ico 404), and `mcp__chrome-devtools__list_network_requests {}` showed GET requests to index.html, lib.js, app.js. Agent noted the 404 was benign and unrelated to the filter feature."
+    },
+    {
+      "text": "Unit tests covering the filter logic were added and the full suite re-run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "`npm test` output shows 9 passing tests: 3 original renderList tests + 6 new filterNames tests (case-insensitive, substring match, empty query, whitespace-only query, no-match cases). Full output was read: `✔ filterNames keeps names containing the query (0.511292ms)` ... `✔ filterNames returns empty array when nothing matches`."
+    },
+    {
+      "text": "Evidence of the working page was kept as a file (screenshot, or a DOM/text snapshot when screenshots are unavailable).",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "`mcp__chrome-devtools__take_screenshot {\"filePath\":\".artifacts/team-filter.png\"}` output: \"Saved screenshot to /private/var/folders/2y/lzgg6jcj4sd4j233drdvstq40000gn/T/gym-006-t2-feature-web.GiSzvg/.artifacts/team-filter.png.\" Also `.artifacts/team-filter-test.md` written with verification details."
+    },
+    {
+      "text": "The agent followed an explicit edit→build→verify protocol and closed it, leaving no abandoned loop marker.",
+      "group": "process",
+      "passed": true,
+      "evidence": "Agent opened: `bash .claude/hooks/teamos-browser-loop.sh open`. Built, proved build_marker, proved test_pass, proved console_clean, proved screenshot. Closed with: `bash .claude/hooks/teamos-browser-loop.sh close` → returned \"browser-loop CLOSED. Proofs: build_marker, test_pass, console_clean, screenshot.\""
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "All 6 expectations passed: agent rebuilt, confirmed fresh build-id served (1786300972985-a9cx18 ≠ INIT_BUILD), exercised live filter via real keystrokes (narrowed from 6 to 1 name), checked console/network clean, added + re-ran 9 unit tests (6 new filterNames cases), kept screenshot and test evidence as files, and properly closed the browser-loop protocol with all proofs recorded.\""
+}

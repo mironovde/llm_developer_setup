@@ -7,19 +7,24 @@
 #   close                    — verify all proofs and close the loop (exit 1 if incomplete)
 set -euo pipefail
 
-find_team() {
+# Artifacts live in .artifacts/ (this config keeps no team/ state layer). An existing
+# team/artifacts/ upward is honoured so the helper also works inside older projects.
+find_artifacts() {
   local d="$PWD"
   for _ in 1 2 3 4 5; do
-    if [ -d "$d/team" ]; then printf '%s' "$d/team"; return 0; fi
+    if [ -d "$d/team/artifacts" ]; then printf '%s' "$d/team/artifacts"; return 0; fi
+    if [ -d "$d/.artifacts" ] || [ -f "$d/package.json" ] || [ -d "$d/.git" ]; then
+      printf '%s' "$d/.artifacts"; return 0
+    fi
     [ "$d" = "/" ] && break
     d="$(dirname "$d")"
   done
-  return 1
+  printf '%s' "$PWD/.artifacts"
 }
 
-TEAM="$(find_team)" || { echo "teamos-browser-loop: no team/ directory found upward from $PWD" >&2; exit 1; }
-mkdir -p "$TEAM/artifacts"
-MARKER="$TEAM/artifacts/.browser-loop.json"
+ART="$(find_artifacts)"
+mkdir -p "$ART"
+MARKER="$ART/.browser-loop.json"
 REQUIRED='["build_marker","test_pass","console_clean","screenshot"]'
 
 case "${1:-}" in

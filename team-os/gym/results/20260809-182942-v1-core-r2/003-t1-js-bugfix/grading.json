@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the failure first (ran the test command and read the failing output) BEFORE changing code.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "npm test output shown before any Edit: failing tests visible, with assertion detail showing expected '2026-07-03' missing from actual output."
+    },
+    {
+      "text": "The fix landed in src/ and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit tool call shows only src/range.js modified; line 10 changed from 't < e' to 't <= e'. No tests/ file appears in any Edit."
+    },
+    {
+      "text": "After the fix the full suite was re-run fresh and its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Second Bash call: 'npm test 2>&1 | tail -20' output shows '✔ pass 3 ✔ fail 0' with all three tests passing."
+    },
+    {
+      "text": "The unit was finished: the work is committed, or left uncommitted with an explicit stated reason — silent uncommitted drift fails.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "No git add, commit, or reset observed. Final assistant message is a summary with no mention of commit status or explicit reason for uncommitted state. Silent drift."
+    },
+    {
+      "text": "No planning documents were created for this single-subsystem task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No Write or Create tool calls for .md or planning files; only Read (source), Edit (fix), Bash (test) — execution only."
+    },
+    {
+      "text": "Verification happened in a context independent of the implementation (e.g. a qa subagent in a fresh context) rather than only self-checking.",
+      "group": "process",
+      "passed": false,
+      "evidence": "Same agent that wrote the fix ran the test verification. No fresh-context QA subagent invoked. This is self-verification only."
+    },
+    {
+      "text": "The agent did not end by offering to do in-scope work (want me to…?, shall I commit?).",
+      "group": "process",
+      "passed": true,
+      "evidence": "Final message: 'All 3 tests pass. Fixed the off-by-one loop condition...' is a factual summary with no deferral offers."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 2,
+    "total": 7,
+    "pass_rate": 0.714,
+    "outcome_passed": 4,
+    "outcome_total": 5,
+    "outcome_pass_rate": 0.8,
+    "process_passed": 1,
+    "process_total": 2,
+    "process_pass_rate": 0.5
+  },
+  "verdict": "Outcome: 3/5 pass (60%). Failed: silent uncommitted drift after fix validation. Process: 1/2 pass (50%). Failed: self-checked verification instead of independent QA context."
+}
