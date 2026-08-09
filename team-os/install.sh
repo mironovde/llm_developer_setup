@@ -36,6 +36,12 @@ for f in "$SRC_ROOT"/home/agents/*.md; do
   [ -e "$f" ] || continue
   MAPPINGS+=("agents/$(basename "$f")|$f")
 done
+# Slash commands: carried so a new machine is not missing them. They are not part of the measured
+# core — they are the user's own commands, kept here only so a rollout is lossless.
+for f in "$SRC_ROOT"/home/commands/*.md; do
+  [ -e "$f" ] || continue
+  MAPPINGS+=("commands/$(basename "$f")|$f")
+done
 for f in "$SRC_ROOT"/scripts/*; do
   [ -f "$f" ] || continue
   MAPPINGS+=("teamos/bin/$(basename "$f")|$f")

@@ -22,11 +22,14 @@ xcodebuild -version >/dev/null 2>&1 && ok "xcodebuild functional (iOS capability
 
 # --- installed home config ---
 if [ -f "$CLAUDE_HOME/CLAUDE.md" ]; then
-  if grep -q "Team OS" "$CLAUDE_HOME/CLAUDE.md"; then
+  # Detect the installed config by a line it actually contains. The 2026-08-09 minimal core
+  # dropped the "Team OS" banner, and doctor kept reporting a correctly installed config as
+  # missing — a monitor that cries wolf gets ignored, which is worse than no monitor.
+  if grep -qE "Team OS|^# Working agreement" "$CLAUDE_HOME/CLAUDE.md"; then
     L=$(wc -l < "$CLAUDE_HOME/CLAUDE.md" | tr -d ' ')
-    [ "$L" -le 200 ] && ok "global CLAUDE.md is Team OS ($L lines, under 200)" || warn "global CLAUDE.md is Team OS but $L lines (>200 — trim it)"
+    [ "$L" -le 200 ] && ok "global CLAUDE.md is the Team OS config ($L lines, under 200)" || warn "global CLAUDE.md is the Team OS config but $L lines (>200 — trim it)"
   else
-    warn "global CLAUDE.md is NOT Team OS (install.sh not run, or another config active)"
+    warn "global CLAUDE.md is not the Team OS config (install.sh not run, or another config active)"
   fi
 else
   warn "no global CLAUDE.md"

@@ -12,9 +12,13 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# Metrics land in team/ for projects still on that layer, otherwise in .artifacts/ — the
+# session-metrics hook writes to whichever exists. Reading only team/ meant the reader went blind
+# in every project that does not have it, which since 2026-08-09 is most of them.
 M="$DIR/team/metrics.jsonl"
+[ -s "$M" ] || M="$DIR/.artifacts/metrics.jsonl"
 if [ ! -s "$M" ]; then
-  echo "efficiency-report: no data at $M" >&2
+  echo "efficiency-report: no data at $DIR/team/metrics.jsonl or $DIR/.artifacts/metrics.jsonl" >&2
   exit 1
 fi
 
