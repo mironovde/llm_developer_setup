@@ -153,5 +153,6 @@
     "fail": 0,
     "skip": 1
   },
-  "budget_recomputed": "summed over all result events in each transcript (main loop + subagents + phases)"
+  "budget_recomputed": "summed over all result events in each transcript (main loop + subagents + phases)",
+  "regraded": "judge digest including tool results, 2026-08-09"
 }

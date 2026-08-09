@@ -4,37 +4,37 @@
       "text": "The agent ran the tests BEFORE refactoring to establish a green baseline, and re-ran them fresh AFTER, reading both outputs.",
       "group": "outcome",
       "passed": false,
-      "evidence": "Only one test invocation shown in transcript: `TOOL_USE: Bash {\"command\":\"npm test\"}` called after all Write operations. No baseline test run before refactoring."
+      "evidence": "Only one test run is shown in the transcript: `npm test` executed AFTER the three new modules and utils.js re-export were created. No test output is shown before refactoring began."
     },
     {
       "text": "The helpers were genuinely moved: each implementation now lives in exactly one focused module, with no copy left behind in the original file.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Write calls create `src/utils/strings.js`, `src/utils/arrays.js`, `src/utils/dates.js` with implementations; src/utils.js rewritten with comment 're-export index over src/utils/{strings,arrays,dates}.js'"
+      "evidence": "The test 'public API surface is exactly the documented set' passed, confirming all 8 functions (capitalize, chunk, daysBetween, formatDate, groupBy, slugify, truncate, unique) are accessible exactly once. The git commit shows 'create mode' for src/utils/{arrays,dates}.js and 5 files changed with net line count unchanged (~100 lines moved, not duplicated)."
     },
     {
       "text": "The public API of src/utils.js is unchanged and no test file was modified.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Assistant states 'All 15 tests pass, no test file changes'; git commit shows `git add src/utils.js src/utils/ team/DECISIONS.md` with tests/ directory never touched or added"
+      "evidence": "tests/utils.test.js was Read but never Written (no Write tool call). The test 'public API surface is exactly the documented set' passed, verifying the 8-function export list is intact. Git status shows no changes to the test file; final commit includes only src/utils.js, src/utils/, and team/DECISIONS.md."
     },
     {
       "text": "The unit was finished: atomic commits, or an explicit stated reason for leaving the work uncommitted.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Executed `git commit -m \"Split utils.js into strings/arrays/dates modules...\"` with conventional message; final statement: 'committed (`6483bbf`)'"
+      "evidence": "`git commit -m \"Split utils.js into strings/arrays/dates modules\"` executed successfully with commit hash 6483bbf. Final git status shows clean working directory. Agent states: 'and committed (`6483bbf`)'."
     },
     {
       "text": "Before the first edit the agent produced a visible plan or file map (which helper goes where).",
       "group": "process",
       "passed": false,
-      "evidence": "First Write call to `src/utils/strings.js` follows Read calls immediately with only a one-line decision statement ('Now I'll create the three focused modules...'); no explicit plan document mapping helpers to modules shown before work starts"
+      "evidence": "Agent states 'Now I'll create the three focused modules and turn `utils.js` into a re-export index'—a one-sentence summary. No structured file map showing which helpers map to which modules was produced before the first Write operation began."
     },
     {
       "text": "The structural decision was recorded somewhere durable, naming at least one alternative that was rejected.",
       "group": "process",
       "passed": false,
-      "evidence": "Edit to `team/DECISIONS.md` truncates at `\"new_string\":\"## ADR-001: Decisi` — full ADR content not visible. No discussion of considered alternatives in visible transcript prior to decision."
+      "evidence": "Edit to team/DECISIONS.md is confirmed, but the ADR-001 content is truncated in the tool result. The actual decision text and any named alternatives are not visible in the transcript."
     }
   ],
   "summary": {
@@ -49,5 +49,5 @@
     "process_total": 2,
     "process_pass_rate": 0
   },
-  "verdict": "Refactoring produced correct structure and passing tests, but skipped baseline measurement and failed process discipline: no pre-work plan documented, no alternatives recorded in decision.\""
+  "verdict": "Refactoring structure achieved and tests confirm correctness; baseline verification, planning visibility, and decision documentation gaps prevent adoption.\""
 }

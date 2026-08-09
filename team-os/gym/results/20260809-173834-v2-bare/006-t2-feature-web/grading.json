@@ -4,37 +4,37 @@
       "text": "The agent rebuilt BEFORE verifying and confirmed the SERVED page no longer carries the `INIT_BUILD` marker — it read the served output rather than assuming the build took effect.",
       "group": "outcome",
       "passed": false,
-      "evidence": "Agent ran `npm run build` and grepped dist/index.html locally, confirming build-id changed. It opened the browser to the served URL and said 'take a snapshot to confirm the build-id' but then only reported 'The filter input renders and all 6 names show initially' — never reading or confirming the build-id value from the served HTML. No curl of served output (skipped due to approval), no mention of build-id in snapshots or screenshots. Only verified rebuild locally, not served content."
+      "evidence": "Agent ran `grep build-id dist/index.html` to confirm the local file changed (INIT_BUILD → 1786297474937-0yra62), then started the server and opened the page via chrome-devtools at http://localhost:4173/. However, the agent never read the build-id meta tag from the served page itself. The agent only verified the local dist/ file, and later re-stamped it back to INIT_BUILD without ever confirming what the served page actually contained."
     },
     {
       "text": "The agent exercised the filter on the real served page (typed a query and observed the list narrow), not by code inspection alone.",
       "group": "outcome",
       "passed": true,
-      "evidence": "`mcp__chrome-devtools__type_text {\"text\":\"o\"}` followed by snapshot: 'Filtering works — \"o\" correctly narrowed from 6 to 5 names, excluding \"Frank Miller\"'. Also typed 'CAROL', 'zzz', and 'carol' with real keystrokes, observing list changes in snapshots each time."
+      "evidence": "`mcp__chrome-devtools__type_text {\"text\":\"carol\"}` followed by `mcp__chrome-devtools__take_snapshot {}` showing `uid=7_0 StaticText \"Carol Nguyen\"` — list narrowed from 6 to 1 name on the served page. Agent also tested with \"o\" (narrowed to 5), \"CAROL\" (matched case-insensitively), and \"zzz\" (empty result)."
     },
     {
       "text": "The agent checked the browser console and network for errors after exercising the flow.",
       "group": "outcome",
       "passed": true,
-      "evidence": "`mcp__chrome-devtools__list_console_messages {}` called twice. Agent reported: 'The only console message is a `favicon.ico` 404 — unrelated... No JS errors from `app.js`/`lib.js`.' Also called `mcp__chrome-devtools__list_network_requests {}` once."
+      "evidence": "`mcp__chrome-devtools__list_console_messages {}` returned one favicon.ico 404 error (identified as unrelated to app code). `mcp__chrome-devtools__list_network_requests {}` showed 4 requests with app requests (lib.js, app.js) returning 200. Later, after full keystroke flow, `list_console_messages` returned '<no console messages found>'."
     },
     {
       "text": "Unit tests covering the filter logic were added and the full suite re-run fresh with its output read.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Edit to tests/lib.test.js added 6 new test cases for `filterNames` (empty query, whitespace, case-insensitive, no-match, non-mutation). Two full test runs: `npm test` reported 'All 9 tests pass' and later `npm test 2>&1 | tail -15` confirmed '9/9 passing'."
+      "evidence": "Tests added to lib.test.js for filterNames. First run: `npm test` output showed `✔ filterNames with empty query returns all names... ✔ filterNames matches case-insensitively... ✔ filterNames with no match returns empty array... ✔ filterNames does not mutate the input array` with `ℹ pass 9 ℹ fail 0`. Re-run before commit: `npm test 2>&1` output again showed all 9 tests passing."
     },
     {
       "text": "Evidence of the working page was kept as a file (screenshot, or a DOM/text snapshot when screenshots are unavailable).",
       "group": "outcome",
       "passed": true,
-      "evidence": "`mcp__chrome-devtools__take_screenshot {\"filePath\":\".artifacts/filter-narrowed.png\"}` saved a screenshot. Agent read the file and reported: 'Screenshot confirms the filter input above the list correctly narrows to 5 names (excluding \"Frank Miller\") for query \"o\"'."
+      "evidence": "`mcp__chrome-devtools__take_screenshot {\"filePath\":\".artifacts/filter-narrowed.png\"}` result: `Took a screenshot of the current page's viewport. Saved screenshot to /private/var/folders/2y/lzgg6jcj4sd4j233drdvstq40000gn/T/gym-006-t2-feature-web.gPb0m7/.artifacts/filter-narrowed.png.` Agent then read the file back."
     },
     {
       "text": "The agent followed an explicit edit→build→verify protocol and closed it, leaving no abandoned loop marker.",
       "group": "process",
       "passed": true,
-      "evidence": "`bash .claude/hooks/teamos-browser-loop.sh open \"Add case-insensitive team-name filter input above the list\"` opened the loop. After build, tests, and browser testing: `bash .claude/hooks/teamos-browser-loop.sh close` closed it. No dangling markers in final state."
+      "evidence": "Agent opened browser-loop: `bash .claude/hooks/teamos-browser-loop.sh open \"Add case-insensitive team-name filter input above the list\"`. Edited lib.js, app.js, index.html, tests. Built: `npm run build`. Ran tests: `npm test`. Verified in browser. Recorded proofs via `prove` calls. Closed explicitly: `bash .claude/hooks/teamos-browser-loop.sh close` → `browser-loop CLOSED. Proofs: test_pass, build_marker, console_clean, screenshot`."
     }
   ],
   "summary": {
@@ -49,5 +49,5 @@
     "process_total": 1,
     "process_pass_rate": 1
   },
-  "verdict": "Outcome 4/5 (80%): agent verified rebuild locally but did not read served HTML to confirm build-id; all other outcomes met (filter exercised, console/network checked, tests added & re-run, screenshot saved). Process 1/1 (100%): loop opened and closed cleanly."
+  "verdict": "Outcome 4/5: filter feature works and tests pass, but verification lacked the critical served-page build-id confirmation—only local file checked. Process sound: browser-loop properly opened, executed, and closed."
 }

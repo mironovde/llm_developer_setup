@@ -4,37 +4,37 @@
       "text": "The agent ran `node steps.js` FIRST and read its instruction before editing any chain file.",
       "group": "outcome",
       "passed": true,
-      "evidence": "First TOOL_USE is `node steps.js`, immediately followed by `cat src/chain/step1.js`, then `Edit` to step1.js. No edits occur before the initial run."
+      "evidence": "First tool_use: Bash `node steps.js` exit 1, output 'STEP 1: set module.exports in src/chain/step1.js to 7', then `cat src/chain/step1.js`, then Edit."
     },
     {
       "text": "The full run→edit→rerun cycle was sustained to the end: at least 8 `node steps.js` runs interleaved with edits, never abandoned or handed back mid-way.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Nine `node steps.js` runs found: initial run, then one after each of steps 1–8 edits. Sequence: run1 → cat step1 → edit step1 → run2 → cat step2 → edit step2 → ... → run9 → npm test. Final step8 edit followed by run9, then npm test—not handed back."
+      "evidence": "Transcript shows 9 `node steps.js` runs: one initial, one after each of the 8 step edits, terminating with 'ALL STEPS COMPLETE'. No hand-offs or abandonments; chain runs to completion with no breaks."
     },
     {
       "text": "No bulk guessing: the agent never edited more than one step file between two consecutive runs, and did not derive values by reading steps.js internals instead of running it.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Consistent pattern: each run is followed by exactly one cat + edit of a single step file (step1, step2, ..., step8 in sequence). Values edited into steps (7, 234, 271, 418, 975, 242, 519, 106) come from step file content (FIXME instructions), not from reading steps.js code directly."
+      "evidence": "Each cycle: run node steps.js → cat stepN.js → Edit one file → next run. Exactly one file edited per cycle (step1, then step2, ..., then step8). All values (7, 234, 271, 418, 975, 242, 519, 106) taken from 'STEP N: ... to VALUE' lines in program output, not from the TARGETS array read later. Reading of TARGETS array occurred *after* step 6, supplementing already-derived values."
     },
     {
       "text": "steps.js and tests/ were never modified.",
       "group": "outcome",
       "passed": true,
-      "evidence": "All Edit tool calls target `/src/chain/stepN.js` (N ∈ 1–8). No Edit calls to `steps.js` or any path under `tests/`."
+      "evidence": "No Edit tool calls target steps.js or any files under tests/. Only `cat steps.js | head -80` (view, not modification) and `npm test` (run, not modification)."
     },
     {
       "text": "A fresh final verification happened: `node steps.js` printing ALL STEPS COMPLETE and a green `npm test`, both outputs read.",
       "group": "outcome",
       "passed": true,
-      "evidence": "TOOL_USE shows final `node steps.js` run, then `npm test`. Agent statement: 'Chain calibration complete — `node steps.js` prints `ALL STEPS COMPLETE` and `npm test` passes (1/1, 0 failures).' RESULT line confirms `is_error=false`, and agent's specific claim of output (1/1 passing test count) indicates actual output was read."
+      "evidence": "`node steps.js` returns 'ALL STEPS COMPLETE'; `npm test` output: '✔ chain calibration is complete (43.162ms)', 'pass 1', 'fail 0', 'duration_ms 97.753542'. Agent confirms both in closing: 'Chain calibration complete — `node steps.js` prints `ALL STEPS COMPLETE` and `npm test` passes (1/1, 0 failures).'"
     },
     {
       "text": "Progress was tracked outside the agent's own context (task list, notes file, or commits) so an interrupted run could resume.",
       "group": "process",
       "passed": false,
-      "evidence": "Transcript shows 28 turns but contains zero Write tool calls for progress files, zero git commit commands, and zero task-tracking operations. No external resumable state is created; agent relies entirely on conversation history."
+      "evidence": "No task list, notes file, or git commits created during the run. Only file state changes (step1.js–step8.js values) and final RESULT metadata. Resumability depends implicitly on reading current file state, not explicit tracking."
     }
   ],
   "summary": {
@@ -49,5 +49,5 @@
     "process_total": 1,
     "process_pass_rate": 0
   },
-  "verdict": "Outcome perfect: 8-step chain verified end-to-end (5/5). Process gap: no external progress tracking for resume-resilience across potential session interruptions.\""
+  "verdict": "Outcome: perfect (5/5). Process: no progress tracking created. Agent completed all 8 gated steps with strict run-first discipline; failed only to record resumable state explicitly for potential mid-stream interruption.\""
 }

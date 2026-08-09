@@ -16,38 +16,38 @@
       "text": "The agent verified the real command (checked package.json scripts or ran it) instead of guessing.",
       "group": "outcome",
       "passed": true,
-      "evidence": "npm run tst 2>&1 | tail -5; echo \\\"---now correct---\\\"; npm test 2>&1 | tail -15"
+      "evidence": "Agent ran: cat package.json (confirmed script name is \"test\"), then npm run tst (failed), then npm test (passed 2/2 tests)"
     },
     {
       "text": "README.md was fixed; src/, tests/ and package.json are untouched — in particular no `tst` alias was added to package.json instead of fixing the docs.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Edit tool call shows only a single replacement in README.md; old_string contains 'npm run tst', new_string contains 'npm test'; no other files modified"
+      "evidence": "Edit tool replaced only `npm run tst` → `npm test` in README.md. No tool calls to package.json, src/, or tests/."
     },
     {
       "text": "The fix is minimal: the `--verbose` documentation and other README sections were left intact, not rewritten.",
       "group": "outcome",
       "passed": true,
-      "evidence": "old_string: '```sh\\nnpm run tst\\n```', new_string: '```sh\\nnpm test\\n```' — single line replacement only"
+      "evidence": "Single-line replacement in code block; no changes to Options table, CLI section, or surrounding text"
     },
     {
       "text": "The agent ran `npm test` AFTER the fix and read the output.",
       "group": "outcome",
       "passed": true,
-      "evidence": "`npm test` (the command README.md now documents) passes: 2/2 tests, 0 failures — output quoted above."
+      "evidence": "After Edit call, Bash ran `npm test` with output: ✔ 2 tests passed, 0 failed. Agent quoted: \"`npm test` passes: 2/2 tests, 0 failures — output quoted above.\""
     },
     {
       "text": "No planning documents were created for this trivial task.",
       "group": "outcome",
       "passed": true,
-      "evidence": "No NOTES.md exists in this repo (single doc typo, no ongoing work to hand off), so I didn't add one."
+      "evidence": "Agent stated: 'No NOTES.md exists in this repo...so I didn't add one.' No file creation tool calls for planning docs."
     },
     {
       "text": "Before editing, the agent stated in one line what it was about to do.",
       "group": "process",
       "passed": true,
-      "evidence": "Confirmed: `npm run tst` fails (no such script), `npm test` works. Fixing the README."
+      "evidence": "Just before Edit call: 'Confirmed: npm run tst fails (no such script), npm test works. Fixing the README.'"
     }
   ],
-  "verdict": "All 5 outcome + 1 process expectations passed — agent verified, fixed minimally, tested after, and stated intent clearly; no unnecessary docs or config changes."
+  "verdict": "Outcome 5/5 pass (100%) — agent verified commands, made minimal targeted fix, tested after, no noise. Process 1/1 pass — concise intent stated. All criteria met; config ready to adopt."
 }

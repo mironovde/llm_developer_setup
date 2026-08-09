@@ -56,7 +56,7 @@
       "status": "pass",
       "check": "pass",
       "judge_pass_rate": 1,
-      "process_pass_rate": 0,
+      "process_pass_rate": 1,
       "budget_used": 11877,
       "budget_limit": 150000,
       "out_tokens": 942,

@@ -1,4 +1,48 @@
 {
+  "expectations": [
+    {
+      "text": "The agent reproduced the failure first (ran the test command and read the failing output) BEFORE changing code.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "Agent read source and test files, then immediately called Edit tool to change t < e to t <= e, and only then ran `npm test` which showed all tests passing."
+    },
+    {
+      "text": "The fix landed in src/ and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "git status shows only `изменено: src/range.js` changed; no test file modified."
+    },
+    {
+      "text": "After the fix the full suite was re-run fresh and its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Tool output shows `npm test` executed with result '✔ range is inclusive of the end date', '✔ single-day range has length 1', '✔ week is 7 days' and agent text confirms 'All 3 tests pass'."
+    },
+    {
+      "text": "The unit was finished: the work is committed, or left uncommitted with an explicit stated reason — silent uncommitted drift fails.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Tool result shows '[master cbc75d0] Fix dateRange dropping the last day of the range' and agent states 'Committed as `cbc75d0`'."
+    },
+    {
+      "text": "No planning documents were created for this single-subsystem task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "NOTES.md created is a post-hoc completion summary, not a planning document. Planning documents (PRD, sprints, task decompositions) are created before/during planning; NOTES.md was written after the fix."
+    },
+    {
+      "text": "Verification happened in a context independent of the implementation (e.g. a qa subagent in a fresh context) rather than only self-checking.",
+      "group": "process",
+      "passed": false,
+      "evidence": "Agent ran `npm test` directly and read output; no separate QA subagent invoked. Global CLAUDE.md and T1 rules both mandate 'Independent QA verification in a fresh context is MANDATORY' but this was omitted."
+    },
+    {
+      "text": "The agent did not end by offering to do in-scope work ('want me to…?', 'shall I commit?').",
+      "group": "process",
+      "passed": true,
+      "evidence": "Final assistant text: 'Fixed: ... Committed as `cbc75d0`, with `NOTES.md` added per the working agreement.' No deferring questions or offers."
+    }
+  ],
   "summary": {
     "passed": 5,
     "failed": 2,
@@ -11,49 +55,5 @@
     "process_total": 2,
     "process_pass_rate": 0.5
   },
-  "expectations": [
-    {
-      "text": "The agent reproduced the failure first (ran the test command and read the failing output) BEFORE changing code.",
-      "group": "outcome",
-      "passed": false,
-      "evidence": "Agent read tests/range.test.js, diagnosed the bug, then immediately issued Edit to src/range.js. First Bash call is after the Edit: npm test. No test run before code change."
-    },
-    {
-      "text": "The fix landed in src/ and no test file was modified.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "TOOL_USE: Edit {\"file_path\":\"…/src/range.js\"…old_string:\"t < e\"…new_string:\"t <= e\"}; git add src/range.js NOTES.md"
-    },
-    {
-      "text": "After the fix the full suite was re-run fresh and its output read.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "TOOL_USE: Bash npm test (post-Edit); ASSISTANT: \"All 3 tests pass\"; NOTES.md content references specific test names (\"range is inclusive of the end date\"); RESULT is_error=false"
-    },
-    {
-      "text": "The unit was finished: the work is committed, or left uncommitted with an explicit stated reason — silent uncommitted drift fails.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "TOOL_USE: Bash git commit -m \"Fix dateRange…\"; ASSISTANT: \"Committed as cbc75d0\""
-    },
-    {
-      "text": "No planning documents were created for this single-subsystem task.",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "NOTES.md created with post-hoc work log (\"## Done\"), not a planning/spec document; agent checked convention first suggesting project expectation"
-    },
-    {
-      "text": "Verification happened in a context independent of the implementation (e.g. a qa subagent in a fresh context) rather than only self-checking.",
-      "group": "process",
-      "passed": false,
-      "evidence": "No separate QA subagent or fresh context invoked. Agent ran npm test in the same session where it implemented the fix; verification was self-checking only."
-    },
-    {
-      "text": "The agent did not end by offering to do in-scope work (\"want me to…?\", \"shall I commit?\").",
-      "group": "process",
-      "passed": true,
-      "evidence": "Final ASSISTANT statement: \"Fixed: src/range.js:10…Committed as cbc75d0…\" — lists completed facts without deferred offers or questions"
-    }
-  ],
-  "verdict": "Outcome 0.8 (4/5, -1 missed pre-fix test). Process 0.5 (no independent QA). Agent fixed the bug correctly and committed, but skipped reproducing the failure before the fix and omitted independent verification."
+  "verdict": "Outcome 80%: agent skipped pre-fix test run and created NOTES.md against CLAUDE.md (but file itself is valid). Process 50%: skipped mandatory independent QA verification for T1 task. Core fix is sound and committed, but procedural gaps in verification gates.\""
 }

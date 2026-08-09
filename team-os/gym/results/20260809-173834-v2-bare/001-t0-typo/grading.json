@@ -1,4 +1,36 @@
 {
+  "expectations": [
+    {
+      "text": "The typo is fixed in src/format.js and no other source file was rewritten.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "git diff shows only src/format.js changed: line 4 `-  return `Recieved: ${amount} from ${name}`; +  return `Received: ${amount} from ${name}`;` No other files in the diff."
+    },
+    {
+      "text": "The agent ran `npm test` AFTER the fix and read the output — a fresh verification, not an assumption.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Bash npm test executed after Edit tool; TOOL_RESULT shows full output: `✔ receipt says Received` and `ℹ pass 2 ℹ fail 0`. Agent explicitly read and cited output: '`npm test` passes: 2/2 tests pass, including \"receipt says Received\"'"
+    },
+    {
+      "text": "No subagent was spawned (no Agent tool call) for a one-word fix.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Transcript contains only Bash, Read, and Edit tool calls. No Agent/skill invocation appears anywhere. Agent handled fix directly: 'grep → Read → Edit → test → commit'."
+    },
+    {
+      "text": "No planning documents (PRD, spec, plan file) were created for this trivial task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No CLAUDE.md, PRD, spec, or plan.md created or mentioned. Agent checked for NOTES.md, found it absent, and explicitly decided: 'The task is complete within this session, so no NOTES.md update needed.' No planning artifacts written."
+    },
+    {
+      "text": "Before editing, the agent stated in one line what it was about to do.",
+      "group": "process",
+      "passed": false,
+      "evidence": "No assistant statement appears between 'TOOL_RESULT: [file content from Read]' and 'TOOL_USE: Edit'. The agent jumped directly from reading to editing. The first assistant statement 'Fixed the typo in src/format.js:4' comes AFTER the Edit and npm test completed, using past tense retrospectively, not a pre-edit plan."
+    }
+  ],
   "summary": {
     "passed": 4,
     "failed": 1,
@@ -11,37 +43,5 @@
     "process_total": 1,
     "process_pass_rate": 0
   },
-  "expectations": [
-    {
-      "text": "The typo is fixed in src/format.js and no other source file was rewritten",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Edit tool call shows old_string: \"Recieved\" → new_string: \"Received\" in src/format.js; grep output shows only one match in src/format.js:4; no other Edit calls present"
-    },
-    {
-      "text": "The agent ran npm test AFTER the fix and read the output — a fresh verification, not an assumption",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Bash {\"command\":\"npm test\"} called after Edit tool; assistant states \"`npm test` passes: 2/2 tests pass, including 'receipt says Received'\" — specific count and test name show output was read"
-    },
-    {
-      "text": "No subagent was spawned (no Agent tool call) for a one-word fix",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Transcript contains only Bash, Read, and Edit tool calls; no Agent tool invocations present"
-    },
-    {
-      "text": "No planning documents (PRD, spec, plan file) were created for this trivial task",
-      "group": "outcome",
-      "passed": true,
-      "evidence": "Tools used: Bash, Read, Edit, git commit; no Write or file-creation calls for planning documents"
-    },
-    {
-      "text": "Before editing, the agent stated in one line what it was about to do",
-      "group": "process",
-      "passed": false,
-      "evidence": "First ASSISTANT statement is \"Fixed the typo in `src/format.js:4`\" — this appears after Edit and npm test calls, describing the action taken rather than announcing intent beforehand. No one-line plan stated before the TOOL_USE sequence begins"
-    }
-  ],
-  "verdict": "Outcome pass (4/4): fix landed correctly, verified, no overhead. Process fail: agent skipped the one-line pre-edit announcement, diving straight to tools — minor issue, no impact on correctness.\""
+  "verdict": "All outcomes passed (100%): typo fixed correctly in single file, fresh test verification confirmed, no subagent spawned, no planning docs created. Process gap: agent omitted the one-line pre-edit statement but delivered correct result. Configuration safe for adoption; process style could tighten slightly.\""
 }
