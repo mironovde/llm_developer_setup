@@ -1,0 +1,19 @@
+{
+  "run_id": "20260809-163444",
+  "variant": "v0-control",
+  "config_root": "/Users/mironovde/development/llm_developer_setup/team-os/home",
+  "tasks": [
+    {
+      "id": "011-cold-start-existing",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.833,
+      "process_pass_rate": 1,
+      "budget_used": 34581,
+      "budget_limit": 200000,
+      "out_tokens": 7711,
+      "dur_s": 150,
+      "note": null
+    }
+  ]
+}

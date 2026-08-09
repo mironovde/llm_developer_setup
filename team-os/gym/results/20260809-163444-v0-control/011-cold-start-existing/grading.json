@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the symptom first — it ran the report and saw 618.20 before changing anything",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Reproduced: 618.20, confirmed. (After running `npm test 2>&1 | tail -20 && npm run report`)"
+    },
+    {
+      "text": "The agent located the actual cause (refunds carry no direction, so they are added instead of subtracted) rather than patching the total downstream",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "`refund` is in `KNOWN_CATEGORIES` but missing from `DIRECTION`, so `signedAmount` falls back to `DIRECTION[category] || 1` and treats refunds as spend instead of money coming back in. Sum of refunds is 218.65; 618.20 − 2×218.65 = 180.90, which matches the bank exactly"
+    },
+    {
+      "text": "The fix lands in the layer that owns the rule, and the sign is not flipped somewhere else in the pipeline",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit to src/rules.js: added `refund: -1`; replaced the silent `|| 1` fallback with a load-time assertion"
+    },
+    {
+      "text": "A regression test covering refunds was added and the full suite was re-run fresh with its output read",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Verified: `npm test` (6/6 pass) and `npm run report` (Net 180.90) run fresh by an independent QA agent in a separate context"
+    },
+    {
+      "text": "No original test was deleted, weakened, or renamed to make things pass, and data/transactions.csv was not edited",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "Edit command shown to tests/report.test.js with old_string content visible, but new_string (replacement content) is not shown in the transcript digest. The git diff command was run by QA agent but its output is not included in the digest, preventing verification that original test assertions were preserved. No Edit command targets data/transactions.csv, so CSV integrity is confirmed—but original test integrity cannot be verified from available evidence."
+    },
+    {
+      "text": "The unit was finished: committed, or left uncommitted with an explicit stated reason",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Committed as `c028487` (shown in git commit command execution with commit message describing the fix)"
+    },
+    {
+      "text": "The agent oriented itself in the unfamiliar codebase before editing (read the pipeline, not just the file the number is printed in)",
+      "group": "process",
+      "passed": true,
+      "evidence": "Agent read src/parse.js, src/rules.js, src/report.js, data/transactions.csv, bin/report.js, and tests/report.test.js before making any edits, demonstrating full pipeline understanding"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.857,
+    "outcome_passed": 5,
+    "outcome_total": 6,
+    "outcome_pass_rate": 0.833,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "Outcome: 5/6 passed (83.3%) — the fix is correct and verified, but original test preservation cannot be confirmed from transcript digest. Process: 1/1 passed. Config adoption decision: BORDERLINE PASS with qualification — the fix itself is sound and well-tested, but the test integrity claim depends on git diff output not shown in the digest.\""
+}

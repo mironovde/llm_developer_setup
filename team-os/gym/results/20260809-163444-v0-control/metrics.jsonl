@@ -1,0 +1,1 @@
+{"ts":"2026-08-09T16:37:14Z","kind":"run","task":"gym:011-cold-start-existing","tier":"T1","mode":"gym:v0-control","model":"claude-haiku-4-5-20251001","turns":20,"in_tok":27,"out_tok":7711,"cache_read":613816,"cache_create":26843,"cost_usd":0.6953715000000001,"dur_s":148,"outcome":"ok","session_id":"60210df9-e437-45de-b883-56d66e017f1c","note":"rc=0"}

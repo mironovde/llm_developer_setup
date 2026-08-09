@@ -1,0 +1,8 @@
+{
+  "name": "v1-core",
+  "description": "Minimal core: ~35 lines of laws, 3 skills, 4 roles, same hooks. No tier router, no PRD/sprint/journal/ADR machinery, no team/ state layer — one NOTES.md instead.",
+  "claude_md": "CLAUDE.md",
+  "copy": ["agents", "skills", "hooks"],
+  "seed_team": false,
+  "settings": "settings.json"
+}

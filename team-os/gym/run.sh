@@ -38,13 +38,20 @@ done
 # ── config variant under test ────────────────────────────────────────────────
 [ -d "$CONFIG_ROOT" ] || { echo "config dir not found: $CONFIG_ROOT" >&2; exit 1; }
 VARIANT_JSON="$CONFIG_ROOT/variant.json"
-vget() { # $1=jq path, $2=default
-  [ -f "$VARIANT_JSON" ] && jq -r "$1 // empty" "$VARIANT_JSON" 2>/dev/null | grep . || printf '%s' "$2"
+# NOTE: `jq '.k // empty'` returns empty for a key whose value is literally `false` — jq's
+# alternative operator treats false as absent. A variant declaring "seed_team": false would
+# silently get a team/ directory anyway. Presence is tested with has(), never with //.
+vget() { # $1=key, $2=default
+  local v="__ABSENT__"
+  if [ -f "$VARIANT_JSON" ]; then
+    v="$(jq -r --arg k "$1" 'if has($k) and .[$k] != null then (.[$k]|tostring) else "__ABSENT__" end' "$VARIANT_JSON" 2>/dev/null)"
+  fi
+  if [ -n "$v" ] && [ "$v" != "__ABSENT__" ]; then printf '%s' "$v"; else printf '%s' "$2"; fi
 }
-VARIANT="$(vget '.name' "$(basename "$CONFIG_ROOT")")"
-V_CLAUDE_MD="$(vget '.claude_md' "CLAUDE.md")"
-V_SEED_TEAM="$(vget '.seed_team' "true")"
-V_SETTINGS="$(vget '.settings' "$GYM/gym-settings.json")"
+VARIANT="$(vget 'name' "$(basename "$CONFIG_ROOT")")"
+V_CLAUDE_MD="$(vget 'claude_md' "CLAUDE.md")"
+V_SEED_TEAM="$(vget 'seed_team' "true")"
+V_SETTINGS="$(vget 'settings' "$GYM/gym-settings.json")"
 case "$V_SETTINGS" in /*) ;; *) V_SETTINGS="$CONFIG_ROOT/$V_SETTINGS" ;; esac
 [ -f "$V_SETTINGS" ] || V_SETTINGS="$GYM/gym-settings.json"
 if [ -f "$VARIANT_JSON" ] && jq -e '.copy' "$VARIANT_JSON" >/dev/null 2>&1; then

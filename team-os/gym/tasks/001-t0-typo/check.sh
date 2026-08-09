@@ -17,7 +17,7 @@ fi
 # (Was: "no files in team/specs" — that only detected the current config's ceremony vocabulary.)
 ROOT_COMMIT="$(git rev-list --max-parents=0 HEAD)"
 NEWDOCS=$({ git diff --name-only --diff-filter=A "$ROOT_COMMIT" 2>/dev/null; git ls-files --others --exclude-standard 2>/dev/null; } \
-  | grep -vE '^(\.claude/|node_modules/)' | grep -cE '\.(md|json|ya?ml)$' || true)
+  | grep -vE '^(\.claude/|node_modules/|\.artifacts/|team/artifacts/)' | grep -cE '\.(md|json|ya?ml)$' || true)
 if [ "${NEWDOCS:-0}" -gt 1 ]; then
   echo "FAIL: $NEWDOCS new doc/plan files created for a one-word typo fix (max 1)"; exit 1
 fi

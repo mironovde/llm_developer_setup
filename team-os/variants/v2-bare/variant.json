@@ -1,0 +1,8 @@
+{
+  "name": "v2-bare",
+  "description": "Near-empty config: 8 laws, no skills, no roles, no state layer. Everything else is left to the harness (native tasks, memory, compaction) and to deterministic hooks, which cost no context.",
+  "claude_md": "CLAUDE.md",
+  "copy": ["hooks"],
+  "seed_team": false,
+  "settings": "settings.json"
+}
