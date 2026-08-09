@@ -32,19 +32,22 @@ for f in tests/*.test.js; do
 done
 if [ "$FILTER_TEST" = "0" ]; then echo "FAIL: no unit test covers the filter logic"; exit 1; fi
 
-# 4. Browser evidence: screenshot (or, as fallback, a non-empty .txt DOM snapshot) in team/artifacts
-if [ ! -d team/artifacts ]; then echo "FAIL: team/artifacts missing — no browser evidence recorded"; exit 1; fi
-SHOTS=$(find team/artifacts -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.webp' \) | wc -l | tr -d ' ')
+# 4. Browser evidence recorded SOMEWHERE in the workspace — the outcome is "the agent looked at
+#    the running page and kept proof", not "the file sits in team/artifacts/".
+SHOTS=$(find . -type f \( -name '*.png' -o -name '*.jpg' -o -name '*.jpeg' -o -name '*.webp' \) \
+  ! -path './.git/*' ! -path './.claude/*' ! -path './node_modules/*' ! -path './dist/*' 2>/dev/null | wc -l | tr -d ' ')
 if [ "$SHOTS" = "0" ]; then
-  SNAPS=$(find team/artifacts -type f -name '*.txt' -size +0c | wc -l | tr -d ' ')
+  SNAPS=$(find . -type f \( -name '*.txt' -o -name '*-test.md' -o -name '*snapshot*' \) -size +0c \
+    ! -path './.git/*' ! -path './.claude/*' ! -path './node_modules/*' 2>/dev/null | wc -l | tr -d ' ')
   if [ "$SNAPS" = "0" ]; then
-    echo "FAIL: no screenshot (png/jpg/jpeg/webp) or non-empty .txt DOM snapshot in team/artifacts"; exit 1
+    echo "FAIL: no screenshot and no non-empty DOM/text snapshot anywhere — page was never inspected"; exit 1
   fi
 fi
 
-# 5. Browser loop closed, not abandoned
-if [ -f team/artifacts/.browser-loop.json ]; then
-  echo "FAIL: browser loop left open — team/artifacts/.browser-loop.json still exists"; exit 1
+# 5. If the config under test uses a browser-loop marker, it must not be left open.
+#    Variants without the loop simply have no marker — absence passes.
+if [ -f team/artifacts/.browser-loop.json ] || [ -f .browser-loop.json ]; then
+  echo "FAIL: browser loop left open — marker file still exists"; exit 1
 fi
 
 echo "PASS: dist rebuilt fresh, filter shipped, tests green, browser evidence recorded, loop closed"

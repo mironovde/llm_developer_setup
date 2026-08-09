@@ -1,0 +1,7 @@
+{
+  "name": "v0-control",
+  "description": "Current Team OS config, unchanged — the control arm of the simplification experiment.",
+  "claude_md": "CLAUDE.md",
+  "copy": ["agents", "skills", "hooks"],
+  "seed_team": true
+}

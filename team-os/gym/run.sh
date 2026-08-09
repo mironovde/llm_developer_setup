@@ -3,8 +3,11 @@
 # Hermetic per ADR-003: --setting-sources project --strict-mcp-config; Team OS config is installed
 # into each fixture at project level, so the user's real ~/.claude content never loads.
 #
-# Usage: run.sh [smoke|all|<task-id>...] [--baseline] [--runs N] [--no-judge] [--keep-workspace]
+# Usage: run.sh [smoke|all|<task-id>...] [--config DIR] [--baseline] [--runs N] [--no-judge] [--keep-workspace]
 #   smoke = 001 + 003 (fast sanity); all = every task; task ids like 001 or 001-t0-typo
+#   --config DIR = config variant to test (default: team-os/home). DIR is shaped like home/
+#     and may carry variant.json: {name, claude_md, copy[], seed_team, settings}.
+#     This is what makes the gym able to COMPARE configs instead of only testing the current one.
 set -uo pipefail
 
 GYM="$(cd "$(dirname "$0")" && pwd)"
@@ -16,8 +19,12 @@ BASELINE=0
 RUNS=1
 JUDGE=1
 KEEP=0
+DRY=0
+CONFIG_ROOT="$ROOT/home"
 while [ $# -gt 0 ]; do
   case "$1" in
+    --config) CONFIG_ROOT="$(cd "${2:?--config needs a dir}" && pwd)"; shift 2 ;;
+    --dry-run) DRY=1; shift ;;
     --baseline) BASELINE=1; shift ;;
     --runs) RUNS="${2:?}"; shift 2 ;;
     --no-judge) JUDGE=0; shift ;;
@@ -27,6 +34,24 @@ while [ $# -gt 0 ]; do
   esac
 done
 [ ${#SELECT[@]} -eq 0 ] && SELECT=(smoke)
+
+# ── config variant under test ────────────────────────────────────────────────
+[ -d "$CONFIG_ROOT" ] || { echo "config dir not found: $CONFIG_ROOT" >&2; exit 1; }
+VARIANT_JSON="$CONFIG_ROOT/variant.json"
+vget() { # $1=jq path, $2=default
+  [ -f "$VARIANT_JSON" ] && jq -r "$1 // empty" "$VARIANT_JSON" 2>/dev/null | grep . || printf '%s' "$2"
+}
+VARIANT="$(vget '.name' "$(basename "$CONFIG_ROOT")")"
+V_CLAUDE_MD="$(vget '.claude_md' "CLAUDE.md")"
+V_SEED_TEAM="$(vget '.seed_team' "true")"
+V_SETTINGS="$(vget '.settings' "$GYM/gym-settings.json")"
+case "$V_SETTINGS" in /*) ;; *) V_SETTINGS="$CONFIG_ROOT/$V_SETTINGS" ;; esac
+[ -f "$V_SETTINGS" ] || V_SETTINGS="$GYM/gym-settings.json"
+if [ -f "$VARIANT_JSON" ] && jq -e '.copy' "$VARIANT_JSON" >/dev/null 2>&1; then
+  V_COPY="$(jq -r '.copy[]' "$VARIANT_JSON" | tr '\n' ' ')"
+else
+  V_COPY="agents skills hooks"
+fi
 
 TASKS=()
 resolve_tasks() {
@@ -47,10 +72,11 @@ resolve_tasks() {
 resolve_tasks
 
 RUN_ID="$(date -u +%Y%m%d-%H%M%S)"
-OUT="$GYM/results/$RUN_ID"
+OUT="$GYM/results/$RUN_ID-$VARIANT"
 mkdir -p "$OUT"
 SUMMARY="$OUT/summary.json"
-echo '{"run_id":"'"$RUN_ID"'","tasks":[]}' > "$SUMMARY"
+jq -n --arg r "$RUN_ID" --arg v "$VARIANT" --arg c "$CONFIG_ROOT" \
+  '{run_id: $r, variant: $v, config_root: $c, tasks: []}' > "$SUMMARY"
 
 capability_ok() { # $1=requirement → 0/1
   case "$1" in
@@ -99,25 +125,46 @@ run_task_once() { # $1=task_name $2=attempt → sets GLOBALS: T_STATUS T_CHECK T
     return 0
   fi
 
-  # workspace: fixture + Team OS config at project level + fresh team state
+  # workspace: fixture + the config variant under test at project level + optional team state
   local ws
   ws="$(mktemp -d "${TMPDIR:-/tmp}/gym-$task.XXXXXX")"
   cp -R "$tdir/fixture/." "$ws/"
-  mkdir -p "$ws/.claude/hooks"
-  cp -R "$ROOT/home/agents" "$ws/.claude/agents"
-  cp -R "$ROOT/home/skills" "$ws/.claude/skills"
-  cp "$ROOT/home/hooks/"teamos-*.sh "$ws/.claude/hooks/"
-  # project CLAUDE.md = Team OS global content (+ fixture's own project notes appended)
-  if [ -f "$ws/CLAUDE.md" ]; then
-    cat "$ROOT/home/CLAUDE.md" > "$ws/CLAUDE.md.teamos"
-    printf '\n\n---\n\n' >> "$ws/CLAUDE.md.teamos"
-    cat "$ws/CLAUDE.md" >> "$ws/CLAUDE.md.teamos"
-    mv "$ws/CLAUDE.md.teamos" "$ws/CLAUDE.md"
-  else
-    cp "$ROOT/home/CLAUDE.md" "$ws/CLAUDE.md"
+  mkdir -p "$ws/.claude"
+  local sub
+  for sub in $V_COPY; do
+    case "$sub" in
+      hooks) [ -d "$CONFIG_ROOT/hooks" ] || continue
+             mkdir -p "$ws/.claude/hooks"
+             cp "$CONFIG_ROOT/hooks/"*.sh "$ws/.claude/hooks/" 2>/dev/null || true ;;
+      *)     [ -d "$CONFIG_ROOT/$sub" ] && cp -R "$CONFIG_ROOT/$sub" "$ws/.claude/$sub" ;;
+    esac
+  done
+  # project CLAUDE.md = variant's global content (+ fixture's own project notes appended)
+  if [ -f "$CONFIG_ROOT/$V_CLAUDE_MD" ]; then
+    if [ -f "$ws/CLAUDE.md" ]; then
+      cat "$CONFIG_ROOT/$V_CLAUDE_MD" > "$ws/CLAUDE.md.variant"
+      printf '\n\n---\n\n' >> "$ws/CLAUDE.md.variant"
+      cat "$ws/CLAUDE.md" >> "$ws/CLAUDE.md.variant"
+      mv "$ws/CLAUDE.md.variant" "$ws/CLAUDE.md"
+    else
+      cp "$CONFIG_ROOT/$V_CLAUDE_MD" "$ws/CLAUDE.md"
+    fi
   fi
-  [ -d "$ws/team" ] || cp -R "$ROOT/project-template/team" "$ws/team"
+  if [ "$V_SEED_TEAM" = "true" ] && [ ! -d "$ws/team" ]; then
+    cp -R "$ROOT/project-template/team" "$ws/team"
+  fi
   ( cd "$ws" && git init -q && git add -A && git -c user.email=gym@teamos -c user.name=gym commit -qm "fixture init" )
+
+  # --dry-run: verify what the variant actually puts in front of the model, spend no tokens
+  if [ "$DRY" -eq 1 ]; then
+    echo "[$task] DRY workspace for variant '$VARIANT' ($CONFIG_ROOT):"
+    ( cd "$ws" && find . -path ./.git -prune -o -type f -print | sed 's|^\./|  |' | sort | head -40 )
+    echo "  CLAUDE.md: $( [ -f "$ws/CLAUDE.md" ] && wc -l < "$ws/CLAUDE.md" | tr -d ' ' || echo 0) lines"
+    echo "  team/ seeded: $( [ -d "$ws/team" ] && echo yes || echo no)"
+    T_STATUS="skip"; T_CHECK="skip"; T_JR=""; T_BU=""; T_TOK=""; T_DUR=0; T_NOTE="dry-run"
+    [ "$KEEP" -eq 0 ] && rm -rf "$ws"
+    return 0
+  fi
 
   local mcp_args=()
   [ "$browser" = "true" ] && mcp_args=(--mcp-config "$GYM/mcp-chrome.json")
@@ -129,7 +176,7 @@ run_task_once() { # $1=task_name $2=attempt → sets GLOBALS: T_STATUS T_CHECK T
   ( cd "$ws" && run_with_timeout "$timeout" \
       claude -p "$(cat "$tdir/prompt.md")" \
         --setting-sources project \
-        --settings "$GYM/gym-settings.json" \
+        --settings "$V_SETTINGS" \
         --strict-mcp-config "${mcp_args[@]}" \
         --permission-mode acceptEdits \
         --output-format stream-json --verbose \
@@ -144,7 +191,7 @@ run_task_once() { # $1=task_name $2=attempt → sets GLOBALS: T_STATUS T_CHECK T
 
   local result
   result="$(extract_result_json "$rundir/transcript.jsonl")"
-  append_metrics "$OUT/metrics.jsonl" "$result" "gym:$task" "$tier" "gym" "rc=$rc"
+  append_metrics "$OUT/metrics.jsonl" "$result" "gym:$task" "$tier" "gym:$VARIANT" "rc=$rc"
 
   if detect_limit "$rundir/transcript.jsonl" >/dev/null; then
     T_STATUS="limit"; T_CHECK="skip"; T_JR=""; T_BU=""; T_TOK=""; T_NOTE="usage limit hit mid-run"
@@ -209,8 +256,10 @@ jq --arg p "$OVERALL_PASS" --arg f "$OVERALL_FAIL" --arg s "$OVERALL_SKIP" \
   '.totals = {pass: ($p|tonumber), fail: ($f|tonumber), skip: ($s|tonumber)}' "$SUMMARY" > "$TMP" && mv "$TMP" "$SUMMARY"
 
 echo
-echo "== gym $RUN_ID: pass=$OVERALL_PASS fail=$OVERALL_FAIL skip=$OVERALL_SKIP =="
+echo "== gym $RUN_ID [$VARIANT]: pass=$OVERALL_PASS fail=$OVERALL_FAIL skip=$OVERALL_SKIP =="
 jq -r '.tasks[] | "\(.id): \(.status) (check=\(.check) judge=\(.judge_pass_rate // "n/a") budget=\(.budget_used // "?")/\(.budget_limit // "?"))"' "$SUMMARY"
+
+if [ "$DRY" -eq 1 ]; then rm -rf "$OUT"; echo "(dry-run: no results kept)"; exit 0; fi
 
 if [ "$BASELINE" -eq 1 ]; then
   cp "$SUMMARY" "$GYM/results/baseline.json"

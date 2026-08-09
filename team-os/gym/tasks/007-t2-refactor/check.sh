@@ -25,10 +25,17 @@ if [ "$MODULES" -lt 3 ]; then
   echo "FAIL: only $MODULES module file(s) in src/ besides utils.js (need >= 3)"; exit 1
 fi
 
-# 5. The structural decision was recorded as a NEW ADR (ADR-000 is the pre-seeded template)
-if [ ! -f team/DECISIONS.md ]; then echo "FAIL: team/DECISIONS.md missing"; exit 1; fi
-if ! grep -Eq '^## ADR-0*[1-9]' team/DECISIONS.md; then
-  echo "FAIL: no new ADR in team/DECISIONS.md (need a '## ADR-NNN' heading with NNN != 000)"; exit 1
-fi
+# 5. No dead duplicate left behind: the moved implementations must live in ONE place.
+#    A split that copies functions into modules while leaving the originals around still
+#    passes the tests but is not a refactor.
+for fn in slugify truncate capitalize chunk unique groupBy formatDate daysBetween; do
+  DEFS=$(grep -lE "^[[:space:]]*(function|const|let|var)[[:space:]]+$fn\b" src/*.js 2>/dev/null | wc -l | tr -d ' ')
+  if [ "${DEFS:-0}" -gt 1 ]; then
+    echo "FAIL: $fn is defined in $DEFS files — implementation duplicated, originals not removed"; exit 1
+  fi
+done
 
-echo "PASS: monolith split into modules, utils.js is an index, tests untouched and green, ADR recorded"
+# NOTE: the ADR requirement that used to live here ("## ADR-NNN in team/DECISIONS.md") was removed
+# on 2026-08-09: it measured the current config's bookkeeping vocabulary, not the refactor. Whether
+# the structural decision was recorded is now a `process` expectation for the judge.
+echo "PASS: monolith split into modules, utils.js is an index, no duplicate implementations, tests untouched and green"
