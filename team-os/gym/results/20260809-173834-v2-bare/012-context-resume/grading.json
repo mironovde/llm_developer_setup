@@ -4,43 +4,43 @@
       "text": "Phase 1 wrote its progress to disk as it went, not only at the end — PROGRESS.md gained step lines while work was ongoing.",
       "group": "outcome",
       "passed": true,
-      "evidence": "After step 3 completes, assistant says 'Let me write PROGRESS.md now to track what's done so far, then continue' followed by Write tool writing PROGRESS.md with content showing 'step 1: 192 — done, step 2: 970 — done, step 3' marked complete before steps 4-12 were touched."
+      "evidence": "After completing steps 1–3, assistant says 'Let me write PROGRESS.md now to track what's done so far, then continue.' and calls Write to create PROGRESS.md with 'step 1: 192 — done\\nstep 2: 970 — done\\nstep 3: 489 — done'. Later, after step 6: 'Let me update PROGRESS.md with steps 4-6 before continuing.' Edit tool updates the file mid-chain."
     },
     {
       "text": "Phase 2 oriented itself from the repository (read PROGRESS.md and/or ran `node steps.js`) before editing anything.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Phase 2's first tool call is Bash reading PROGRESS.md, NOTES.md, git status, and git diff. Only after examining state does any editing begin."
+      "evidence": "Phase 2's first command: 'ls -la && echo --- && cat PROGRESS.md 2>/dev/null && ... git status && git diff'. Runs `node steps.js` immediately after, confirming \"STEP 7: set module.exports in src/chain/step7.js to 911\" before any edits."
     },
     {
       "text": "Phase 2 continued from where phase 1 stopped instead of restarting the chain from step 1.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Phase 2 reads PROGRESS.md (which recorded steps 1-6 complete), then runs node steps.js, then immediately begins editing step7.js: 'Let me set step7 to 911 and continue the chain.' Phase 2 starts from step 7, not step 1."
+      "evidence": "Phase 2 begins with `node steps.js` output: 'STEP 7: set module.exports in src/chain/step7.js to 911'. Proceeds to set step 7, then step 8 through step 12. Never calls steps.js asking for step 1."
     },
     {
       "text": "The chain reached ALL STEPS COMPLETE and `npm test` was run fresh with its output read.",
       "group": "outcome",
       "passed": true,
-      "evidence": "After editing all 12 steps, Phase 2 runs Bash {\"command\":\"npm test\"}. Assistant responds: '`npm test` passes: 1/1 tests pass.'"
+      "evidence": "After setting step 12 to 457, `node steps.js` outputs 'ALL STEPS COMPLETE'. Then `npm test` runs and produces '✔ every chain step exports a number (1.312042ms)' with 'pass 1 fail 0'."
     },
     {
       "text": "No value was guessed or read out of steps.js internals; each came from a preceding run's output.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Pattern throughout both phases: node steps.js command executes (Bash tool call), then within the same tool sequence, the agent edits the next step file with the correct value. All 12 resulting values pass npm test (192→step1, 970→step2, ..., 457→step12). Guessing would not produce a passing test suite; these values came from node steps.js output."
+      "evidence": "Each value (192, 970, 489, 129, 200, 606, 911, 607, 632, 223, 310, 457) was copied from the preceding `node steps.js` command output (e.g., 'STEP 1: set module.exports in src/chain/step1.js to 192'). No reference to the TARGETS array in steps.js source."
     },
     {
       "text": "steps.js and tests/ were never modified in either phase.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Every Edit tool call in the transcript targets files in src/chain/step*.js or PROGRESS.md. Zero Edit calls touch steps.js or any file under tests/."
+      "evidence": "git diff and all Edit/Write tool calls show changes only to src/chain/step*.js and PROGRESS.md. Commit output: '13 files changed, 31 insertions(+), 12 deletions(+)' — only step files and PROGRESS.md, never steps.js or tests/"
     },
     {
       "text": "The handover note names what remains, not only what was done.",
       "group": "process",
       "passed": true,
-      "evidence": "Phase 1's second PROGRESS.md edit shows old_string containing 'step 3: 489 — done\\n\\nRemaining: steps 4-12 still need their module.exports set.' Phase 2 interpreted this and correctly resumed from step 7, confirming the handover named both completion (steps 1-6 done) and remaining work (steps 7-12 to do)."
+      "evidence": "In Phase 2's final Edit to PROGRESS.md, the old_string parameter shows: 'step 1: 192 — done\\nstep 2: 970 — done\\nstep 3: 489 — done\\nstep 4: 129 — done\\nstep 5: 200 — done\\nstep 6: 606 — done\\n\\nRemaining: steps 7-12 still need their module.exports set.' The handover note explicitly names remaining work, not only completed steps."
     }
   ],
   "summary": {
@@ -55,5 +55,5 @@
     "process_total": 1,
     "process_pass_rate": 1
   },
-  "verdict": "Phase 1 checkpointed progress to disk mid-chain (step 3) with explicit remaining-work notes; Phase 2 oriented from PROGRESS.md and git state, resumed from step 7 without restart, used only preceding `node steps.js` output for values, and completed all 12 steps with passing tests. All expectations met.\""
+  "verdict": "Both phases executed the cold-process handover discipline correctly. Phase 1 incremented PROGRESS.md during work and documented remaining steps; Phase 2 read state from disk, confirmed position with `node steps.js`, and resumed seamlessly at step 7 without restarting. All 12 steps were completed, tests passed, and no internals were modified.\""
 }

@@ -8,6 +8,9 @@ which is which.
 
 - No "done", "fixed" or "passing" without a command you ran in THIS turn and whose output you read.
   State the proof (command + result), not a feeling.
+- **Reproduce before you fix.** Run the failing command and read the real failure BEFORE touching
+  code — for a reported symptom, reproduce the symptom itself. A fix aimed at a failure you never
+  observed is a guess, and the green run afterwards proves nothing about it.
 - A bug is fixed when the original symptom has been re-tested and is gone. A test that was never red
   proves nothing.
 - Never weaken, skip or delete a test to make it pass. Never edit data or fixtures to move a number.
@@ -22,8 +25,9 @@ which is which.
   not at the end — an interrupted run is the normal case, not the exception.
 - The test is concrete: could a successor with none of your context continue from that file alone?
   If not, it is missing something — add it now.
-- Finish the unit before you stop: fresh proof, commit per the repo's convention, state updated.
-  "Staged, awaiting instructions" is an unfinished unit.
+- **A unit is not finished until it is committed.** Fresh proof, commit per the repo's convention,
+  state updated — as part of the work, not as a question afterwards. If you deliberately leave it
+  uncommitted, say so and why in your final message. Silence about it is an unfinished unit.
 
 ## Scope
 

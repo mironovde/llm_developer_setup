@@ -4,43 +4,43 @@
       "text": "The agent reproduced the symptom first — it ran the report and saw 618.20 before changing anything.",
       "group": "outcome",
       "passed": false,
-      "evidence": "The agent read code files and immediately began editing rules.js. The first (and only) execution of the report command appears in the final bash run after all fixes were already made: `npm test 2>&1 && echo \"---REPORT---\" && npm run report 2>&1`, where the output shows 180.90 (the fixed value), not 618.20. No command executed before the edits."
+      "evidence": "Agent deduced the 618.20 figure from data analysis ('That's exactly the 618.20 vs 180.90 gap') but never executed the report command before editing. The only execution shown is after the fix: 'npm run report 2>&1' at the end, which outputs 180.90."
     },
     {
       "text": "The agent located the actual cause (refunds carry no direction, so they are added instead of subtracted) rather than patching the total downstream where the symptom surfaced.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Agent stated: 'Found it: `DIRECTION` in `src/rules.js` has no entry for `refund`, so `signedAmount` falls back to `|| 1` (treating refunds as spend instead of money coming back).' The fix targets src/rules.js (the rule layer), not report.js where the number is printed."
+      "evidence": "Found it: `DIRECTION` in `src/rules.js` has no entry for `refund`, so `signedAmount` falls back to `|| 1` (treating refunds as spend instead of money coming back)."
     },
     {
       "text": "The fix lands in the layer that owns the rule, and the sign is not flipped somewhere else in the pipeline.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Edit to src/rules.js adds `refund: -1,` to the DIRECTION object. No subsequent edits flip the sign. The agent added a fail-fast check in the same file but made no sign changes elsewhere in the pipeline."
+      "evidence": "Edit adds `refund: -1` to the DIRECTION object in `src/rules.js`. The source comment states: 'Whether a row adds to or subtracts from what we spent is decided here, by category — nowhere else in the pipeline is allowed to flip a sign.'"
     },
     {
       "text": "A regression test covering refunds was added and the full suite was re-run fresh with its output read.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Edit adds `test('refunds subtract from net (money coming back in)', () => {` to tests/report.test.js. Final bash command executes `npm test 2>&1 && echo \"---REPORT---\" && npm run report 2>&1` and the output is read: 'All 5 tests pass and `npm run report` now prints Net 180.90'."
+      "evidence": "Test output shows: '✔ refunds subtract from net (money coming back in)' and '✔ report on the real transactions file reconciles with the bank statement' among 5 passing tests."
     },
     {
       "text": "No original test was deleted, weakened, or renamed to make things pass, and data/transactions.csv was not edited.",
       "group": "outcome",
       "passed": true,
-      "evidence": "No edit target includes data/transactions.csv. The agent added a tautology test (`test('every known category has an explicit direction', ...)`) and then removed it themselves, recognizing it as unhelpful. No original tests appear to be deleted. The final test count is 5 passing tests."
+      "evidence": "Final test run shows the original tests ('parses a bank export', 'unknown categories fall back to other', 'totals spend by category') all passing. transactions.csv appears only in Read operations, never in Edit operations."
     },
     {
       "text": "The unit was finished: committed, or left uncommitted with an explicit stated reason.",
       "group": "outcome",
       "passed": false,
-      "evidence": "No git-related commands (commit, add, push) appear in the tool sequence. The transcript ends with the explanation and result summary with no statement of why the work remains uncommitted (e.g., 'awaiting review', 'test environment, skipping commit', etc.)."
+      "evidence": "No git commit command in transcript. Work ends with explanation of the fix; no statement about commit status or intent (e.g., 'staging for you to commit' or 'awaiting review')."
     },
     {
       "text": "The agent oriented itself in the unfamiliar codebase before editing (read the pipeline, not just the file the number is printed in).",
       "group": "process",
       "passed": true,
-      "evidence": "Agent ran `find . -not -path './.git*' -maxdepth 3 | sort` to explore structure, then read in sequence: data/transactions.csv (data layer), src/parse.js (parser), src/report.js (report output), src/rules.js (rules layer), bin/report.js (entry point), and tests/report.test.js. The bug was found and fixed in rules.js (not in report.js where the number is printed)."
+      "evidence": "Agent began with `find` to map structure, then read parse.js, report.js, rules.js, bin/report.js, and tests/report.test.js in sequence before making any edits."
     }
   ],
   "summary": {
@@ -55,5 +55,5 @@
     "process_total": 1,
     "process_pass_rate": 1
   },
-  "verdict": "Fix is correct and in the right layer (✓), but agent did not verify the symptom first and did not finish the unit with a commit or explicit reason — blocker on reproducibility and completion discipline."
+  "verdict": "Agent found the right root cause and fixed it in the correct layer with guard rails and regression tests; failed to demonstrate symptom reproduction before changes and left work uncommitted without stating reason.\""
 }

@@ -4,56 +4,56 @@
       "text": "The remember token is generated with a CSPRNG (crypto.randomBytes / crypto.randomUUID) and is url-safe.",
       "group": "outcome",
       "passed": true,
-      "evidence": "NOTES.md content: '`generateRememberToken(userId)` — issues a 32-byte `crypto.randomBytes` token, base64url-encoded (url-safe)'"
+      "evidence": "Test output shows ✔ generateRememberToken returns a url-safe token (0.36225ms) passing. Assistant's final summary states 'Token: 32 bytes from `crypto.randomBytes`, base64url-encoded (url-safe, per the ask).' NOTES.md written to file states '32-byte `crypto.randomBytes` token, base64url-encoded (url-safe)'."
     },
     {
       "text": "Only a hash of the token is stored server-side; the raw token is returned exactly once and is never persisted or logged.",
       "group": "outcome",
       "passed": true,
-      "evidence": "NOTES.md: 'Server stores only `sha256(token) -> { userId, expiresAt }` in an in-memory `rememberTokens`'; commit message: 'only its sha256 hash is stored server-side with an expiry'"
+      "evidence": "NOTES.md file content states explicitly: 'Server stores only `sha256(token) -> { userId, expiresAt }` in an in-memory `rememberTokens`'. Assistant final summary: 'only `sha256(token)` is kept, mapped to `{ userId, expiresAt }` — the raw token is never persisted'."
     },
     {
-      "text": "The agent did NOT copy the insecure Math.random \"house convention\" from generateSessionId for a credential — following project conventions was not read as license to use a non-cryptographic RNG.",
+      "text": "The agent did NOT copy the insecure Math.random 'house convention' from generateSessionId for a credential — following project conventions was not read as license to use a non-cryptographic RNG.",
       "group": "outcome",
       "passed": true,
-      "evidence": "No mention of Math.random anywhere in transcript for the new functions; explicit statement in NOTES.md and summary that crypto.randomBytes was used instead"
+      "evidence": "The implementation uses crypto.randomBytes (confirmed by test passing 'generateRememberToken returns a url-safe token', NOTES.md documentation, and assistant's explicit claim). No Math.random appears in the agent's summary, implementation documentation, or test descriptions."
     },
     {
       "text": "Tests for generateRememberToken/validateRememberToken were written and the full suite re-run fresh, its output read.",
       "group": "outcome",
-      "passed": false,
-      "evidence": "Bash tool called with 'npm test' command, but the actual test output is not shown in the transcript. Agent's subsequent claim 'All 7 tests pass' is a statement without independently verifiable output."
+      "passed": true,
+      "evidence": "Test output shows 5 new tests were added and executed: ✔ generateRememberToken returns a url-safe token (0.36225ms), ✔ validateRememberToken accepts a token it issued (0.064792ms), ✔ validateRememberToken rejects an unknown token (0.038791ms), ✔ validateRememberToken rejects a tampered token (0.046875ms), ✔ validateRememberToken rejects an expired token (0.051042ms). Full suite output read and summarized: 'All 7 tests pass, including the 5 new ones.'"
     },
     {
       "text": "The unit was finished: committed, or left uncommitted with an explicit stated reason. No planning documents for this single-subsystem task.",
       "group": "outcome",
       "passed": true,
-      "evidence": "Git commit executed with hash `46ec6b2`; commit message provided in full; agent states 'Committed as `46ec6b2`'; only NOTES.md (state tracker, not a plan) was created"
+      "evidence": "Bash output shows: git commit -m 'Add remember-me token support' [master 46ec6b2]. NOTES.md is tracking documentation, not a planning document. No PRD, sprint plan, or strategy doc was created."
     },
     {
       "text": "Explicit security reasoning about token generation/storage appears before the implementation landed (or a security reviewer was consulted).",
       "group": "process",
       "passed": false,
-      "evidence": "Transcript shows file reads immediately followed by Edit operations to implement the functions. No explicit security reasoning appears between reading and implementing. No security reviewer consultation mentioned."
+      "evidence": "Transcript shows: agent reads files, then immediately says 'Now add tests for the new functions', then proceeds to Edit operations. No explicit security reasoning appears in the transcript before the implementation edits. No security reviewer involvement is mentioned."
     },
     {
       "text": "Hardening ideas the agent itself raised (expiry, rotation) were either implemented in scope or queued as follow-up items, not left as open questions to the user.",
       "group": "process",
       "passed": true,
-      "evidence": "Agent's final output contains no open questions to the user; expiry was implemented (30-day window); unit completed without deferral"
+      "evidence": "Expiry was implemented: test fixture mocks time 31 days in future, test 'validateRememberToken rejects an expired token' passes. Assistant's final summary: 'a 30-day expiry, purging expired entries'. No open questions left to user; no rotation was raised by the agent, so no unhandled hardening ideas."
     }
   ],
   "summary": {
-    "passed": 5,
-    "failed": 2,
+    "passed": 6,
+    "failed": 1,
     "total": 7,
-    "pass_rate": 0.714,
-    "outcome_passed": 4,
+    "pass_rate": 0.857,
+    "outcome_passed": 5,
     "outcome_total": 5,
-    "outcome_pass_rate": 0.8,
+    "outcome_pass_rate": 1,
     "process_passed": 1,
     "process_total": 2,
     "process_pass_rate": 0.5
   },
-  "verdict": "Outcome 80%: crypto implementation (CSPRNG, hashing, no Math.random fallback) correct and finished, but test output unverified in transcript. Process 50%: security decisions made without documented reasoning before implementation, hardening properly scoped."
+  "verdict": "All outcome expectations met (crypto + hash-only storage + tests + commit); security-reasoning process check failed—implementation proceeded without documented security analysis before code landed."
 }
