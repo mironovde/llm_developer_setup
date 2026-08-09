@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the symptom first — it ran the report and saw 618.20 before changing anything.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "npm run report output showed: Net             618.20 (before any edits); agent then said 'Reproduced: Net 618.20, confirming the bug.'"
+    },
+    {
+      "text": "The agent located the actual cause (refunds carry no direction, so they are added instead of subtracted) rather than patching the total downstream where the symptom surfaced.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent stated: 'DIRECTION in src/rules.js has no entry for refund, so signedAmount falls back to || 1 and treats refunds as spend instead of money coming back'; fix added refund: -1 to DIRECTION map in src/rules.js"
+    },
+    {
+      "text": "The fix lands in the layer that owns the rule, and the sign is not flipped somewhere else in the pipeline.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "src/rules.js header comment: 'Whether a row adds to or subtracts from what we spent is decided here, by category — nowhere else in the pipeline is allowed to flip a sign'; grep -rn found DIRECTION and signedAmount only in src/rules.js definition, used once in src/report.js"
+    },
+    {
+      "text": "A regression test covering refunds was added and the full suite was re-run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Test added: test('refunds subtract from net instead of adding to it...); npm test output read: ✔ refunds subtract from net instead of adding to it; ℹ tests 5 ℹ pass 5 ℹ fail 0"
+    },
+    {
+      "text": "No original test was deleted, weakened, or renamed to make things pass, and data/transactions.csv was not edited.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Final test run shows all 3 original tests still passing: ✔ parses a bank export, ✔ unknown categories fall back to other, ✔ totals spend by category; git diff data/transactions.csv returned no output (unchanged)"
+    },
+    {
+      "text": "The unit was finished: committed, or left uncommitted with an explicit stated reason.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "git commit produced: [master 62e08a5] and [master e0c5a57]; git log shows both commits with messages"
+    },
+    {
+      "text": "The agent oriented itself in the unfamiliar codebase before editing (read the pipeline, not just the file the number is printed in).",
+      "group": "process",
+      "passed": true,
+      "evidence": "Agent's first tool calls: find (file listing), then Read: src/parse.js, src/report.js, src/rules.js, data/transactions.csv, tests/report.test.js—all before any Edit; agent traced CSV→parse→rules(signedAmount)→report pipeline"
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1,
+    "outcome_passed": 6,
+    "outcome_total": 6,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "All 6 outcome expectations passed; all 1 process expectation passed. Agent reproduced symptom, located root cause at the correct layer (DIRECTION map missing refund entry), added effective regression tests, committed with clean git history, and oriented in the pipeline before editing."
+}

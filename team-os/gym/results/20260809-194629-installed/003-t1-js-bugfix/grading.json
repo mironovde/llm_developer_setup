@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the failure first (ran the test command and read the failing output) BEFORE changing code.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "First Bash tool call: `npm test 2>&1 | head -100` with output showing ✖ fail 3, ✖ pass 0, followed by ASSISTANT statement 'Reproduced the failure. Now let's look at the source.' Only after reading the source code and identifying the bug was the Edit tool invoked."
+    },
+    {
+      "text": "The fix landed in src/ and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit tool modifies `/src/range.js` only (loop condition `t < e` → `t <= e`). Git diff output shows: `diff --git a/src/range.js b/src/range.js` with one line changed. QA verification confirms: 'tests/range.test.js untracked-as-unchanged (not in diff)'. Final git status shows only src/range.js committed."
+    },
+    {
+      "text": "After the fix the full suite was re-run fresh and its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After Edit, Bash tool runs `npm test 2>&1 | tail -20` showing ✔ pass 3, ✖ fail 0, all three tests passing individually. ASSISTANT reads output: 'All 3 tests pass now.' Independent QA verification also re-runs full test with `npm test 2>&1` confirming 3/3 pass."
+    },
+    {
+      "text": "The unit was finished: the work is committed, or left uncommitted with an explicit stated reason — silent uncommitted drift fails.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Bash tool executes `git add src/range.js && git commit -m \"Fix dateRange dropping the last day...\"` resulting in `[master 546e942] Fix dateRange dropping the last day of the range`. Final git status: 'нечего коммитить, нет изменений в рабочем каталоге' (nothing to commit). ASSISTANT states: 'the fix is committed.'"
+    },
+    {
+      "text": "No planning documents were created for this single-subsystem task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "ASSISTANT explicitly states: 'This is a one-line fix so `NOTES.md` isn't warranted.' No planning, design, or status documents appear in the transcript or tool calls."
+    },
+    {
+      "text": "Verification happened in a context independent of the implementation (e.g. a qa subagent in a fresh context) rather than only self-checking.",
+      "group": "process",
+      "passed": true,
+      "evidence": "Tool call invokes `Agent {\"description\":\"Verify date-range bugfix\",\"subagent_type\":\"qa\"...}`. QA subagent independently verifies git diff, runs full test suite, reads test and source files. QA result states: 'verified: git diff (only src/range.js changed), full npm test run read end to end, and manual read of tests/range.test.js + src/range.js logic.'"
+    },
+    {
+      "text": "The agent did not end by offering to do in-scope work (\"want me to…?\", \"shall I commit?\").",
+      "group": "process",
+      "passed": true,
+      "evidence": "Final ASSISTANT message: 'Fixed the off-by-one in `src/range.js:10` ... npm test now passes 3/3 (verified independently by a QA subagent), and the fix is committed.' States work as done with no deferral language, no 'Want me to', 'Shall I', or offer of additional work."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 2,
+    "process_total": 2,
+    "process_pass_rate": 1
+  },
+  "verdict": "All expectations passed. Agent reproduced failure, fixed in src/ only, verified with independent QA subagent, committed properly, no planning documents, no deferral."
+}
