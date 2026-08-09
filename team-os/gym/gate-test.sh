@@ -15,11 +15,23 @@ mkws() { # $1=task → prints workspace path
   printf '%s' "$ws"
 }
 
-run_gate() { # $1=task $2=ws $3=transcript-text → exit code
+run_gate() { # $1=task $2=ws $3=transcript-text [$4=phase1-state-file] → exit code
   local t="$1" ws="$2" tr="$ws/.transcript.jsonl"
   printf '%s\n' "${3:-{}}" > "$tr"
-  ( cd "$ws" && WORKSPACE="$ws" TRANSCRIPT="$tr" RESULT_JSON='{}' \
+  ( cd "$ws" && WORKSPACE="$ws" TRANSCRIPT="$tr" RESULT_JSON='{}' PHASE1_STATE="${4:-}" \
       BUDGET_USED=1000 BUDGET_LIMIT=999999 bash "$GYM/tasks/$t/check.sh" ) >"$ws/.gate.log" 2>&1
+}
+
+# Solve the 012 chain up to step N, writing the matching PROGRESS.md lines.
+solve_chain() { # $1=ws $2=steps-to-solve $3=progress-lines
+  python3 - "$1" "$2" "$3" <<'PY'
+import pathlib, re, sys
+ws, n, plines = pathlib.Path(sys.argv[1]), int(sys.argv[2]), int(sys.argv[3])
+vals = [v.strip() for v in re.search(r"TARGETS = \[([^\]]+)\]", (ws/"steps.js").read_text()).group(1).split(",")]
+for i in range(n):
+    (ws/f"src/chain/step{i+1}.js").write_text(f"'use strict';\n\nmodule.exports = {vals[i]};\n")
+(ws/"PROGRESS.md").write_text("".join(f"step {i+1}: {vals[i]} — done\n" for i in range(plines)))
+PY
 }
 
 expect() { # $1=label $2=expected(pass|fail) $3=actual-rc $4=ws
@@ -88,6 +100,65 @@ ws="$(mkws 007-t2-refactor dupes)"
 cp "$ws/src/utils.js" "$ws/src/strings.js"; cp "$ws/src/utils.js" "$ws/src/arrays.js"; cp "$ws/src/utils.js" "$ws/src/dates.js"
 printf "module.exports = require('./strings');\n" > "$ws/src/utils.js"
 run_gate 007-t2-refactor "$ws" '{}'; expect "copies left behind" fail $? "$ws"
+
+echo "── 011-cold-start-existing"
+ws="$(mkws 011-cold-start-existing red)"; run_gate 011-cold-start-existing "$ws" '{}'; expect "unsolved" fail $? "$ws"
+
+fix_rules() { sed -i '' 's/^  dining: 1,$/  dining: 1,\n  refund: -1,/' "$1/src/rules.js"; }
+add_refund_test() { cat >> "$1/tests/report.test.js" <<'T'
+
+test('refunds reduce the net total', () => {
+  const csv = ['date,category,description,amount',
+               '2026-02-01,groceries,Market,10.00',
+               '2026-02-03,refund,Returned item,4.00'].join('\n');
+  const report = buildReport(parseCsv(csv));
+  assert.strictEqual(report.byCategory.refund, -4);
+  assert.strictEqual(report.net, 6);
+});
+T
+}
+ws="$(mkws 011-cold-start-existing green)"; fix_rules "$ws"; add_refund_test "$ws"
+run_gate 011-cold-start-existing "$ws" '{}'; expect "fixed in rules + regression test" pass $? "$ws"
+
+ws="$(mkws 011-cold-start-existing notest)"; fix_rules "$ws"
+run_gate 011-cold-start-existing "$ws" '{}'; expect "fixed but no regression test" fail $? "$ws"
+
+ws="$(mkws 011-cold-start-existing datahack)"
+python3 - "$ws" <<'PY'
+import pathlib, sys
+p = pathlib.Path(sys.argv[1])/"data/transactions.csv"
+p.write_text(p.read_text().replace("172.75", "-172.75").replace(",45.90", ",-45.90"))
+PY
+run_gate 011-cold-start-existing "$ws" '{}'; expect "numbers bent in the data file" fail $? "$ws"
+
+echo "── 012-context-resume"
+snap() { # $1=ws → writes a phase-1 snapshot taken at the current state, prints its path
+  local f="$1/.phase1.json"
+  ( cd "$1" && bash "$GYM/tasks/012-context-resume/snapshot.sh" ) > "$f"
+  printf '%s' "$f"
+}
+ws="$(mkws 012-context-resume red)"; run_gate 012-context-resume "$ws" '{}' ""; expect "unsolved, no snapshot" fail $? "$ws"
+
+ws="$(mkws 012-context-resume green)"
+solve_chain "$ws" 5 5; SNAP="$(snap "$ws")"          # interrupted here: 5 steps settled
+solve_chain "$ws" 12 12                               # phase 2 continues, settled files rewritten identically
+run_gate 012-context-resume "$ws" '{}' "$SNAP"; expect "resumed and finished" pass $? "$ws"
+
+ws="$(mkws 012-context-resume restart)"
+solve_chain "$ws" 5 5; SNAP="$(snap "$ws")"
+solve_chain "$ws" 12 12
+printf "'use strict';\n// redone from scratch\nmodule.exports = %s;\n" \
+  "$(sed -n 's/.*module.exports = \([0-9]*\).*/\1/p' "$ws/src/chain/step1.js")" > "$ws/src/chain/step1.js"
+run_gate 012-context-resume "$ws" '{}' "$SNAP"; expect "phase 2 rewrote settled step" fail $? "$ws"
+
+ws="$(mkws 012-context-resume nonotes)"
+solve_chain "$ws" 5 0; SNAP="$(snap "$ws")"          # worked but wrote nothing to disk
+solve_chain "$ws" 12 12
+run_gate 012-context-resume "$ws" '{}' "$SNAP"; expect "nothing written during phase 1" fail $? "$ws"
+
+ws="$(mkws 012-context-resume finished-early)"
+solve_chain "$ws" 12 12; SNAP="$(snap "$ws")"        # interrupt landed after the work was done
+run_gate 012-context-resume "$ws" '{}' "$SNAP"; expect "nothing left to resume" fail $? "$ws"
 
 echo
 echo "gate tests: $PASS ok, $FAIL failed"

@@ -1,0 +1,9 @@
+{
+  "tier": "T1",
+  "budget": 200000,
+  "timeout": 1200,
+  "requires": ["node"],
+  "browser": false,
+  "pass_k": 1,
+  "description": "Cold start on an unfamiliar, layered codebase: a user-shaped symptom report with no structural hints, a bug the passing test suite does not cover, and a fix that must land in the layer that owns the rule. Measures work on an existing project rather than greenfield."
+}

@@ -1,0 +1,12 @@
+{
+  "tier": "T2",
+  "budget": 400000,
+  "timeout": 1500,
+  "requires": ["node"],
+  "browser": false,
+  "pass_k": 1,
+  "two_phase": true,
+  "phase1_timeout": 60,
+  "phase2_prompt": "prompt2.md",
+  "description": "Twelve-step gated chain, deliberately interrupted mid-run. A second cold process is started in the same workspace with nothing but 'continue'. Measures whether the config makes the agent externalise state well enough for a successor with zero context to resume — the core property behind multi-hour autonomy."
+}

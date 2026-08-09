@@ -1,0 +1,10 @@
+date,category,description,amount
+2026-01-03,groceries,Supermarket,120.40
+2026-01-05,transport,Metro card,45.00
+2026-01-09,groceries,Bakery,18.10
+2026-01-12,refund,Returned headphones,172.75
+2026-01-15,utilities,Electricity,88.30
+2026-01-20,transport,Taxi,23.60
+2026-01-22,refund,Refunded subscription,45.90
+2026-01-27,dining,Lunch,64.25
+2026-01-30,utilities,Internet,39.90

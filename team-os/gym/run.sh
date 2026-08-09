@@ -170,20 +170,50 @@ run_task_once() { # $1=task_name $2=attempt → sets GLOBALS: T_STATUS T_CHECK T
   local mcp_args=()
   [ "$browser" = "true" ] && mcp_args=(--mcp-config "$GYM/mcp-chrome.json")
 
-  echo "[$task] running (tier=$tier budget=$budget timeout=${timeout}s browser=$browser)"
-  local t0 t1
+  # one headless agent process against the prepared workspace
+  agent_pass() { # $1=prompt-file $2=transcript-out $3=timeout $4=stderr-out → rc
+    ( cd "$ws" && run_with_timeout "$3" \
+        claude -p "$(cat "$1")" \
+          --setting-sources project \
+          --settings "$V_SETTINGS" \
+          --strict-mcp-config "${mcp_args[@]}" \
+          --permission-mode acceptEdits \
+          --output-format stream-json --verbose \
+          < /dev/null > "$2" 2> "$4" )
+  }
+
+  local two_phase p1_timeout p2_prompt
+  two_phase="$(jq -r '.two_phase // false' "$meta")"
+  p1_timeout="$(jq -r '.phase1_timeout // 60' "$meta")"
+  p2_prompt="$(jq -r '.phase2_prompt // "prompt2.md"' "$meta")"
+
+  echo "[$task] running (tier=$tier budget=$budget timeout=${timeout}s browser=$browser two_phase=$two_phase)"
+  local t0 t1 rc
   t0="$(date +%s)"
-  set +e
-  ( cd "$ws" && run_with_timeout "$timeout" \
-      claude -p "$(cat "$tdir/prompt.md")" \
-        --setting-sources project \
-        --settings "$V_SETTINGS" \
-        --strict-mcp-config "${mcp_args[@]}" \
-        --permission-mode acceptEdits \
-        --output-format stream-json --verbose \
-        < /dev/null > "$rundir/transcript.jsonl" 2> "$rundir/stderr.log" )
-  local rc=$?
-  set -e
+  if [ "$two_phase" = "true" ]; then
+    # Phase 1 is killed on purpose; phase 2 is a cold process that must resume from the workspace.
+    set +e
+    agent_pass "$tdir/prompt.md" "$rundir/transcript-p1.jsonl" "$p1_timeout" "$rundir/stderr-p1.log"
+    set -e
+    pkill -f "gym-fixture" 2>/dev/null || true
+    if [ -x "$tdir/snapshot.sh" ] || [ -f "$tdir/snapshot.sh" ]; then
+      ( cd "$ws" && bash "$tdir/snapshot.sh" ) > "$rundir/phase1-state.json" 2>"$rundir/snapshot.log" || true
+    fi
+    echo "[$task]   phase 1 interrupted after ${p1_timeout}s → cold restart"
+    set +e
+    agent_pass "$tdir/$p2_prompt" "$rundir/transcript-p2.jsonl" "$((timeout - p1_timeout))" "$rundir/stderr-p2.log"
+    rc=$?
+    set -e
+    { cat "$rundir/transcript-p1.jsonl" 2>/dev/null
+      printf '{"type":"assistant","message":{"content":[{"type":"text","text":"===== PHASE 2: cold process, prompt was only \\"Continue the work in this repository.\\" ====="}]}}\n'
+      cat "$rundir/transcript-p2.jsonl" 2>/dev/null; } > "$rundir/transcript.jsonl"
+    cat "$rundir/stderr-p1.log" "$rundir/stderr-p2.log" > "$rundir/stderr.log" 2>/dev/null || true
+  else
+    set +e
+    agent_pass "$tdir/prompt.md" "$rundir/transcript.jsonl" "$timeout" "$rundir/stderr.log"
+    rc=$?
+    set -e
+  fi
   t1="$(date +%s)"
   T_DUR=$((t1 - t0))
 
@@ -203,10 +233,20 @@ run_task_once() { # $1=task_name $2=attempt → sets GLOBALS: T_STATUS T_CHECK T
 
   T_BU="$(budget_used "$result")"
   T_TOK="$(printf '%s' "$result" | jq -r '.usage.output_tokens // 0' 2>/dev/null || echo 0)"
+  if [ "$two_phase" = "true" ]; then
+    # both processes are spend against the same task — the second one is not free
+    local r1 r2
+    r1="$(extract_result_json "$rundir/transcript-p1.jsonl")"
+    r2="$(extract_result_json "$rundir/transcript-p2.jsonl")"
+    T_BU=$(( $(budget_used "$r1") + $(budget_used "$r2") ))
+    T_TOK=$(( $(printf '%s' "$r1" | jq -r '.usage.output_tokens // 0' 2>/dev/null || echo 0) \
+            + $(printf '%s' "$r2" | jq -r '.usage.output_tokens // 0' 2>/dev/null || echo 0) ))
+  fi
 
   # deterministic gate
   set +e
   ( cd "$ws" && WORKSPACE="$ws" TRANSCRIPT="$rundir/transcript.jsonl" RESULT_JSON="$result" \
+      PHASE1_STATE="$rundir/phase1-state.json" \
       BUDGET_USED="$T_BU" BUDGET_LIMIT="$budget" bash "$tdir/check.sh" ) > "$rundir/check.log" 2>&1
   local ck=$?
   set -e
