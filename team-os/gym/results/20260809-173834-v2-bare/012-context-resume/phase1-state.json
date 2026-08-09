@@ -1,0 +1,12 @@
+{
+  "steps_done": 6,
+  "progress_lines": 6,
+  "step_hashes": {
+    "src/chain/step1.js": "0c0dd79c4052e7afe1128191f93d313335ccb1ad7203a4ac4180e795778f6e3b",
+    "src/chain/step2.js": "8202b9cb5632947f2159dbcfc8bd78025eb3a3139893aeffc7bda6a0e4c62be6",
+    "src/chain/step3.js": "39ad2299bb1d3dbbd09120af6fc2bbe872b33ccb77bda341464f6d13e2c49c88",
+    "src/chain/step4.js": "3db116228c1efecdfa2e1ddbc7b42a7fcfde04315f55c647593bbd7c43e6d691",
+    "src/chain/step5.js": "d4d88d8f45a0764fa9abda1a0088545600f17ce621dbce1b4bd0d2cabf6c33f9",
+    "src/chain/step6.js": "db514b5d4abca90b41854b303f93f3857abb7b0e655829762f0e309c28d0da22"
+  }
+}

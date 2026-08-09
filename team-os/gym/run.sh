@@ -238,17 +238,11 @@ run_task_once() { # $1=task_name $2=attempt → sets GLOBALS: T_STATUS T_CHECK T
     return 0
   fi
 
-  T_BU="$(budget_used "$result")"
-  T_TOK="$(printf '%s' "$result" | jq -r '.usage.output_tokens // 0' 2>/dev/null || echo 0)"
-  if [ "$two_phase" = "true" ]; then
-    # both processes are spend against the same task — the second one is not free
-    local r1 r2
-    r1="$(extract_result_json "$rundir/transcript-p1.jsonl")"
-    r2="$(extract_result_json "$rundir/transcript-p2.jsonl")"
-    T_BU=$(( $(budget_used "$r1") + $(budget_used "$r2") ))
-    T_TOK=$(( $(printf '%s' "$r1" | jq -r '.usage.output_tokens // 0' 2>/dev/null || echo 0) \
-            + $(printf '%s' "$r2" | jq -r '.usage.output_tokens // 0' 2>/dev/null || echo 0) ))
-  fi
+  # Charge the run for every agent process it started — main loop, subagents, both phases.
+  # The concatenated transcript carries one result event each, so summing over it covers all
+  # three cases at once.
+  T_BU="$(budget_used_transcript "$rundir/transcript.jsonl")"
+  T_TOK="$(out_tokens_transcript "$rundir/transcript.jsonl")"
 
   # deterministic gate
   set +e

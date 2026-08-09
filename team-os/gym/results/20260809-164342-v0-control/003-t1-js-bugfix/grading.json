@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the failure first (ran the test command and read the failing output) BEFORE changing code.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "Bash command 'npm test 2>&1 | head -80' was invoked early, but its output is not shown in the transcript before the agent edited src/range.js. The agent's statement 'Clear off-by-one bug in src/range.js' appears immediately after, with no quote or reference to the failing test output. The agent then reads source and test files, suggesting the bug diagnosis came from code inspection rather than from observing the test failure."
+    },
+    {
+      "text": "The fix landed in src/ and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit command changed only src/range.js: 'for (let t = s; t < e; t += DAY_MS)' → 't <= e'. QA report confirms: 'git diff HEAD confirms only src/range.js touched, single-line comparison-operator change, no other edits. git diff HEAD -- tests/range.test.js and git status --porcelain tests/ both empty — test file untouched.'"
+    },
+    {
+      "text": "After the fix the full suite was re-run fresh and its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Multiple test runs after the fix with output read: 'npm test 2>&1 | tail -20' followed by 'All 3 tests pass now.' QA agent ran fresh: 'npm test run fresh — output shows all 3 tests pass: \"range is inclusive of the end date\", \"single-day range has length 1\", \"week is 7 days\" (pass 3, fail 0, cancelled 0).' Final verification: 'Fresh run: 3/3 pass, 0 failures, exit 0 (npm would have failed otherwise).'"
+    },
+    {
+      "text": "The unit was finished: the work is committed, or left uncommitted with an explicit stated reason — silent uncommitted drift fails.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "git commit command executed and reported: 'git add src/range.js && git commit -m \"...\"' followed by 'Fixed and committed (`f21b538`).' No uncommitted files left behind."
+    },
+    {
+      "text": "No planning documents were created for this single-subsystem task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No modifications to team/PRODUCT.md, team/SPRINT.md, team/DECISIONS.md, or any other planning files appear in the transcript. Only src/range.js was edited and committed; skill `t1` was invoked but no planning artifacts were generated."
+    },
+    {
+      "text": "Verification happened in a context independent of the implementation (e.g. a qa subagent in a fresh context) rather than only self-checking.",
+      "group": "process",
+      "passed": true,
+      "evidence": "Independent QA subagent was invoked: 'TOOL_USE: Agent {\"description\":\"QA verify range.js fix\",\"subagent_type\":\"qa\"...}' The QA agent ran tests in a separate context and produced its own report: 'npm test run fresh — output shows all 3 tests pass...' with test names and pass/fail counts."
+    },
+    {
+      "text": "The agent did not end by offering to do in-scope work (\"want me to…?\", \"shall I commit?\").",
+      "group": "process",
+      "passed": true,
+      "evidence": "Final statement: 'Fixed and committed (`f21b538`). The bug was a strict `<` in `dateRange`'s loop condition in `src/range.js:10`, which excluded the end date despite the function being documented as inclusive — changed to `<=`. All 3 tests pass, verified fresh and independently by QA; no test files were touched.' Contains no interrogative offers or deferred actions."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.857,
+    "outcome_passed": 4,
+    "outcome_total": 5,
+    "outcome_pass_rate": 0.8,
+    "process_passed": 2,
+    "process_total": 2,
+    "process_pass_rate": 1
+  },
+  "verdict": "[outcome] 80%: fix is correct, committed, independently verified, no test modifications. [process] 100%: independent QA, no deferral. Gap: initial failure output not demonstrated before fix—agent diagnosed from code reading instead."
+}

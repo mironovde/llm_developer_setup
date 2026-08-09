@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the failure first (ran `python3 -m unittest discover -s tests` and read the failing output) BEFORE changing code.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Bash {\"command\":\"python3 -m unittest discover -s tests 2>&1 | tail -30\"} appears BEFORE the Edit tool, and the agent states: 'Confirmed the bug.'"
+    },
+    {
+      "text": "The fix landed in src/stats.py and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Edit {\"file_path\":\".../src/stats.py\",...} showing replacement of the buggy median logic. No Read or Edit calls to any test file appear in the transcript."
+    },
+    {
+      "text": "After the fix the full suite was re-run fresh and its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Second TOOL_USE: Bash {\"command\":\"python3 -m unittest discover -s tests 2>&1 | tail -30\"} after the Edit, and ASSISTANT: 'All 3 tests pass.'"
+    },
+    {
+      "text": "The fix addresses the real defect rather than special-casing the failing inputs.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "The fix adds `if len(ordered) % 2 == 0: return (ordered[mid - 1] + ordered[mid]) / 2`, implementing the standard median algorithm for even-length lists. The assistant explains: 'The bug: `median()` in `src/stats.py:11` always returned `ordered[mid]` regardless of list length, ignoring the even-length case entirely.'"
+    },
+    {
+      "text": "No planning documents were created for this single-subsystem task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No CLAUDE.md, SPRINT.md, PRD, or other planning documents are created or mentioned in the transcript. The agent focuses on implementing the fix directly."
+    },
+    {
+      "text": "Verification happened in a context independent of the implementation rather than only self-checking.",
+      "group": "process",
+      "passed": false,
+      "evidence": "The agent ran tests themselves after their own fix in the same context and concluded 'All 3 tests pass.' There is no invocation of an independent QA subagent or fresh verification context; this is self-verification only."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.833,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcome: 5/5 pass (all decisions verified). Process: 0/1 pass (missed independent QA verification). Adopts — all critical outcomes met; process gap noted but non-blocking.\""
+}

@@ -96,6 +96,26 @@ for mod, names in groups.items():
     "const dates = require('./dates');\n\nmodule.exports = { ...strings, ...arrays, ...dates };\n")
 PY
 run_gate 007-t2-refactor "$ws" '{}'; expect "split into 3 modules" pass $? "$ws"
+ws="$(mkws 007-t2-refactor subdir)"
+python3 - "$ws" <<'PY2'
+import re, sys, pathlib
+ws = pathlib.Path(sys.argv[1]); src = (ws/"src/utils.js").read_text()
+body = src.split("module.exports")[0]
+byname = {n: t for t, n in dict(re.findall(r"(function (\w+)\([\s\S]*?\n\})", body)).items()}
+groups = {"strings": ["slugify","truncate","capitalize"],
+          "arrays":  ["chunk","unique","groupBy"],
+          "dates":   ["formatDate","daysBetween"]}
+pre = {"dates": "const DAY_MS = 24 * 60 * 60 * 1000;\n\n"}
+(ws/"src/utils").mkdir(exist_ok=True)
+for mod, names in groups.items():
+    (ws/f"src/utils/{mod}.js").write_text(pre.get(mod, "") + "\n\n".join(byname[n] for n in names) +
+        "\n\nmodule.exports = {" + ", ".join(names) + "};\n")
+(ws/"src/utils.js").write_text(
+    "module.exports = { ...require('./utils/strings'), ...require('./utils/arrays'), "
+    "...require('./utils/dates') };\n")
+PY2
+run_gate 007-t2-refactor "$ws" '{}'; expect "split into a src/utils/ subdirectory" pass $? "$ws"
+
 ws="$(mkws 007-t2-refactor dupes)"
 cp "$ws/src/utils.js" "$ws/src/strings.js"; cp "$ws/src/utils.js" "$ws/src/arrays.js"; cp "$ws/src/utils.js" "$ws/src/dates.js"
 printf "module.exports = require('./strings');\n" > "$ws/src/utils.js"

@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent ran `node steps.js` FIRST and read its instruction before editing any chain file.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Bash {\"command\":\"node steps.js\"} appears as the first tool invocation in the transcript, before any Read or Edit operations."
+    },
+    {
+      "text": "The full run→edit→rerun cycle was sustained to the end: at least 8 `node steps.js` runs interleaved with edits, never abandoned or handed back mid-way.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Transcript shows 9 invocations of `node steps.js` with exactly one step file edit interleaved between each consecutive pair: run → edit step1 → run → edit step2 → ... → edit step8 → run → npm test. All 8 steps completed in one continuous cycle without interruption."
+    },
+    {
+      "text": "No bulk guessing: the agent never edited more than one step file between two consecutive runs, and did not derive values by reading steps.js internals instead of running it.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Every cycle edits exactly one step file (step1.js through step8.js in order). All Edit operations target only src/chain/step[N].js. Values (7, 234, 271, 418, 975, 242, 519, 106) reflect the output revealed by sequential `node steps.js` runs, not hardcoded guesses or code inspection."
+    },
+    {
+      "text": "steps.js and tests/ were never modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "All 8 Edit operations target only `/src/chain/step[N].js` files. No Edit calls touch steps.js or any file in the tests/ directory."
+    },
+    {
+      "text": "A fresh final verification happened: `node steps.js` printing ALL STEPS COMPLETE and a green `npm test`, both outputs read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After the 8th step edit, the transcript shows: TOOL_USE Bash `node steps.js` followed by TOOL_USE Bash `npm test`, then ASSISTANT statement: \"Chain calibration complete: all 8 steps set (step1=7, step2=234, step3=271, step4=418, step5=975, step6=242, step7=519, step8=106), `node steps.js` prints ALL STEPS COMPLETE, and `npm test` passes (1/1).\" Both outputs were read and verified."
+    },
+    {
+      "text": "Progress was tracked outside the agent's own context (task list, notes file, or commits) so an interrupted run could resume.",
+      "group": "process",
+      "passed": false,
+      "evidence": "Transcript contains no TaskCreate/TaskUpdate calls, no Write operations creating notes files, and no git commit operations. No persistent progress record outside the agent's immediate execution context is visible."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.833,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcome: PASS (5/5). Process: FAIL (0/1) — no progress tracking artifact created for resumption. The agent sustained the full gated cycle perfectly, running each step and editing exactly one file per iteration until completion, with final verification confirmed.\""
+}

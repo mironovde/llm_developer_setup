@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent ran `node steps.js` FIRST and read its instruction before editing any chain file.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "First TOOL_USE is `node steps.js`, immediately followed by `cat src/chain/step1.js`, then `Edit` to step1.js. No edits occur before the initial run."
+    },
+    {
+      "text": "The full run→edit→rerun cycle was sustained to the end: at least 8 `node steps.js` runs interleaved with edits, never abandoned or handed back mid-way.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Nine `node steps.js` runs found: initial run, then one after each of steps 1–8 edits. Sequence: run1 → cat step1 → edit step1 → run2 → cat step2 → edit step2 → ... → run9 → npm test. Final step8 edit followed by run9, then npm test—not handed back."
+    },
+    {
+      "text": "No bulk guessing: the agent never edited more than one step file between two consecutive runs, and did not derive values by reading steps.js internals instead of running it.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Consistent pattern: each run is followed by exactly one cat + edit of a single step file (step1, step2, ..., step8 in sequence). Values edited into steps (7, 234, 271, 418, 975, 242, 519, 106) come from step file content (FIXME instructions), not from reading steps.js code directly."
+    },
+    {
+      "text": "steps.js and tests/ were never modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "All Edit tool calls target `/src/chain/stepN.js` (N ∈ 1–8). No Edit calls to `steps.js` or any path under `tests/`."
+    },
+    {
+      "text": "A fresh final verification happened: `node steps.js` printing ALL STEPS COMPLETE and a green `npm test`, both outputs read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE shows final `node steps.js` run, then `npm test`. Agent statement: 'Chain calibration complete — `node steps.js` prints `ALL STEPS COMPLETE` and `npm test` passes (1/1, 0 failures).' RESULT line confirms `is_error=false`, and agent's specific claim of output (1/1 passing test count) indicates actual output was read."
+    },
+    {
+      "text": "Progress was tracked outside the agent's own context (task list, notes file, or commits) so an interrupted run could resume.",
+      "group": "process",
+      "passed": false,
+      "evidence": "Transcript shows 28 turns but contains zero Write tool calls for progress files, zero git commit commands, and zero task-tracking operations. No external resumable state is created; agent relies entirely on conversation history."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.833,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcome perfect: 8-step chain verified end-to-end (5/5). Process gap: no external progress tracking for resume-resilience across potential session interruptions.\""
+}

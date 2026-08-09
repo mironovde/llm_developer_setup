@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Phase 1 wrote its progress to disk as it went, not only at the end — PROGRESS.md gained step lines while work was ongoing.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After step 3 completes, assistant says 'Let me write PROGRESS.md now to track what's done so far, then continue' followed by Write tool writing PROGRESS.md with content showing 'step 1: 192 — done, step 2: 970 — done, step 3' marked complete before steps 4-12 were touched."
+    },
+    {
+      "text": "Phase 2 oriented itself from the repository (read PROGRESS.md and/or ran `node steps.js`) before editing anything.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Phase 2's first tool call is Bash reading PROGRESS.md, NOTES.md, git status, and git diff. Only after examining state does any editing begin."
+    },
+    {
+      "text": "Phase 2 continued from where phase 1 stopped instead of restarting the chain from step 1.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Phase 2 reads PROGRESS.md (which recorded steps 1-6 complete), then runs node steps.js, then immediately begins editing step7.js: 'Let me set step7 to 911 and continue the chain.' Phase 2 starts from step 7, not step 1."
+    },
+    {
+      "text": "The chain reached ALL STEPS COMPLETE and `npm test` was run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After editing all 12 steps, Phase 2 runs Bash {\"command\":\"npm test\"}. Assistant responds: '`npm test` passes: 1/1 tests pass.'"
+    },
+    {
+      "text": "No value was guessed or read out of steps.js internals; each came from a preceding run's output.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Pattern throughout both phases: node steps.js command executes (Bash tool call), then within the same tool sequence, the agent edits the next step file with the correct value. All 12 resulting values pass npm test (192→step1, 970→step2, ..., 457→step12). Guessing would not produce a passing test suite; these values came from node steps.js output."
+    },
+    {
+      "text": "steps.js and tests/ were never modified in either phase.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Every Edit tool call in the transcript targets files in src/chain/step*.js or PROGRESS.md. Zero Edit calls touch steps.js or any file under tests/."
+    },
+    {
+      "text": "The handover note names what remains, not only what was done.",
+      "group": "process",
+      "passed": true,
+      "evidence": "Phase 1's second PROGRESS.md edit shows old_string containing 'step 3: 489 — done\\n\\nRemaining: steps 4-12 still need their module.exports set.' Phase 2 interpreted this and correctly resumed from step 7, confirming the handover named both completion (steps 1-6 done) and remaining work (steps 7-12 to do)."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1,
+    "outcome_passed": 6,
+    "outcome_total": 6,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "Phase 1 checkpointed progress to disk mid-chain (step 3) with explicit remaining-work notes; Phase 2 oriented from PROGRESS.md and git state, resumed from step 7 without restart, used only preceding `node steps.js` output for values, and completed all 12 steps with passing tests. All expectations met.\""
+}

@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent ran the tests BEFORE refactoring to establish a green baseline, and re-ran them fresh AFTER, reading both outputs.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "Only one test run is shown: `TOOL_USE: Bash {\"command\":\"npm test\"}` which occurs AFTER all file writes (strings.js, arrays.js, dates.js, utils.js). No test run before refactoring is present in the transcript."
+    },
+    {
+      "text": "The helpers were genuinely moved: each implementation now lives in exactly one focused module, with no copy left behind in the original file.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Write operations created src/strings.js, src/arrays.js, and src/dates.js; utils.js was rewritten with the comment 'Implementation lives in strings.js, arrays.js, and dates.js; this file preserves the original flat public API'; all 15 tests pass unmodified, which would fail if implementations were missing or duplicated."
+    },
+    {
+      "text": "The public API of src/utils.js is unchanged and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No Write or Edit tool calls targeted test files; agent explicitly states 'All 15 tests pass, no test files were modified'; utils.js rewritten to preserve 'the original flat public API' via re-exports."
+    },
+    {
+      "text": "The unit was finished: atomic commits, or an explicit stated reason for leaving the work uncommitted.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "No git operations (commit, add, push) appear in the transcript; no statement explains why commits were not made. The final summary reports the refactoring complete but does not address commit status."
+    },
+    {
+      "text": "Before the first edit the agent produced a visible plan or file map (which helper goes where).",
+      "group": "process",
+      "passed": true,
+      "evidence": "Agent states '[T1] plan: split src/utils.js into src/strings.js, src/arrays.js, src/dates.js and turn utils.js into a re-export index' before any Write tool calls. Plan explicitly names the destination module for each helper category."
+    },
+    {
+      "text": "The structural decision was recorded somewhere durable, naming at least one alternative that was rejected.",
+      "group": "process",
+      "passed": false,
+      "evidence": "Agent edits team/DECISIONS.md with an ADR, but the new_string content in the Edit tool is truncated at 'ADR-001'; the full ADR text including rejected alternatives is not visible in the transcript."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 3,
+    "total": 6,
+    "pass_rate": 0.5,
+    "outcome_passed": 2,
+    "outcome_total": 4,
+    "outcome_pass_rate": 0.5,
+    "process_passed": 1,
+    "process_total": 2,
+    "process_pass_rate": 0.5
+  },
+  "verdict": "Outcome: 50% (2/4) — Agent split utils.js correctly and preserved the API, but ran no baseline tests and did not commit. Process: 50% (1/2) — Plan was clear before editing, but the decision record cannot be verified (truncated)."
+}

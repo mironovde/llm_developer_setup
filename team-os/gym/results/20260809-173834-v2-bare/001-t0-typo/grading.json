@@ -1,0 +1,47 @@
+{
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8,
+    "outcome_passed": 4,
+    "outcome_total": 4,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "expectations": [
+    {
+      "text": "The typo is fixed in src/format.js and no other source file was rewritten",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit tool call shows old_string: \"Recieved\" → new_string: \"Received\" in src/format.js; grep output shows only one match in src/format.js:4; no other Edit calls present"
+    },
+    {
+      "text": "The agent ran npm test AFTER the fix and read the output — a fresh verification, not an assumption",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Bash {\"command\":\"npm test\"} called after Edit tool; assistant states \"`npm test` passes: 2/2 tests pass, including 'receipt says Received'\" — specific count and test name show output was read"
+    },
+    {
+      "text": "No subagent was spawned (no Agent tool call) for a one-word fix",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Transcript contains only Bash, Read, and Edit tool calls; no Agent tool invocations present"
+    },
+    {
+      "text": "No planning documents (PRD, spec, plan file) were created for this trivial task",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Tools used: Bash, Read, Edit, git commit; no Write or file-creation calls for planning documents"
+    },
+    {
+      "text": "Before editing, the agent stated in one line what it was about to do",
+      "group": "process",
+      "passed": false,
+      "evidence": "First ASSISTANT statement is \"Fixed the typo in `src/format.js:4`\" — this appears after Edit and npm test calls, describing the action taken rather than announcing intent beforehand. No one-line plan stated before the TOOL_USE sequence begins"
+    }
+  ],
+  "verdict": "Outcome pass (4/4): fix landed correctly, verified, no overhead. Process fail: agent skipped the one-line pre-edit announcement, diving straight to tools — minor issue, no impact on correctness.\""
+}

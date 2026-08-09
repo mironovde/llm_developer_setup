@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the failure first (ran `python3 -m unittest discover -s tests` and read the failing output) BEFORE changing code.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "First bash tool use is a grep search for 'median'; the agent then reads stats.py and immediately edits it. The test run (TOOL_USE: Bash python3 -m unittest) appears only AFTER the Edit tool modifies the code, not before."
+    },
+    {
+      "text": "The fix landed in src/stats.py and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit tool targets `/private/var/folders/.../src/stats.py`. Only one file modification appears in the transcript, no test files are edited."
+    },
+    {
+      "text": "After the fix the full suite was re-run fresh and its output read.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "The bash command `python3 -m unittest discover -s tests` was issued, but the actual test output is not shown in the transcript digest. The assistant claims 'now passes (3/3)' but without seeing the actual command output, we cannot verify it was read—only that the command was issued."
+    },
+    {
+      "text": "The fix addresses the real defect rather than special-casing the failing inputs.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "The fix implements correct median logic: `if len(ordered) % 2 == 0: return (ordered[mid - 1] + ordered[mid]) / 2`. This fixes the systemic bug (averaging two middle elements for even-length lists) rather than patching specific test inputs."
+    },
+    {
+      "text": "No planning documents were created for this single-subsystem task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Transcript shows grep search, file read, code edit, and test run—no mention of any PRD, plan, design doc, or planning artifacts."
+    },
+    {
+      "text": "Verification happened in a context independent of the implementation rather than only self-checking.",
+      "group": "process",
+      "passed": false,
+      "evidence": "The test run (final bash command) was executed in the same transcript context where the code was edited. No evidence of a fresh/independent verification context (separate agent, fresh checkout, etc.); the implementer self-checked only."
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 3,
+    "total": 6,
+    "pass_rate": 0.5,
+    "outcome_passed": 3,
+    "outcome_total": 5,
+    "outcome_pass_rate": 0.6,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcome 0.6/1: Code fix is correct but violates core T0/T1 practices—no reproduce-first, no output verification. Process 0/1: Self-checking only, no independent verification context demonstrated."
+}

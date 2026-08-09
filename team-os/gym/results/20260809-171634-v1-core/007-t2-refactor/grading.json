@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent ran the tests BEFORE refactoring to establish a green baseline, and re-ran them fresh AFTER, reading both outputs.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Baseline: 15/15 passing. Now creating the three focused modules. ... npm test now succeeded (transient permission hiccup before). All 15 tests pass, 0 failures."
+    },
+    {
+      "text": "The helpers were genuinely moved: each implementation now lives in exactly one focused module, with no copy left behind in the original file.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "New `src/utils.js` is a pure re-export: `module.exports = { ...strings, ...arrays, ...dates }`, no leftover implementation code. ... every function body is byte-identical to the original, just relocated."
+    },
+    {
+      "text": "The public API of src/utils.js is unchanged and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Exported names are exactly the original 8: slugify, truncate, capitalize, chunk, unique, groupBy, formatDate, daysBetween. ... `git diff -- tests/utils.test.js` is empty; `git status --short` shows no entry for that file at all"
+    },
+    {
+      "text": "The unit was finished: atomic commits, or an explicit stated reason for leaving the work uncommitted.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Nothing left to do; changes aren't committed since the working agreement leaves committing to explicit request."
+    },
+    {
+      "text": "Before the first edit the agent produced a visible plan or file map (which helper goes where).",
+      "group": "process",
+      "passed": false,
+      "evidence": "Now I'll split into three modules and turn `utils.js` into a re-export index. [Then immediately writes files without enumerating which functions route to which module.]"
+    },
+    {
+      "text": "The structural decision was recorded somewhere durable, naming at least one alternative that was rejected.",
+      "group": "process",
+      "passed": false,
+      "evidence": "ADR-001 was appended (## ADR-001: Split utils.js into strings/arrays/dates modules / - Status: acc...) but the transcript cuts off before showing the full decision text, and the verification summary does not confirm that alternative approaches were named or rejected."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 2,
+    "total": 6,
+    "pass_rate": 0.667,
+    "outcome_passed": 4,
+    "outcome_total": 4,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 2,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcomes solid (tests run, functions properly moved, API preserved, work reasoned); process gaps — no detailed pre-edit plan mapping functions to modules, and ADR recorded without visible alternative analysis.\""
+}

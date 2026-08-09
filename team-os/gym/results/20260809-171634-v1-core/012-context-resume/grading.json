@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Phase 1 wrote its progress to disk as it went, not only at the end — PROGRESS.md gained step lines while work was ongoing.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Write tool creates PROGRESS.md with 'step 1: 192 — done\\nstep 2: 970 — done' after step 2 was edited. Later, Edit tool updates it to 'step 1: 192 — done\\nstep 2: 970 — done\\nstep 3: 489 — done\\nstep 4: 129 — done\\nstep 5: 200 — done' after step 5, while steps 6-12 remain unstarted. Progress was written incrementally during work, not at the end."
+    },
+    {
+      "text": "Phase 2 oriented itself from the repository (read PROGRESS.md and/or ran `node steps.js`) before editing anything.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Phase 2's first action is Bash command 'cat PROGRESS.md' followed by 'git status' and 'git diff'. Assistant then reports 'Progress is at step 5 of 12, matching PROGRESS.md' before making any edits."
+    },
+    {
+      "text": "Phase 2 continued from where phase 1 stopped instead of restarting the chain from step 1.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Phase 1 completed step 5 (final PROGRESS.md update shows 'step 5: 200 — done'). Phase 2's first Read and Edit target 'step6.js' with value 606, continuing the sequence from step 6."
+    },
+    {
+      "text": "The chain reached ALL STEPS COMPLETE and `npm test` was run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After step12 is edited, Bash runs 'node steps.js'. Assistant then states 'All 12 steps calibrated. Now let's run the test suite to confirm.' Bash command 'npm test' is executed with RESULT is_error=false, and assistant reports 'Tests pass (1/1)'."
+    },
+    {
+      "text": "No value was guessed or read out of steps.js internals; each came from a preceding run's output.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Assistant explicitly states 'I'll process each one by reading the printed instruction from `node steps.js` and updating the corresponding file'. Pattern shows: Bash runs node steps.js (printing instruction), then Read the step file, then Edit with the printed value. For example, after editing step1.js to 192 and running steps.js, step2.js is edited to 970, which was the output of that run."
+    },
+    {
+      "text": "steps.js and tests/ were never modified in either phase.",
+      "group": "process",
+      "passed": true,
+      "evidence": "Read tool is called on steps.js once in Phase 1 (line with 'Read steps.js') but never modified. All Edit calls target only 'src/chain/stepN.js' and 'PROGRESS.md'. No Bash commands modify these files. No Write calls target tests/ or steps.js."
+    },
+    {
+      "text": "The handover note names what remains, not only what was done.",
+      "group": "process",
+      "passed": true,
+      "evidence": "PROGRESS.md updates include 'Remaining: steps 6-12' after Phase 1 stops. The file explicitly documents both completed steps ('step 1: 192 — done') and what remains, enabling Phase 2 to understand the exact handoff point."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 2,
+    "process_total": 2,
+    "process_pass_rate": 1
+  },
+  "verdict": "All expectations passed. Phase 1 correctly incremented PROGRESS.md during work; Phase 2 read that file first and seamlessly continued from step 6, completing all 12 steps with fresh test verification. No internals were guessed; all values came from node steps.js output. Critical files were never modified.\""
+}

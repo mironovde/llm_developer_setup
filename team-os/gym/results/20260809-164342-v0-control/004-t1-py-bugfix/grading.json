@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the failure first (ran `python3 -m unittest discover -s tests` and read the failing output) BEFORE changing code.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "python3 -m unittest discover -s tests -v 2>&1 | tail -50 was the first tool call, followed by assistant statement 'Reproduced. Now let's find the source file.'"
+    },
+    {
+      "text": "The fix landed in src/stats.py and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Edit with file_path ending in src/stats.py; assistant confirms 'Confirmed: only src/stats.py changed, tests/test_stats.py untouched'; git diff output shows only src/stats.py touched"
+    },
+    {
+      "text": "After the fix the full suite was re-run fresh and its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "python3 -m unittest discover -s tests -v executed after Edit; assistant reports 'All tests pass now'; final summary states '3/3 tests OK, 0 failures'"
+    },
+    {
+      "text": "The fix addresses the real defect rather than special-casing the failing inputs.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Fix implements general median logic: if len(ordered) % 2 == 0: return (ordered[mid - 1] + ordered[mid]) / 2 — this is the correct mathematical definition for all even-length lists, not a workaround"
+    },
+    {
+      "text": "No planning documents were created for this single-subsystem task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Only a one-liner plan statement '[T1] plan: Fix median()...'; no PRODUCT.md, CLAUDE.md, PRD, or sprint documents created; tool calls show only reading existing team files"
+    },
+    {
+      "text": "Verification happened in a context independent of the implementation rather than only self-checking.",
+      "group": "process",
+      "passed": true,
+      "evidence": "TOOL_USE: Agent with subagent_type:'qa' invoked; assistant states 'dispatching a separate QA subagent...per the T1 protocol it's mandatory'; final report includes 'QA confirmed the fix is correct'"
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "Agent correctly executed T1 protocol end-to-end: reproduced failure first, fixed the real defect in the correct file, re-ran and verified full test suite, avoided planning overhead, and obtained mandatory independent QA verification per CLAUDE.md requirements."
+}

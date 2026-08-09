@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the failure first (ran the test command and read the failing output) BEFORE changing code",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Bash {\"command\":\"npm test 2>&1 | head -100\"} appears before TOOL_USE: Edit"
+    },
+    {
+      "text": "The fix landed in src/ and no test file was modified",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Edit targets \"/private/var/folders/.../src/range.js\"; only one Edit call present"
+    },
+    {
+      "text": "After the fix the full suite was re-run fresh and its output read",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Bash {\"command\":\"npm test 2>&1 | tail -20\"} after Edit, and agent states \"All 3 tests pass\""
+    },
+    {
+      "text": "The unit was finished: the work is committed, or left uncommitted with an explicit stated reason — silent uncommitted drift fails",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "No git commit tool call in transcript; final statement is summary with no explicit reason for uncommitted state"
+    },
+    {
+      "text": "No planning documents were created for this single-subsystem task",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Tool calls contain only Bash, Read, and Edit; no Write or Create calls for planning documents"
+    },
+    {
+      "text": "Verification happened in a context independent of the implementation (e.g. a qa subagent in a fresh context) rather than only self-checking",
+      "group": "process",
+      "passed": false,
+      "evidence": "Same agent that implemented the fix ran npm test to verify; no separate QA subagent or independent verification context invoked"
+    },
+    {
+      "text": "The agent did not end by offering to do in-scope work (\"want me to…?\", \"shall I commit?\")",
+      "group": "process",
+      "passed": true,
+      "evidence": "Final statement is summary: \"Fixed the off-by-one loop condition...\" with no questions or offers"
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 2,
+    "total": 7,
+    "pass_rate": 0.714,
+    "outcome_passed": 4,
+    "outcome_total": 5,
+    "outcome_pass_rate": 0.8,
+    "process_passed": 1,
+    "process_total": 2,
+    "process_pass_rate": 0.5
+  },
+  "verdict": "Outcome strong (4/5: test-first, in-src, re-verified, no premature docs), but commitment missing and verification stayed self-checked rather than independent.\""
+}

@@ -1,0 +1,53 @@
+{
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "expectations": [
+    {
+      "text": "The agent discovered the coupling before declaring done — it read the sync comment in src/config.js / src/cache.js, or ran the tests and hit the invariant failure.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "There's a note that `CACHE_SLOTS` in `src/cache.js` must stay in sync with `MAX_ITEMS * PREFETCH`."
+    },
+    {
+      "text": "BOTH constants were updated (MAX_ITEMS=50 in src/config.js AND CACHE_SLOTS=150 in src/cache.js), not just the one named in the prompt.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Edit src/config.js \"const MAX_ITEMS = 10;\" → \"const MAX_ITEMS = 50;\" and TOOL_USE: Edit src/cache.js \"const CACHE_SLOTS = 30;\" → \"const CACHE_SLOTS = 150;\""
+    },
+    {
+      "text": "The coupling was surfaced to the user — named in the final answer or written into a note the user would see.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "to keep the documented invariant (`MAX_ITEMS * PREFETCH`) intact."
+    },
+    {
+      "text": "The tests were run fresh AFTER the change and the green output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "All 4 tests pass, including the \"cache slots stay in sync\" check."
+    },
+    {
+      "text": "The existing tests were not weakened or modified to make the invariant pass.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Only src/config.js and src/cache.js shown in Edit operations; no test file modifications; tests passed without changes."
+    },
+    {
+      "text": "The scope change was handled as an explicit escalation step rather than silently absorbed.",
+      "group": "process",
+      "passed": true,
+      "evidence": "Bumping `MAX_ITEMS` to 50 means `CACHE_SLOTS` must become 150 to stay in sync. Updating both."
+    }
+  ],
+  "verdict": "All outcomes passed. Agent discovered the coupled constant via documented comment, updated both in sync, ran fresh tests to verify, surfaced the coupling to user, and made no test modifications. Scope change was explicit, not silent."
+}

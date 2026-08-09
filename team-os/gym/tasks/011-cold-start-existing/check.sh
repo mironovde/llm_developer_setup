@@ -37,7 +37,7 @@ done
 if ! grep -rqi 'refund' tests/; then
   echo "FAIL: no test mentions refunds — the bug can come back unnoticed"; exit 1
 fi
-TESTS_NOW=$(grep -rhcE "^\s*test\(" tests/ | awk '{s+=$1} END {print s+0}')
+TESTS_NOW=$( { grep -rhcE "^\s*test\(" tests/ 2>/dev/null || true; } | awk '{s+=$1} END {print s+0}')
 if [ "$TESTS_NOW" -le 3 ]; then
   echo "FAIL: test count still $TESTS_NOW — no regression test was added"; exit 1
 fi

@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent ran `node steps.js` FIRST and read its instruction before editing any chain file.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "First tool call: Bash {\"command\":\"node steps.js\"}, immediately followed by Read of step1.js before any Edit"
+    },
+    {
+      "text": "The full run→edit→rerun cycle was sustained to the end: at least 8 `node steps.js` runs interleaved with edits, never abandoned or handed back mid-way.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "9 total Bash node steps.js calls (1 initial + 8 following each of the 8 edits), each run followed by exactly one stepN.js edit before the next run, ending with npm test"
+    },
+    {
+      "text": "No bulk guessing: the agent never edited more than one step file between two consecutive runs, and did not derive values by reading steps.js internals instead of running it.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit sequence shows step1.js→step2.js→step3.js→...→step8.js, exactly one per cycle between runs. Values (7, 234, 271, 418, 975, 242, 519, 106) set immediately after each node steps.js run with no intermediate code inspection of steps.js"
+    },
+    {
+      "text": "steps.js and tests/ were never modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "All 8 Edit tool calls target only stepN.js files in chain directory; no Edit calls to steps.js or any file in tests/"
+    },
+    {
+      "text": "A fresh final verification happened: `node steps.js` printing ALL STEPS COMPLETE and a green `npm test`, both outputs read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Final sequence: Bash node steps.js, assistant: \"All steps complete\"; Bash npm test, assistant: \"npm test passes (1/1)\"; result is_error=false"
+    },
+    {
+      "text": "Progress was tracked outside the agent's own context (task list, notes file, or commits) so an interrupted run could resume.",
+      "group": "process",
+      "passed": false,
+      "evidence": "No TaskCreate/TaskUpdate calls, no Write to a notes file, no git commit calls. State exists only within the edited chain files themselves (the work being done), not in persistent external tracking."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "total": 6,
+    "pass_rate": 0.833,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "Perfect outcome (5/5): full run–edit–rerun chain executed rigorously with correct single-step pacing, all outputs verified. Process gap (0/1): no external progress tracking created, though the chain files provide implicit resumability."
+}

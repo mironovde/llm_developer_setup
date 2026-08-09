@@ -39,6 +39,27 @@ budget_used() { # $1=result_json → integer
   printf '%s' "$1" | jq -r '((.usage.input_tokens // 0) + (.usage.cache_creation_input_tokens // 0) + (.usage.output_tokens // 0))' 2>/dev/null || echo 0
 }
 
+# Total spend for a run, summed over EVERY result event in the transcript.
+# A transcript carries one result event per agent process: the main loop plus every subagent
+# it spawned, plus each phase of a two-phase run. Reading only the last one (as `budget_used`
+# on `extract_result_json` does) charges the run for whichever agent happened to finish last —
+# measured 2026-08-09: a 15-turn refactor was billed as 1.6k tokens because a QA subagent's
+# 1-turn result landed after it. The undercount is asymmetric: it only hits configs that
+# delegate, which is exactly the axis a config comparison is trying to measure.
+budget_used_transcript() { # $1=transcript.jsonl → integer
+  [ -f "$1" ] || { echo 0; return 0; }
+  grep '"type":"result"' "$1" 2>/dev/null \
+    | jq -s 'map((.usage.input_tokens // 0) + (.usage.cache_creation_input_tokens // 0) + (.usage.output_tokens // 0)) | add // 0' 2>/dev/null \
+    || echo 0
+}
+
+# Output tokens for a run, summed the same way.
+out_tokens_transcript() { # $1=transcript.jsonl → integer
+  [ -f "$1" ] || { echo 0; return 0; }
+  grep '"type":"result"' "$1" 2>/dev/null \
+    | jq -s 'map(.usage.output_tokens // 0) | add // 0' 2>/dev/null || echo 0
+}
+
 # Detect a usage-limit hit in a transcript (structural first; text fallback).
 # CAVEAT (found in calibration): EVERY run emits an informational rate_limit_event with
 # rate_limit_info.status="allowed" and a resetsAt epoch — only status="rejected" means a hit,

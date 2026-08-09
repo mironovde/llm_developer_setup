@@ -8,17 +8,38 @@ EXPECT="$2"
 OUTFILE="$3"
 GYM="$(cd "$(dirname "$0")" && pwd)"
 
-# Digest the transcript: assistant text + tool calls (names + truncated inputs) + result line.
-DIGEST="$(jq -r '
-  select(.type? == "assistant" or .type? == "result") |
+# Digest the transcript: assistant text + tool calls + TOOL RESULTS + result lines.
+#
+# Tool results were missing here until 2026-08-09, and expectations of the form "ran the tests and
+# READ the output" were being graded against a digest that structurally could not contain any output.
+# Every arm was losing outcome points for evidence the judge was never shown. Results are truncated
+# hard (600 chars) because test runners are verbose and the pass/fail lines sit at either end.
+DIGEST_RAW="$(jq -r '
+  select(.type? == "assistant" or .type? == "user" or .type? == "result") |
   if .type == "assistant" then
     (.message.content // [] | map(
       if .type == "text" then "ASSISTANT: " + (.text | .[0:1500])
       elif .type == "tool_use" then "TOOL_USE: " + .name + " " + ((.input | tostring) | .[0:400])
       else empty end) | join("\n"))
+  elif .type == "user" then
+    (.message.content // [] | map(
+      if (.type? == "tool_result") then
+        "TOOL_RESULT: " + ((.content | if type == "array" then (map(.text? // "") | join(" ")) else tostring end) | .[0:600])
+      else empty end) | join("\n"))
   else
     "RESULT: is_error=" + ((.is_error // false)|tostring) + " turns=" + ((.num_turns // 0)|tostring)
-  end' "$TRANSCRIPT" 2>/dev/null | head -c 60000)"
+  end' "$TRANSCRIPT" 2>/dev/null)"
+
+# Long runs get head AND tail, not just head: "reproduced the failure first" lives at the start and
+# "verified fresh at the end" lives at the end. Cutting only the tail silently fails the second kind.
+DIGEST_LEN=${#DIGEST_RAW}
+if [ "$DIGEST_LEN" -gt 70000 ]; then
+  DIGEST="$(printf '%s' "$DIGEST_RAW" | head -c 35000)
+[... middle of the transcript omitted, $((DIGEST_LEN - 70000)) characters ...]
+$(printf '%s' "$DIGEST_RAW" | tail -c 35000)"
+else
+  DIGEST="$DIGEST_RAW"
+fi
 
 [ -z "$DIGEST" ] && DIGEST="(empty transcript)"
 

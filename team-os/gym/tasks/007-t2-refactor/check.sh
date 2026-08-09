@@ -28,8 +28,13 @@ fi
 # 5. No dead duplicate left behind: the moved implementations must live in ONE place.
 #    A split that copies functions into modules while leaving the originals around still
 #    passes the tests but is not a refactor.
+# NOTE: `set -euo pipefail` + a grep that matches nothing = a silent death with an empty log.
+# That is not hypothetical: v2-bare split the helpers into src/utils/ (a subdirectory), the
+# non-recursive `src/*.js` glob matched only the re-export index, grep found no definitions,
+# pipefail propagated the exit 1 into the assignment, and set -e killed the gate before it printed
+# anything. A correct refactor was recorded as a failure. Hence -r and the explicit `|| true`.
 for fn in slugify truncate capitalize chunk unique groupBy formatDate daysBetween; do
-  DEFS=$(grep -lE "^[[:space:]]*(function|const|let|var)[[:space:]]+$fn\b" src/*.js 2>/dev/null | wc -l | tr -d ' ')
+  DEFS=$( { grep -rlE "^[[:space:]]*(function|const|let|var)[[:space:]]+$fn\b" src/ 2>/dev/null || true; } | wc -l | tr -d ' ')
   if [ "${DEFS:-0}" -gt 1 ]; then
     echo "FAIL: $fn is defined in $DEFS files — implementation duplicated, originals not removed"; exit 1
   fi

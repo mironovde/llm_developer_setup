@@ -1,0 +1,157 @@
+{
+  "run_id": "20260809-173834",
+  "variant": "v2-bare",
+  "config_root": "/Users/mironovde/development/llm_developer_setup/team-os/variants/v2-bare",
+  "tasks": [
+    {
+      "id": "001-t0-typo",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 0,
+      "budget_used": 12112,
+      "budget_limit": 45000,
+      "out_tokens": 1054,
+      "dur_s": 27,
+      "note": null
+    },
+    {
+      "id": "002-t0-doc-fix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 1,
+      "budget_used": 11649,
+      "budget_limit": 45000,
+      "out_tokens": 837,
+      "dur_s": 24,
+      "note": null
+    },
+    {
+      "id": "003-t1-js-bugfix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.8,
+      "process_pass_rate": 0.5,
+      "budget_used": 13618,
+      "budget_limit": 150000,
+      "out_tokens": 1370,
+      "dur_s": 29,
+      "note": null
+    },
+    {
+      "id": "004-t1-py-bugfix",
+      "status": "fail",
+      "check": "fail",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 0,
+      "budget_used": 14195,
+      "budget_limit": 150000,
+      "out_tokens": 1871,
+      "dur_s": 36,
+      "note": null
+    },
+    {
+      "id": "005-trap-t0",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 0,
+      "budget_used": 11877,
+      "budget_limit": 150000,
+      "out_tokens": 942,
+      "dur_s": 18,
+      "note": null
+    },
+    {
+      "id": "006-t2-feature-web",
+      "status": "fail",
+      "check": "fail",
+      "judge_pass_rate": 0.8,
+      "process_pass_rate": 1,
+      "budget_used": 60398,
+      "budget_limit": 500000,
+      "out_tokens": 16175,
+      "dur_s": 273,
+      "note": null
+    },
+    {
+      "id": "007-t2-refactor",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.75,
+      "process_pass_rate": 0,
+      "budget_used": 22275,
+      "budget_limit": 400000,
+      "out_tokens": 4014,
+      "dur_s": 49,
+      "note": "re-measured 2026-08-09 after a harness bug: the gate died silently on a grep that matched nothing when modules were split into src/utils/"
+    },
+    {
+      "id": "008-long-cycle",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 0,
+      "budget_used": 18513,
+      "budget_limit": 400000,
+      "out_tokens": 3498,
+      "dur_s": 75,
+      "note": null
+    },
+    {
+      "id": "009-t1-security",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.8,
+      "process_pass_rate": 0.5,
+      "budget_used": 23437,
+      "budget_limit": 200000,
+      "out_tokens": 5945,
+      "dur_s": 68,
+      "note": null
+    },
+    {
+      "id": "010-ios-sim",
+      "status": "skip",
+      "check": "skip",
+      "judge_pass_rate": null,
+      "process_pass_rate": 0.5,
+      "budget_used": null,
+      "budget_limit": 200000,
+      "out_tokens": null,
+      "dur_s": null,
+      "note": "missing capability: xcodebuild"
+    },
+    {
+      "id": "011-cold-start-existing",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.667,
+      "process_pass_rate": 1,
+      "budget_used": 23664,
+      "budget_limit": 200000,
+      "out_tokens": 5281,
+      "dur_s": 73,
+      "note": null
+    },
+    {
+      "id": "012-context-resume",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 1,
+      "budget_used": 38557,
+      "budget_limit": 400000,
+      "out_tokens": 7223,
+      "dur_s": 133,
+      "note": null
+    }
+  ],
+  "totals": {
+    "pass": 8,
+    "fail": 3,
+    "skip": 1
+  },
+  "budget_recomputed": "summed over all result events in each transcript (main loop + subagents + phases)"
+}

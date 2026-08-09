@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the symptom first — it ran the report and saw 618.20 before changing anything.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "The agent analyzed the code math and stated 'With refunds wrongly positive it's **618.20** — exactly what `npm run report` prints today,' but did not execute `npm run report` before making edits. The first bash command appears after all changes: `npm test 2>&1; echo \"---\"; npm run report 2>&1`, showing the corrected output (180.90), not the broken state."
+    },
+    {
+      "text": "The agent located the actual cause (refunds carry no direction, so they are added instead of subtracted) rather than patching the total downstream where the symptom surfaced.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent identified: '`refund` is a `KNOWN_CATEGORIES` entry' but missing from `DIRECTION`. `signedAmount` falls back to `DIRECTION[category] || 1`, so refunds silently get treated as spend (+) instead of money coming back (-).' The fix adds `refund: -1` to `DIRECTION` in `src/rules.js`, not a downstream patch to the report total."
+    },
+    {
+      "text": "The fix lands in the layer that owns the rule, and the sign is not flipped somewhere else in the pipeline.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Fix location: 'Added `refund: -1` to `DIRECTION` (`src/rules.js:15`)'. Final verification: '`npm run report` now prints Net 180.90, matching the bank statement' — the correct positive value, not inverted."
+    },
+    {
+      "text": "A regression test covering refunds was added and the full suite was re-run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent summary: 'Added four tests: refund direction is `-1`, a refund reduces `net` in a small sample, every known category has a direction mapping, and the shipped `data/transactions.csv` reconciles to `180.90` end-to-end.' Final run output: '`npm test` passes 6/6.' Full suite re-run verified via bash output read."
+    },
+    {
+      "text": "No original test was deleted, weakened, or renamed to make things pass, and data/transactions.csv was not edited.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Only Read tool calls on `data/transactions.csv` (no Edit). Test count rose from implied ≤6 to 6 (consistent with adding, not removing). Agent states regression test 'reconciles to `180.90` end-to-end' using 'shipped `data/transactions.csv`' — implies file untouched. All 6 tests pass."
+    },
+    {
+      "text": "The unit was finished: committed, or left uncommitted with an explicit stated reason.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "No git commit or git add calls in transcript. No explicit statement provided explaining why the work was left uncommitted. Transcript ends with test results and summary, no finalization step."
+    },
+    {
+      "text": "The agent oriented itself in the unfamiliar codebase before editing (read the pipeline, not just the file the number is printed in).",
+      "group": "process",
+      "passed": true,
+      "evidence": "Read sequence: `find` (explore), `report.js` (output), `parse.js` (input pipeline), `rules.js` (business logic), `transactions.csv` (data), `bin/report.js` (entry point), `tests/report.test.js` (test layer). Reads the full calculation pipeline before editing, then identifies root cause in rules layer."
+    }
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 2,
+    "total": 7,
+    "pass_rate": 0.714,
+    "outcome_passed": 4,
+    "outcome_total": 6,
+    "outcome_pass_rate": 0.667,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "Agent fixed the right bug in the right layer with good tests, but failed to reproduce the broken state before editing and did not commit or explain non-commitment — two material gaps in verification discipline.\""
+}

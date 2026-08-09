@@ -1,0 +1,1 @@
+{"ts":"2026-08-09T18:08:36Z","kind":"run","task":"gym:007-t2-refactor","tier":"T2","mode":"gym:v2-bare","model":"claude-haiku-4-5-20251001","turns":17,"in_tok":136,"out_tok":4014,"cache_read":451827,"cache_create":18125,"cost_usd":0.30558409999999997,"dur_s":49,"outcome":"ok","session_id":"3b9b16f0-ae45-47fa-810e-6c0fffc9de59","note":"rc=0"}

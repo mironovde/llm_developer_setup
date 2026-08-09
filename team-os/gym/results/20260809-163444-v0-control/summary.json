@@ -14,6 +14,23 @@
       "out_tokens": 7711,
       "dur_s": 150,
       "note": null
+    },
+    {
+      "id": "012-context-resume",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 1,
+      "budget_used": 49349,
+      "budget_limit": 400000,
+      "out_tokens": 8575,
+      "dur_s": 155,
+      "note": null
     }
-  ]
+  ],
+  "totals": {
+    "pass": 2,
+    "fail": 0,
+    "skip": 0
+  }
 }
