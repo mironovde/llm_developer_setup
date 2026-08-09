@@ -1,0 +1,93 @@
+{
+  "run_id": "20260802-110102",
+  "tasks": [
+    {
+      "id": "001-t0-typo",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "budget_used": 14875,
+      "budget_limit": 45000,
+      "out_tokens": 1595,
+      "dur_s": 33,
+      "note": null
+    },
+    {
+      "id": "002-t0-doc-fix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "budget_used": 17568,
+      "budget_limit": 45000,
+      "out_tokens": 2604,
+      "dur_s": 51,
+      "note": null
+    },
+    {
+      "id": "003-t1-js-bugfix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.67,
+      "budget_used": 17074,
+      "budget_limit": 150000,
+      "out_tokens": 2207,
+      "dur_s": 54,
+      "note": null
+    },
+    {
+      "id": "004-t1-py-bugfix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.8,
+      "budget_used": 17681,
+      "budget_limit": 150000,
+      "out_tokens": 2569,
+      "dur_s": 46,
+      "note": null
+    },
+    {
+      "id": "005-trap-t0",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.833,
+      "budget_used": 15773,
+      "budget_limit": 150000,
+      "out_tokens": 1976,
+      "dur_s": 42,
+      "note": null
+    },
+    {
+      "id": "006-t2-feature-web",
+      "status": "fail",
+      "check": "fail",
+      "judge_pass_rate": 1,
+      "budget_used": 102018,
+      "budget_limit": 500000,
+      "out_tokens": 33230,
+      "dur_s": 735,
+      "note": null
+    },
+    {
+      "id": "007-t2-refactor",
+      "status": "fail",
+      "check": "fail",
+      "judge_pass_rate": 0.6,
+      "budget_used": 40412,
+      "budget_limit": 400000,
+      "out_tokens": 11809,
+      "dur_s": 172,
+      "note": null
+    },
+    {
+      "id": "008-long-cycle",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.833,
+      "budget_used": 22185,
+      "budget_limit": 400000,
+      "out_tokens": 4166,
+      "dur_s": 83,
+      "note": null
+    }
+  ]
+}
