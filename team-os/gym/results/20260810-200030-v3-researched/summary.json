@@ -62,6 +62,66 @@
       "out_tokens": 2499,
       "dur_s": 64,
       "note": null
+    },
+    {
+      "id": "006-t2-feature-web",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 1,
+      "budget_used": 51266,
+      "budget_limit": 500000,
+      "out_tokens": 14358,
+      "dur_s": 277,
+      "note": null
+    },
+    {
+      "id": "007-t2-refactor",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 0,
+      "budget_used": 25926,
+      "budget_limit": 400000,
+      "out_tokens": 5638,
+      "dur_s": 89,
+      "note": null
+    },
+    {
+      "id": "008-long-cycle",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 1,
+      "budget_used": 22025,
+      "budget_limit": 400000,
+      "out_tokens": 5711,
+      "dur_s": 118,
+      "note": null
+    },
+    {
+      "id": "009-t1-security",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 0,
+      "budget_used": 26126,
+      "budget_limit": 200000,
+      "out_tokens": 7446,
+      "dur_s": 111,
+      "note": null
+    },
+    {
+      "id": "010-ios-sim",
+      "status": "skip",
+      "check": "skip",
+      "judge_pass_rate": null,
+      "process_pass_rate": 0,
+      "budget_used": null,
+      "budget_limit": 200000,
+      "out_tokens": null,
+      "dur_s": null,
+      "note": "missing capability: xcodebuild"
     }
   ]
 }

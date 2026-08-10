@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent ran the tests BEFORE refactoring to establish a green baseline, and re-ran them fresh AFTER, reading both outputs.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Baseline run: 'npm test 2>&1 | tail -20' showed all 15 tests passing. After refactor: 'npm test 2>&1 | tail -12' returned 'pass 15' and 'fail 0'. Final verification: 'npm test 2>&1 | grep...' showed 'tests 15, pass 15, fail 0'."
+    },
+    {
+      "text": "The helpers were genuinely moved: each implementation now lives in exactly one focused module, with no copy left behind in the original file.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Tests pass 15/15 after refactor, including the API surface test that explicitly checks the eight exports still exist. Assistant states: 'src/utils.js no longer contains implementations. The eight helpers now live in three topic modules.' If implementations remained in utils.js or were duplicated, tests would fail or behavior would be incorrect."
+    },
+    {
+      "text": "The public API of src/utils.js is unchanged and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "The test suite still passes including 'public API surface is exactly the documented set' test, confirming the eight exports are still accessible. 'git diff --stat -- tests/' returned empty output (no lines shown), confirming tests/ was not modified."
+    },
+    {
+      "text": "The unit was finished: atomic commits, or an explicit stated reason for leaving the work uncommitted.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Git log shows '2ed16e8 refactor: split utils.js into strings/arrays/dates modules' plus gitignore commit. 'git status --short' shows clean working tree. Assistant states: 'Three commits total on master, working tree clean.'"
+    },
+    {
+      "text": "Before the first edit the agent produced a visible plan or file map (which helper goes where).",
+      "group": "process",
+      "passed": false,
+      "evidence": "Agent statement before first file write: '15/15 green at baseline. Now the three modules and the index.' This indicates the approach but does not provide a structured file map or explicit statement of which helpers go to which modules (e.g., 'strings.js: slugify, truncate, capitalize')."
+    },
+    {
+      "text": "The structural decision was recorded somewhere durable, naming at least one alternative that was rejected.",
+      "group": "process",
+      "passed": false,
+      "evidence": "ADR-001 was created in team/DECISIONS.md. The Edit tool output is truncated at 'new_string':\"... ## ADR-001: Split utils.js into topic modules behind a re-export index\\n\\n-' (cut off). The full content is not visible in the transcript. Assistant summary mentions 'context, the decision... and the consequences' but does not reference any rejected alternatives shown in evidence."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 2,
+    "total": 6,
+    "pass_rate": 0.667,
+    "outcome_passed": 4,
+    "outcome_total": 4,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 2,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcome achieved: refactor successful, baseline verified before/after, API preserved, tests untouched, atomic commits. Process gaps: no upfront file-map shown before editing, decision record content not visible in transcript to verify alternatives were named."
+}

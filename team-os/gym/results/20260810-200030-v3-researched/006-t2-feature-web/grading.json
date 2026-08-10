@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent rebuilt BEFORE verifying and confirmed the SERVED page no longer carries the `INIT_BUILD` marker — it read the served output rather than assuming the build took effect.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent ran `npm run build` which printed `built dist/ with build-id 1786392549413-25edlr`, then navigated the browser to http://localhost:4173/ and evaluated `document.querySelector('meta[name=\"build-id\"]').content` which returned `1786392549413-25edlr` — matching the fresh build id, proving the served page is current, not stale with INIT_BUILD."
+    },
+    {
+      "text": "The agent exercised the filter on the real served page (typed a query and observed the list narrow), not by code inspection alone.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent clicked filter input (uid=1_3), typed 'A' and evaluated the list, seeing 5 items (Boris Petrov dropped); typed 'LI' → 1 item (Alice Johnson); typed 'ZZ' → 0 items; backspaced to empty → all 6 restored; typed spaces → all 6 kept; typed '   ov ' → ['Boris Petrov','Elena Sokolova'] (substring match with trimming verified). Each step included real keystrokes and script evaluation of the live DOM."
+    },
+    {
+      "text": "The agent checked the browser console and network for errors after exercising the flow.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "`mcp__chrome-devtools__list_console_messages` returned 1 error (favicon.ico 404); `mcp__chrome-devtools__list_network_requests` showed GET http://localhost:4173/ [200], lib.js [200], app.js [200], favicon.ico [404]. Agent recorded: `console_clean = no JS errors; only pre-existing favicon.ico 404; /, lib.js, app.js all 200`."
+    },
+    {
+      "text": "Unit tests covering the filter logic were added and the full suite re-run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent edited tests/lib.test.js to add filterNames test cases (case-insensitivity, substring matching, empty query, whitespace trimming, no-match). Ran `npm test` and read output: `✔ renderList renders one <li> per name (0.604208ms) ... ✔ filterNames matches regardless of case (0.576667ms) ✔ filterNames matches anywhere in the name ... ✔ filterNames trims surrounding whitespace from the query (0.040583ms)` — all visible tests passed. Final message confirms '12 pass / 0 fail'."
+    },
+    {
+      "text": "Evidence of the working page was kept as a file (screenshot, or a DOM/text snapshot when screenshots are unavailable).",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent took screenshot via `mcp__chrome-devtools__take_screenshot` saved to `.artifacts/team-filter.png`; created detailed test report at `.artifacts/team-filter-test.md`; captured DOM snapshot via `mcp__chrome-devtools__take_snapshot` showing page structure with filter input and team members."
+    },
+    {
+      "text": "The agent followed an explicit edit→build→verify protocol and closed it, leaving no abandoned loop marker.",
+      "group": "process",
+      "passed": true,
+      "evidence": "Agent opened browser-loop: `bash .claude/hooks/teamos-browser-loop.sh open 'case-insensitive team filter input'`. Made code edits, ran `npm test` (all pass), ran `npm run build`, started server, verified in browser. Proved all requirements via hook calls: `prove build_marker`, `prove test_pass`, `prove console_clean`, `prove screenshot`. Closed cleanly: `bash .claude/hooks/teamos-browser-loop.sh close` returned 'browser-loop CLOSED' with all 4 proofs recorded."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "All outcomes passed: built before verifying, exercised real filter on served page with keystrokes, checked console/network for errors, added unit tests with full suite re-run, kept screenshot/snapshot evidence. Process expectation also passed: explicit browser-loop protocol with proper closure."
+}

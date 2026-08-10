@@ -5,6 +5,9 @@
 #
 # Usage: run.sh [smoke|all|<task-id>...] [--config DIR] [--baseline] [--runs N] [--no-judge] [--keep-workspace]
 #   smoke = 001 + 003 (fast sanity); all = every task; task ids like 001 or 001-t0-typo
+#   --parallel N = run up to N tasks at once. Headless agents are network-bound, so wall-clock
+#     collapses roughly linearly; token and outcome measurements are unaffected. Tasks that bind a
+#     port or drive a browser are forced back to serial regardless of N — they would collide.
 #   --config DIR = config variant to test (default: team-os/home). DIR is shaped like home/
 #     and may carry variant.json: {name, claude_md, copy[], seed_team, settings}.
 #     This is what makes the gym able to COMPARE configs instead of only testing the current one.
@@ -20,11 +23,13 @@ RUNS=1
 JUDGE=1
 KEEP=0
 DRY=0
+PARALLEL=1
 CONFIG_ROOT="$ROOT/home"
 while [ $# -gt 0 ]; do
   case "$1" in
     --config) CONFIG_ROOT="$(cd "${2:?--config needs a dir}" && pwd)"; shift 2 ;;
     --dry-run) DRY=1; shift ;;
+    --parallel) PARALLEL="${2:?--parallel needs a number}"; shift 2 ;;
     --baseline) BASELINE=1; shift ;;
     --runs) RUNS="${2:?}"; shift 2 ;;
     --no-judge) JUDGE=0; shift ;;
@@ -277,8 +282,39 @@ run_task_once() { # $1=task_name $2=attempt → sets GLOBALS: T_STATUS T_CHECK T
   return 0
 }
 
+# Parallel scheduling: fan out the tasks that are safe to run concurrently, keep the rest serial.
+# A task is serial if it drives a browser or starts a server — those bind ports and would fight.
+if [ "$PARALLEL" -gt 1 ] && [ "${#TASKS[@]}" -gt 1 ]; then
+  SERIAL=(); CONCURRENT=()
+  for t in "${TASKS[@]}"; do
+    # Serial iff the task drives a browser or declares itself serial. An earlier heuristic grepped
+    # package.json for "gym-fixture" — which every fixture is named — and classified almost
+    # everything as serial, quietly defeating the flag.
+    if [ "$(jq -r '.browser // false' "$GYM/tasks/$t/meta.json" 2>/dev/null)" = "true" ] \
+       || [ "$(jq -r '.serial // false' "$GYM/tasks/$t/meta.json" 2>/dev/null)" = "true" ]; then
+      SERIAL+=("$t")
+    else
+      CONCURRENT+=("$t")
+    fi
+  done
+  echo "parallel=$PARALLEL: ${#CONCURRENT[@]} concurrent, ${#SERIAL[@]} serial (port-binding)"
+  RUNNING=0
+  for t in "${CONCURRENT[@]}"; do
+    ( run_task_once "$t" ""
+      add_summary "$t" "$([ "$T_STATUS" = "pass" ] && echo pass || echo "$T_STATUS")" "$T_CHECK" "$T_JR" "$T_BU" \
+        "$(jq -r '.budget // 150000' "$GYM/tasks/$t/meta.json")" "$T_TOK" "$T_DUR" "$T_NOTE" "${T_PR:-}"
+    ) &
+    RUNNING=$((RUNNING + 1))
+    if [ "$RUNNING" -ge "$PARALLEL" ]; then wait -n 2>/dev/null || wait; RUNNING=$((RUNNING - 1)); fi
+  done
+  wait
+  TASKS=("${SERIAL[@]}")
+  [ "${#TASKS[@]}" -eq 0 ] && TASKS=()
+fi
+
 OVERALL_PASS=0; OVERALL_FAIL=0; OVERALL_SKIP=0
-for task in "${TASKS[@]}"; do
+for task in "${TASKS[@]:-}"; do
+  [ -z "$task" ] && continue
   PASSK="$(jq -r '.pass_k // 1' "$GYM/tasks/$task/meta.json" 2>/dev/null || echo 1)"
   N=$RUNS
   [ "$PASSK" -gt "$N" ] && N=$PASSK

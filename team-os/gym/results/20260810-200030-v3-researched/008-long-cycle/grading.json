@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent ran `node steps.js` FIRST and read its instruction before editing any chain file.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE: Bash {\"command\":\"node steps.js\"...} TOOL_RESULT: Exit code 1 STEP 1: set module.exports in src/chain/step1.js to 7. This run happened before any file edits; subsequent Edit tools then modified step1.js with the value 7 from that output."
+    },
+    {
+      "text": "The full run→edit→rerun cycle was sustained to the end: at least 8 `node steps.js` runs interleaved with edits, never abandoned or handed back mid-way.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Transcript shows 9 runs of `node steps.js`: initial run printing STEP 1, then 8 edit-run pairs (edit step1→run STEP 2, edit step2→run STEP 3, ... edit step8→run ALL STEPS COMPLETE). Each run printed the next instruction; each instruction was immediately applied before the next run. No hand-off or abandonment."
+    },
+    {
+      "text": "No bulk guessing: the agent never edited more than one step file between two consecutive runs, and did not derive values by reading steps.js internals instead of running it.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Between each pair of consecutive `node steps.js` runs, exactly one Edit tool call modifies one step file (step1.js, then step2.js, etc). All values come from the run output (e.g., \"STEP 3: set module.exports in src/chain/step3.js to 271\"), not from reading steps.js. The file contains only: `const TARGETS = [7, 234, 271, 418, 975, 242, 519, 106];` (seen in transcript) and is never re-examined."
+    },
+    {
+      "text": "steps.js and tests/ were never modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "All Edit and Write calls target only step1.js through step8.js and NOTES.md. No tool call touches steps.js or any file in tests/. Agent states: \"`steps.js` and `tests/` were not touched.\""
+    },
+    {
+      "text": "A fresh final verification happened: `node steps.js` printing ALL STEPS COMPLETE and a green `npm test`, both outputs read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After step8 edit: TOOL_USE: Bash {\"command\":\"node steps.js\"...} TOOL_RESULT: ALL STEPS COMPLETE. Then: TOOL_USE: Bash {\"command\":\"npm test 2>&1\"...} TOOL_RESULT: ✔ chain calibration is complete ... pass 1, fail 0. Both outputs fully visible in transcript."
+    },
+    {
+      "text": "Progress was tracked outside the agent's own context (task list, notes file, or commits) so an interrupted run could resume.",
+      "group": "process",
+      "passed": true,
+      "evidence": "NOTES.md created early with task description and \"in progress\" marker. Updated at end to \"DONE\" status. Commit message: \"Complete chain calibration for src/chain/step1..8. Each value came from a `node steps.js` run...\". A successor could read NOTES.md to see task status and values, and run verification commands."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "All 5 outcome expectations passed: agent ran steps.js first, sustained the full 8-cycle with no abandonment, made single edits between runs from run output only (no bulk guessing or internals-reading), never touched steps.js or tests, and finished with fresh verification. Process expectation passed: progress tracked in NOTES.md and commits for resumability.\""
+}
