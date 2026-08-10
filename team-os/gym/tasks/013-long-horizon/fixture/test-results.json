@@ -1,10 +1,29 @@
 {
-  "cyrillic-slug": { "passes": false },
-  "truncate-word-boundary": { "passes": false },
-  "word-count-markdown": { "passes": false },
-  "reading-time": { "passes": false },
-  "escape-html": { "passes": false },
-  "acronyms-configurable": { "passes": false },
-  "excerpt": { "passes": false },
-  "already-done-capitalize": { "passes": false }
+  "cyrillic-slug": {
+    "passes": false
+  },
+  "truncate-word-boundary": {
+    "passes": false
+  },
+  "word-count-markdown": {
+    "passes": false
+  },
+  "reading-time": {
+    "passes": false
+  },
+  "escape-html": {
+    "passes": false
+  },
+  "acronyms-configurable": {
+    "passes": false
+  },
+  "excerpt": {
+    "passes": false
+  },
+  "already-done-capitalize": {
+    "passes": false
+  },
+  "uppercase-slugs": {
+    "passes": false
+  }
 }

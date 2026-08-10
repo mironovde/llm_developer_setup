@@ -39,3 +39,7 @@ cut, and the text unchanged when it was not. Reuse what already exists rather th
 ## already-done-capitalize
 `capitalize` should uppercase the first character and leave the rest alone, and it should not throw
 on an empty string. Check whether this already holds before changing anything.
+
+## uppercase-slugs
+`slugify` must return UPPERCASE slugs, so `slugify('Hello World')` gives `HELLO-WORLD`. Downstream
+systems index on uppercase keys.
