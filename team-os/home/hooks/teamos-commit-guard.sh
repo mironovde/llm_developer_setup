@@ -40,13 +40,16 @@ fi
 
 # Did the agent already address it? A stated reason is a valid ending — the rule is
 # "don't leave silently", not "always commit".
-LAST="$(tail -c 20000 "$TRANSCRIPT" 2>/dev/null | tr '\n' ' ')"
+# LC_ALL=C: `tail -c` cuts mid-character, and BSD tr rejects the resulting partial UTF-8 byte
+# with "Illegal byte sequence" — which this guard printed to stderr the first time it fired for
+# real. Byte-wise collation makes tr indifferent to encoding.
+LAST="$(tail -c 20000 "$TRANSCRIPT" 2>/dev/null | LC_ALL=C tr '\n' ' ')"
 if printf '%s' "$LAST" | grep -qiE 'uncommitted|not commit|without commit|leaving .{0,20}(staged|uncommitted)|не коммич|без коммита|не буду коммитить'; then
   exit 0
 fi
 
 COUNT="$(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
-FILES="$(git status --porcelain 2>/dev/null | awk '{print $2}' | head -5 | tr '\n' ' ')"
+FILES="$(git status --porcelain 2>/dev/null | awk '{print $2}' | head -5 | LC_ALL=C tr '\n' ' ')"
 : > "$MARK"
 
 echo "BLOCKED: this session edited files and $COUNT path(s) are still uncommitted ($FILES...). A unit is not finished until it is committed. Either commit the work per the repo's convention now, or state in your final message that you are leaving it uncommitted and why — a deliberate reason is fine, silence is not. This guard fires once per session." >&2
