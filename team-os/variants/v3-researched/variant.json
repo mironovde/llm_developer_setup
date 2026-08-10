@@ -1,0 +1,8 @@
+{
+  "name": "v3-researched",
+  "description": "Rebuilt from Anthropic's Opus 5 / Fable 5 prompting guides and the long-running-agents reference architecture: verification instructions removed (the models self-verify), delegation guidance split per model, progress claims grounded against tool results, autonomous-run and anti-overengineering snippets added.",
+  "claude_md": "CLAUDE.md",
+  "copy": ["agents", "skills", "hooks"],
+  "seed_team": false,
+  "settings": "settings.json"
+}
