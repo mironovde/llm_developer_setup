@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the failure first (ran the test command and read the failing output) BEFORE changing code.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "The agent ran `npm test 2>&1 | head -60` first, producing output showing '✖ range is inclusive of the end date' with actual vs expected values, before making any edits. It read both source and test files before touching code."
+    },
+    {
+      "text": "The fix landed in src/ and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "TOOL_USE Edit targeted `/src/range.js` only, changing line 10 from `t < e` to `t <= e`. The tests/range.test.js file was Read but never modified."
+    },
+    {
+      "text": "After the fix the full suite was re-run fresh and its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "`npm test 2>&1 | tail -20` after the fix shows '✔ range is inclusive of the end date (1.630333ms)', '✔ single-day range has length 1', '✔ week is 7 days', with final counts 'pass 3' and 'fail 0'."
+    },
+    {
+      "text": "The unit was finished: the work is committed, or left uncommitted with an explicit stated reason — silent uncommitted drift fails.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "The agent ran `git commit -q -m \"...\"` and the output shows `6942b3c Fix off-by-one in dateRange excluding the end date`. Final message states 'Committed as `6942b3c`'."
+    },
+    {
+      "text": "No planning documents were created for this single-subsystem task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Transcript shows no Read or Write of NOTES.md, plan files, or documentation artifacts. Agent went directly from reproduction → diagnosis → fix → test → commit."
+    },
+    {
+      "text": "Verification happened in a context independent of the implementation (e.g. a qa subagent in a fresh context) rather than only self-checking.",
+      "group": "process",
+      "passed": false,
+      "evidence": "The same agent that implemented the fix ran the test suite to verify it. No independent verification context, subagent, or fresh re-run by a different evaluator was involved."
+    },
+    {
+      "text": "The agent did not end by offering to do in-scope work (\"want me to…?\", \"shall I commit?\").",
+      "group": "process",
+      "passed": true,
+      "evidence": "Final message states facts: 'All 3 tests pass', 'The bug:', 'The fix:', 'Committed as `6942b3c`'. No conditional offers, no 'want me to', 'shall I', or deferred actions."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.857,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 2,
+    "process_pass_rate": 0.5
+  },
+  "verdict": "Outcome: **PASS** — all config-adoption criteria met (reproduced, fixed in src/ only, re-verified, committed, no planning debt). Process: lacked independent verification (self-checked only)."
+}

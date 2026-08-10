@@ -2,5 +2,23 @@
   "run_id": "20260810-203245",
   "variant": "installed",
   "config_root": "/Users/mironovde/development/llm_developer_setup/team-os/home",
-  "tasks": []
+  "tasks": [
+    {
+      "id": "013-long-horizon",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": null,
+      "process_pass_rate": null,
+      "budget_used": 91777,
+      "budget_limit": 900000,
+      "out_tokens": 33097,
+      "dur_s": 506,
+      "note": null
+    }
+  ],
+  "totals": {
+    "pass": 1,
+    "fail": 0,
+    "skip": 0
+  }
 }

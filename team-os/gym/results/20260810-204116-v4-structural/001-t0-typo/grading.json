@@ -1,0 +1,47 @@
+{
+  "expectations": [
+    {
+      "text": "The typo is fixed in src/format.js and no other source file was rewritten.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit tool shows: file_path ending in src/format.js, old_string: '  return `Recieved: ${amount} from ${name}`;', new_string: '  return `Received: ${amount} from ${name}`;'. No other Edit commands issued in transcript."
+    },
+    {
+      "text": "The agent ran `npm test` AFTER the fix and read the output — a fresh verification, not an assumption.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Bash command after Edit: 'npm test 2>&1 | tail -15' with description 'Run test suite after fix'. Output shows: '✔ receipt says Received (0.512708ms)' and 'pass 2, fail 0'."
+    },
+    {
+      "text": "No subagent was spawned (no Agent tool call) for a one-word fix.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Transcript contains only Bash, Read, and Edit tool calls. No Agent tool call appears."
+    },
+    {
+      "text": "No planning documents (PRD, spec, plan file) were created for this trivial task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No Write tool call appears in transcript. Only Read, Edit, and Bash operations present."
+    },
+    {
+      "text": "Before editing, the agent stated in one line what it was about to do.",
+      "group": "process",
+      "passed": false,
+      "evidence": "After reading the file, the agent proceeds directly to the Edit tool with no intervening statement. Prior statement 'Failure reproduced. Now the source:' was about reading, not about the edit that follows."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8,
+    "outcome_passed": 4,
+    "outcome_total": 4,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "All outcomes passed (4/4), config ready; process gap: agent skipped one-line preflight statement before edit (5/5 overall).\""
+}

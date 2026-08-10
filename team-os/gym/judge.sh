@@ -32,11 +32,15 @@ DIGEST_RAW="$(jq -r '
 
 # Long runs get head AND tail, not just head: "reproduced the failure first" lives at the start and
 # "verified fresh at the end" lives at the end. Cutting only the tail silently fails the second kind.
+# Cap measured, not guessed: a 54,757-character digest grades fine, a 69,291-character one comes
+# back is_error with zero output tokens. The old threshold of 70,000 sat above that cliff, so every
+# long run — the ones this suite exists to measure — silently lost its grading. 44,000 leaves room
+# for the expectations and the instructions on top.
 DIGEST_LEN=${#DIGEST_RAW}
-if [ "$DIGEST_LEN" -gt 70000 ]; then
-  DIGEST="$(printf '%s' "$DIGEST_RAW" | head -c 35000)
-[... middle of the transcript omitted, $((DIGEST_LEN - 70000)) characters ...]
-$(printf '%s' "$DIGEST_RAW" | tail -c 35000)"
+if [ "$DIGEST_LEN" -gt 44000 ]; then
+  DIGEST="$(printf '%s' "$DIGEST_RAW" | head -c 22000)
+[... middle of the transcript omitted, $((DIGEST_LEN - 44000)) characters ...]
+$(printf '%s' "$DIGEST_RAW" | tail -c 22000)"
 else
   DIGEST="$DIGEST_RAW"
 fi
@@ -62,16 +66,30 @@ $(cat "$EXPECT")
 TRANSCRIPT DIGEST (assistant text + tool calls):
 $DIGEST"
 
-claude -p "$PROMPT" \
-  --model haiku \
-  --effort low \
-  --setting-sources project \
-  --strict-mcp-config \
-  --tools "" \
-  --output-format json \
-  --json-schema "$(cat "$GYM/grading-schema.json")" \
-  < /dev/null 2>/dev/null \
-  | jq -r '.result // .structured_output // empty' > "$OUTFILE.tmp" || { rm -f "$OUTFILE.tmp"; echo "judge: claude call failed" >&2; exit 1; }
+# The prompt goes in on STDIN, not as an argv string. Passing a 55-70KB digest as an argument was
+# failing with is_error and zero output tokens on exactly the long runs this suite exists to grade —
+# and failing silently, since the error was swallowed. Two attempts, because some failures are
+# transient rather than structural.
+judge_call() {
+  printf '%s' "$PROMPT" | claude -p \
+    --model haiku \
+    --effort low \
+    --setting-sources project \
+    --strict-mcp-config \
+    --tools "" \
+    --output-format json \
+    --json-schema "$(cat "$GYM/grading-schema.json")" 2>/dev/null \
+    | jq -r '.result // .structured_output // empty'
+}
+
+judge_call > "$OUTFILE.tmp" 2>/dev/null
+if [ ! -s "$OUTFILE.tmp" ]; then
+  sleep 3
+  judge_call > "$OUTFILE.tmp" 2>/dev/null
+fi
+if [ ! -s "$OUTFILE.tmp" ]; then
+  rm -f "$OUTFILE.tmp"; echo "judge: claude call failed after a retry" >&2; exit 1
+fi
 
 # result may be a JSON string or already-object depending on CLI version — normalize
 if jq -e 'type == "object" and has("expectations")' "$OUTFILE.tmp" >/dev/null 2>&1; then

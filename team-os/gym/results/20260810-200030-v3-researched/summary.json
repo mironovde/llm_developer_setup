@@ -146,6 +146,18 @@
       "out_tokens": 11114,
       "dur_s": 209,
       "note": null
+    },
+    {
+      "id": "013-long-horizon",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": null,
+      "process_pass_rate": null,
+      "budget_used": 109652,
+      "budget_limit": 900000,
+      "out_tokens": 41820,
+      "dur_s": 705,
+      "note": null
     }
   ]
 }

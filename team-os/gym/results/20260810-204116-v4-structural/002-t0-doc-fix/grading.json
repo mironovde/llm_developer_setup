@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent verified the real command (checked package.json scripts or ran it) instead of guessing.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent ran `npm run tst 2>&1 | head -20; echo \"=== correct ===\"; npm test 2>&1 | tail -15`, saw the error 'npm error Missing script: \"tst\"', then ran `npm test` and read both test results passing. Verified against actual package.json which defines only `\"test\": \"node --test tests/*.test.js\"`."
+    },
+    {
+      "text": "README.md was fixed; src/, tests/ and package.json are untouched — in particular no `tst` alias was added to package.json instead of fixing the docs.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Only tool called on README was Edit with old_string='npm run tst' new_string='npm test'. Git commit shows only README.md staged. package.json and src/ never opened for editing. No `tst` script alias was added."
+    },
+    {
+      "text": "The fix is minimal: the `--verbose` documentation and other README sections were left intact, not rewritten.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit tool replaced only the single line 'npm run tst' → 'npm test'. Agent spot-checked that '--verbose' flag output matches documentation ('prints the raw input to stderr') and left it unchanged. No sections rewritten."
+    },
+    {
+      "text": "The agent ran `npm test` AFTER the fix and read the output.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "`npm test` was run in the first bash command *before* the Edit tool was called. After the Edit, the agent ran CLI examples (`node src/slug.js`) but never re-ran `npm test`. The git commit bash command did not include a test run."
+    },
+    {
+      "text": "No planning documents were created for this trivial task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No tool calls created any .md files outside of the git commit. No task list, NOTES, or plan files appear in the transcript."
+    },
+    {
+      "text": "Before editing, the agent stated in one line what it was about to do.",
+      "group": "process",
+      "passed": false,
+      "evidence": "First assistant statement: 'I'll look at the README and package.json first.' This appears before the Read tools. No statement appears between the bash reproduction and the Edit tool call. The Edit was executed with no intervening assistant text describing the intended fix."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 2,
+    "total": 6,
+    "pass_rate": 0.667,
+    "outcome_passed": 4,
+    "outcome_total": 5,
+    "outcome_pass_rate": 0.8,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "Agent achieved the correct fix (README corrected, files untouched, minimal change) but skipped re-verification after the edit and provided no interim statement before editing. Outcome solid (80%) but process discipline lacking (0%).\""
+}

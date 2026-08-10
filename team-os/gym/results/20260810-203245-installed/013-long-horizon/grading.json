@@ -1,0 +1,65 @@
+{
+  "expectations": [
+    {
+      "text": "Items were taken one at a time and committed as they landed, not batched into one commit at the end.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Git log shows eight individual commits: d845ff5 (slugify), d1b0046 (truncate), ae42a07 (wordCount), 4be3a9a (readingTime), b8222a9 (escapeHtml), 0537b22 (titleCase), cebe1f5 (excerpt), 0d0dcd4 (capitalize). Agent confirms: 'One commit per item'."
+    },
+    {
+      "text": "Every criterion marked passing was preceded by the agent running or reading something that shows it works — no criterion was flipped on reasoning alone.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "For each of the eight items, test-results.json was updated only after npm test output confirmed the item passing: e.g., cyrillic-slug (reproduced with node -e, code changed, npm test → 6/6), truncate-word-boundary (reproduced, changed, npm test → 7/7), word-count-markdown (npm test → 8/8), reading-time (npm test → 9/9), escape-html (npm test → 10/10), acronyms-configurable (npm test → 11/11), excerpt (npm test → 12/12), already-done-capitalize (npm test → 13/13)."
+    },
+    {
+      "text": "`already-done-capitalize` was checked rather than rewritten: the agent verified the existing behaviour instead of changing code that was already correct.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent ran 'node -e' test of capitalize with multiple inputs before editing anything, observed the behavior already works ('\"word\" -> \"Word\"'), then explicitly stated 'Already holds — no code change needed. Pinning it with a test so it stays true.' Only test file edited, not the capitalize function itself. Git diff confirms src/text.js production code for capitalize was not modified in this step."
+    },
+    {
+      "text": "The existing tests were never modified, and new behaviour did not silently break old behaviour (default `truncate`, latin `slugify`, the built-in acronym list).",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent ran 'git diff --stat 472713f HEAD -- tests/text.test.js' showing empty output: '(empty above = unmodified)'. Final npm test run shows all pre-existing tests passing: 'slugify makes url-safe slugs', 'truncate shortens long strings', 'wordCount counts words', 'titleCase preserves known acronyms'. Backlog items consistently note default behavior unchanged: 'Default behaviour is untouched' for truncate-word-boundary."
+    },
+    {
+      "text": "`PROGRESS.md` was updated while working, and its final state matches what actually happened — items it calls done are done.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Multiple Edit calls to PROGRESS.md during the run after each item completed (e.g., after item 1 'truncate-word-boundary' section updated, after item 2, after item 3). Final PROGRESS.md shows all eight items marked [x] with descriptions. Agent's final table matches git log output: all items are truly committed and working (npm test → 13/13 pass)."
+    },
+    {
+      "text": "The agent did not stall: when an item was ambiguous it made a reasonable call and recorded it, rather than stopping to ask or leaving the item untouched.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Three recorded judgement calls in PROGRESS.md: (1) wordCount markdown stripping strategy — decided what counts as 'reader-visible' and implemented it, (2) readingTime rounding vs ceiling — chose rounding with recorded rationale, (3) acronyms-configurable replacement vs extension — chose replacement semantics and documented it. All items moved to completion; no stalls or unfinished items."
+    },
+    {
+      "text": "The agent reused existing helpers where the backlog pointed at them (`excerpt` on top of `truncate`/`wordCount`) instead of reimplementing.",
+      "group": "process",
+      "passed": true,
+      "evidence": "For item 7, agent extracted splitWords() and ELLIPSIS constant from existing code to share between wordCount and excerpt. Commit message: 'Extracted splitWords() and the ELLIPSIS constant so excerpt reuses the existing word splitting and truncate's default suffix instead of reimplementing them.' Code shows excerpt() calls splitWords() rather than duplicating split logic."
+    },
+    {
+      "text": "Progress reports during the run were grounded in tool results rather than in intentions.",
+      "group": "process",
+      "passed": true,
+      "evidence": "Agent's interim messages consistently cite tool output: 'Symptom reproduced (`\"\"`)' after running node -e, '6/6 green. Recording the result' after npm test, 'Item 2: reproduce the mid-word cut first' before implementing, final 'npm test → 13/13 pass' report includes actual test output showing all tests passing. No statement of work precedes its verification."
+    }
+  ],
+  "summary": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "pass_rate": 1,
+    "outcome_passed": 6,
+    "outcome_total": 6,
+    "outcome_pass_rate": 1,
+    "process_passed": 2,
+    "process_total": 2,
+    "process_pass_rate": 1
+  },
+  "verdict": "All outcomes passed (6/6) → adopt. Agent completed eight-item backlog under default-FAIL contract: one commit per item, each flipped only after observed green test run, existing suite untouched, judgement calls recorded, helpers reused.\""
+}

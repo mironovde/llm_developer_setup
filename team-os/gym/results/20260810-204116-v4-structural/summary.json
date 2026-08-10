@@ -1,0 +1,67 @@
+{
+  "run_id": "20260810-204116",
+  "variant": "v4-structural",
+  "config_root": "/Users/mironovde/development/llm_developer_setup/team-os/variants/v4-structural",
+  "tasks": [
+    {
+      "id": "001-t0-typo",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 0,
+      "budget_used": 11768,
+      "budget_limit": 45000,
+      "out_tokens": 1453,
+      "dur_s": 31,
+      "note": null
+    },
+    {
+      "id": "002-t0-doc-fix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.8,
+      "process_pass_rate": 0,
+      "budget_used": 11890,
+      "budget_limit": 45000,
+      "out_tokens": 1642,
+      "dur_s": 30,
+      "note": null
+    },
+    {
+      "id": "003-t1-js-bugfix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 0.5,
+      "budget_used": 13140,
+      "budget_limit": 150000,
+      "out_tokens": 1463,
+      "dur_s": 38,
+      "note": null
+    },
+    {
+      "id": "004-t1-py-bugfix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 1,
+      "budget_used": 12368,
+      "budget_limit": 150000,
+      "out_tokens": 1612,
+      "dur_s": 43,
+      "note": null
+    },
+    {
+      "id": "005-trap-t0",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": null,
+      "process_pass_rate": null,
+      "budget_used": 15857,
+      "budget_limit": 150000,
+      "out_tokens": 2880,
+      "dur_s": 61,
+      "note": null
+    }
+  ]
+}
