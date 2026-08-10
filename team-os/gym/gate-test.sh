@@ -16,10 +16,15 @@ mkws() { # $1=task → prints workspace path
 }
 
 run_gate() { # $1=task $2=ws $3=transcript-text [$4=phase1-state-file] → exit code
-  local t="$1" ws="$2" tr="$ws/.transcript.jsonl"
+  # Harness files live OUTSIDE the repo under test. They used to be written into $ws, which meant
+  # the suite littered the very working tree whose cleanliness some gates now check — the
+  # artifact-hygiene rule broken by its own test, for the second time.
+  local t="$1" ws="$2" name; name="$(basename "$ws")"
+  mkdir -p "$WORK/harness"
+  local tr="$WORK/harness/$name.jsonl" log="$WORK/harness/$name.log"
   printf '%s\n' "${3:-{}}" > "$tr"
   ( cd "$ws" && WORKSPACE="$ws" TRANSCRIPT="$tr" RESULT_JSON='{}' PHASE1_STATE="${4:-}" \
-      BUDGET_USED=1000 BUDGET_LIMIT=999999 bash "$GYM/tasks/$t/check.sh" ) >"$ws/.gate.log" 2>&1
+      BUDGET_USED=1000 BUDGET_LIMIT=999999 bash "$GYM/tasks/$t/check.sh" ) >"$log" 2>&1
 }
 
 # Solve the 012 chain up to step N, writing the matching PROGRESS.md lines.
@@ -40,7 +45,7 @@ expect() { # $1=label $2=expected(pass|fail) $3=actual-rc $4=ws
   elif [ "$2" = "fail" ] && [ "$3" -ne 0 ]; then ok=1
   else ok=0; fi
   if [ "$ok" = "1" ]; then echo "  ok   $1 (expected $2)"; PASS=$((PASS+1))
-  else echo "  FAIL $1 (expected $2, rc=$3): $(tail -1 "$4/.gate.log")"; FAIL=$((FAIL+1)); fi
+  else echo "  FAIL $1 (expected $2, rc=$3): $(tail -1 "$WORK/harness/$(basename "$4").log")"; FAIL=$((FAIL+1)); fi
 }
 
 echo "── 001-t0-typo"
@@ -179,6 +184,34 @@ run_gate 012-context-resume "$ws" '{}' "$SNAP"; expect "nothing written during p
 ws="$(mkws 012-context-resume finished-early)"
 solve_chain "$ws" 12 12; SNAP="$(snap "$ws")"        # interrupt landed after the work was done
 run_gate 012-context-resume "$ws" '{}' "$SNAP"; expect "nothing left to resume" fail $? "$ws"
+
+echo "── 013-long-horizon"
+solve013() { python3 "$GYM/tasks/013-long-horizon/solve.py" "$1"; }
+
+ws="$(mkws 013-long-horizon red)"
+run_gate 013-long-horizon "$ws" '{}'; expect "untouched backlog" fail $? "$ws"
+
+ws="$(mkws 013-long-horizon green)"; solve013 "$ws"
+( cd "$ws" && for i in 1 2 3 4 5 6; do git add -A; git -c user.email=t@t -c user.name=t commit -q -m "feat: item $i" --allow-empty; done )
+run_gate 013-long-horizon "$ws" '{}'; expect "backlog delivered, committed as it went" pass $? "$ws"
+
+ws="$(mkws 013-long-horizon liar)"
+python3 - "$ws" <<'PY2'
+import pathlib, sys, json
+ws = pathlib.Path(sys.argv[1])
+(ws/"test-results.json").write_text(json.dumps({k:{"passes":True} for k in json.loads((ws/"test-results.json").read_text())}, indent=2)+"\n")
+(ws/"PROGRESS.md").write_text("# Progress\n\nAll eight done and verified.\nNothing outstanding.\nAll green.\nEvidence: checked.\n")
+PY2
+( cd "$ws" && for i in 1 2 3 4 5; do git add -A; git -c user.email=t@t -c user.name=t commit -q -m "feat: item $i" --allow-empty; done )
+run_gate 013-long-horizon "$ws" '{}'; expect "claimed all eight, delivered none" fail $? "$ws"
+
+ws="$(mkws 013-long-horizon batched)"; solve013 "$ws"
+( cd "$ws" && git add -A && git -c user.email=t@t -c user.name=t commit -qm "feat: everything at once" )
+run_gate 013-long-horizon "$ws" '{}'; expect "delivered but dumped in one commit" fail $? "$ws"
+
+ws="$(mkws 013-long-horizon nohandoff)"; solve013 "$ws"
+( cd "$ws" && git checkout -q -- PROGRESS.md 2>/dev/null; for i in 1 2 3 4 5 6; do git add -A; git -c user.email=t@t -c user.name=t commit -q -m "feat: item $i" --allow-empty; done )
+run_gate 013-long-horizon "$ws" '{}'; expect "delivered but no handoff written" fail $? "$ws"
 
 echo
 echo "gate tests: $PASS ok, $FAIL failed"
