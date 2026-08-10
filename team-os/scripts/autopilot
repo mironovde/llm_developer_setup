@@ -4,7 +4,8 @@
 # No permission bypass: acceptEdits + allowlists; irreversible ops hook-denied via TEAMOS_AUTOPILOT=1.
 #
 # Usage: autopilot [project_dir] [--max-iterations N] [--iteration-timeout SECS] [--model M] [--prompt-file F] [--selftest]
-# Stop conditions: team/HALT (agent-written blocker) · team/.autopilot/done (all work finished)
+# Stop conditions: $HALT_FILE (agent-written blocker) · $RUN_DIR/done (all work finished).
+# Both are resolved from the project's state layer — team/ where it exists, else .artifacts/.
 #                  · iteration cap · circuit breaker (3 iterations without repo changes)
 #                  · repeated permission denials (2 consecutive iterations)
 # Tip for overnight runs on macOS: caffeinate -i autopilot <dir>
@@ -67,20 +68,39 @@ if [ "$SELFTEST" -eq 1 ]; then
 fi
 
 cd "$DIR"
-[ -d team ] || { echo "autopilot: no team/ in $(pwd)" >&2; exit 1; }
-mkdir -p team/.autopilot
-LOG="team/.autopilot/log"
-STATE_DIR="team/.autopilot"
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "autopilot: $(pwd) is not a git repository" >&2; exit 1; }
+
+# State layer: team/ where a project still has one, otherwise the project's own planning dir,
+# otherwise NOTES.md. Before 2026-08-10 this hard-required team/ and refused to start anywhere
+# else — which after the config was cut to a minimal core meant it refused in most projects.
+if [ -d team ]; then
+  STATE_LAYER="team/"; STATE_ENTRY="team/SPRINT.md"; RUN_DIR="team/.autopilot"; HALT_FILE="team/HALT"
+elif [ -d .planning ]; then
+  STATE_LAYER=".planning/"; STATE_ENTRY=".planning/STATE.md"; RUN_DIR=".artifacts/.autopilot"; HALT_FILE=".artifacts/HALT"
+else
+  STATE_LAYER="NOTES.md"; STATE_ENTRY="NOTES.md"; RUN_DIR=".artifacts/.autopilot"; HALT_FILE=".artifacts/HALT"
+fi
+[ -d team ] && METRICS="team/metrics.jsonl" || METRICS=".artifacts/metrics.jsonl"
+mkdir -p "$RUN_DIR" "$(dirname "$METRICS")"
+LOG="$RUN_DIR/log"
+STATE_DIR="$RUN_DIR"
 log() { printf '%s %s\n' "$(date -u +%FT%TZ)" "$*" | tee -a "$LOG"; }
 
-DEFAULT_PROMPT='You are the Team Lead in unattended AUTOPILOT (autonomy L3). Fresh context; all state is on disk.
-1. Read team/SPRINT.md, the last 10 lines of team/JOURNAL.md, and TaskList. Do not re-read everything.
-2. Pick ONE highest-priority unit of work: security fixes first, then unblocking items, then in-flight tasks, then highest-score backlog. One coherent unit only.
-3. Announce the tier and execute it per the tier router (t1/t2 playbooks apply; verification law applies — fresh proof, QA in fresh context for T1+).
-4. Update state: SPRINT.md statuses + proof paths, JOURNAL one line, Tasks.
-5. Rules of L3: never ask the user anything; irreversible actions are forbidden (queue them in SPRINT.md under "awaiting user gate"). If a decision is genuinely user-only (product direction, budget, security trade-off) OR you are blocked: write the reason to team/HALT and stop.
-6. If ALL planned work in SPRINT.md and TaskList is done: write a 5-line summary to team/.autopilot/done and stop.
-End your turn after the one unit is complete and state is written.'
+DEFAULT_PROMPT="Unattended run. Fresh context; everything you need is on disk.
+1. Read $STATE_ENTRY and the task list. Do not re-read the whole project.
+2. Pick ONE unit of work, highest priority first: security fixes, then unblocked in-flight work,
+   then the top of the backlog. One coherent unit, not three half-units.
+3. Do it under the working agreement: reproduce before fixing, verify with a command you ran and
+   read, never weaken a test.
+4. Write state to $STATE_LAYER as you go, not at the end — this run can be killed at any moment
+   and a successor with none of your context has to continue from what is on disk.
+5. Commit the unit. Nobody is here to answer questions, so never ask one: if a decision is
+   genuinely the user's (product direction, budget, a security trade-off) or you are blocked,
+   write the reason to $HALT_FILE and stop.
+6. Irreversible or outward actions — deploy, publish, force-push, payments, deleting data — are
+   forbidden here. Queue them in $STATE_ENTRY as awaiting the user and carry on with other work.
+7. When everything planned is done, write a five-line summary to $RUN_DIR/done and stop.
+End your turn once the unit is complete and its state is written."
 
 PROMPT="$DEFAULT_PROMPT"
 [ -n "$PROMPT_FILE" ] && PROMPT="$(cat "$PROMPT_FILE")"
@@ -98,7 +118,7 @@ log "autopilot start: max_iter=$MAX_ITER timeout=${ITER_TIMEOUT}s dir=$(pwd)"
 while :; do
   ITER=$((ITER + 1))
   if [ "$ITER" -gt "$MAX_ITER" ]; then log "STOP: iteration cap ($MAX_ITER) reached"; exit 0; fi
-  if [ -f team/HALT ]; then log "STOP: team/HALT present: $(head -3 team/HALT | tr '\n' ' ')"; exit 0; fi
+  if [ -f "$HALT_FILE" ]; then log "STOP: $HALT_FILE present: $(head -3 "$HALT_FILE" | tr '\n' ' ')"; exit 0; fi
   if [ -f "$STATE_DIR/done" ]; then log "STOP: done sentinel present"; exit 0; fi
 
   TRANSCRIPT="$STATE_DIR/iter-$ITER.jsonl"
@@ -125,14 +145,14 @@ while :; do
     WAIT=$(( RESET_EPOCH - $(date +%s) ))
     [ "$WAIT" -lt 60 ] && WAIT=60
     [ "$WAIT" -gt 21600 ] && WAIT=21600
-    append_metrics team/metrics.jsonl "$RESULT" "autopilot-iter-$ITER" "" "autopilot" "limit hit"
+    append_metrics "$METRICS" "$RESULT" "autopilot-iter-$ITER" "" "autopilot" "limit hit"
     log "limit hit; sleeping ${WAIT}s (until $(date -r "$RESET_EPOCH" 2>/dev/null || date -d "@$RESET_EPOCH" 2>/dev/null))"
     sleep "$WAIT"
     ITER=$((ITER - 1))   # retry does not consume the cap
     continue
   fi
 
-  append_metrics team/metrics.jsonl "$RESULT" "autopilot-iter-$ITER" "" "autopilot" "rc=$RC"
+  append_metrics "$METRICS" "$RESULT" "autopilot-iter-$ITER" "" "autopilot" "rc=$RC"
 
   if [ "$RC" -eq 124 ]; then
     if [ "$(repo_state_hash)" != "$PREV_HASH" ]; then
@@ -149,7 +169,7 @@ while :; do
     log "iteration $ITER had $DENIALS permission denials (streak=$DENIAL_STREAK)"
     if [ "$DENIAL_STREAK" -ge 2 ]; then
       printf 'autopilot halted: repeated permission denials — extend allowlists or run these steps manually.\n%s\n' \
-        "$(printf '%s' "$RESULT" | jq -c '.permission_denials' 2>/dev/null)" > team/HALT
+        "$(printf '%s' "$RESULT" | jq -c '.permission_denials' 2>/dev/null)" > "$HALT_FILE"
       log "STOP: permission-denial streak"; exit 0
     fi
   else
@@ -162,7 +182,7 @@ while :; do
     NO_PROGRESS=$((NO_PROGRESS + 1))
     log "no repo changes after iteration $ITER (streak=$NO_PROGRESS)"
     if [ "$NO_PROGRESS" -ge 3 ]; then
-      printf 'autopilot halted: 3 iterations without repo changes — likely stuck or work is conversational-only.\n' > team/HALT
+      printf 'autopilot halted: 3 iterations without repo changes — likely stuck or work is conversational-only.\n' > "$HALT_FILE"
       log "STOP: circuit breaker (no progress x3)"; exit 0
     fi
   else

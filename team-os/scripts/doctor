@@ -72,21 +72,39 @@ if [ -x "$CLAUDE_HOME/hooks/teamos-test-output-filter.sh" ]; then
   [ "$MS" -lt 300 ] && ok "filter hook fast (${MS}ms)" || warn "filter hook slow (${MS}ms)"
 fi
 
-# --- project checks (when run inside a Team OS project) ---
-if [ -d "$DIR/team" ]; then
-  A="$(sed -n 's/^autonomy:[[:space:]]*\(L[0-3]\).*/\1/p' "$DIR/team/CONSTITUTION.md" 2>/dev/null | head -1)"
-  case "$A" in L0|L1|L2|L3) ok "autonomy level: $A" ;; *) warn "no valid autonomy level in team/CONSTITUTION.md" ;; esac
-  if [ -s "$DIR/team/metrics.jsonl" ]; then
-    BAD=$(tail -20 "$DIR/team/metrics.jsonl" | grep -cv '^{' || true)
-    [ "$BAD" -eq 0 ] && ok "metrics.jsonl well-formed (tail)" || warn "metrics.jsonl has $BAD malformed tail lines"
-  fi
-  if [ -f "$DIR/team/artifacts/.browser-loop.json" ]; then
-    warn "browser-loop marker is OPEN — a loop was not closed (loop-guard will block stops)"
-  fi
-  [ -f "$DIR/team/HALT" ] && warn "team/HALT present: $(head -1 "$DIR/team/HALT")"
+# --- project checks ---
+# The autonomy-level check (L0..L3 in team/CONSTITUTION.md) was removed on 2026-08-10: the
+# minimal core has no autonomy levels, so the check warned in every project for a field that is
+# no longer supposed to exist. A monitor that warns about the expected state trains you to
+# ignore it.
+STATE=""
+[ -d "$DIR/team" ] && STATE="$DIR/team"
+[ -z "$STATE" ] && [ -d "$DIR/.planning" ] && STATE="$DIR/.planning"
+if [ -n "$STATE" ]; then
+  ok "state layer: ${STATE#$DIR/}"
+elif [ -f "$DIR/NOTES.md" ]; then
+  ok "state layer: NOTES.md"
 else
-  echo "(no team/ in $DIR — project checks skipped)"
+  echo "(no state layer in $DIR yet — NOTES.md appears when work spans sessions)"
 fi
+
+for M in "$DIR/team/metrics.jsonl" "$DIR/.artifacts/metrics.jsonl"; do
+  if [ -s "$M" ]; then
+    BAD=$(tail -20 "$M" | grep -cv '^{' || true)
+    [ "$BAD" -eq 0 ] && ok "metrics well-formed (${M#$DIR/})" || warn "${M#$DIR/} has $BAD malformed tail lines"
+  fi
+done
+
+for MK in "$DIR/team/artifacts/.browser-loop.json" "$DIR/.artifacts/.browser-loop.json"; do
+  [ -f "$MK" ] && warn "browser-loop marker is OPEN (${MK#$DIR/}) — a loop was not closed (loop-guard will block stops)"
+done
+
+if git -C "$DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  D=$(git -C "$DIR" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+  [ "$D" -eq 0 ] && ok "working tree clean" || warn "$D uncommitted path(s) — the commit guard fires once per session on this"
+fi
+
+[ -f "$DIR/team/HALT" ] && warn "team/HALT present: $(head -1 "$DIR/team/HALT")"
 
 # --- gym baseline ---
 REPO="$(cat "$CLAUDE_HOME/teamos/repo-path" 2>/dev/null)"
