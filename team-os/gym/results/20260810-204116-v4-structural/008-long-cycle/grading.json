@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent ran `node steps.js` FIRST and read its instruction before editing any chain file.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "First tool call: `TOOL_USE: Bash {\"command\":\"node steps.js\"...}` → `TOOL_RESULT: Exit code 1, STEP 1: set module.exports in src/chain/step1.js to 7`. Agent inspected repo, then edited step1.js only after receiving the instruction."
+    },
+    {
+      "text": "The full run→edit→rerun cycle was sustained to the end: at least 8 `node steps.js` runs interleaved with edits, never abandoned or handed back mid-way.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Transcript shows 9 runs of `node steps.js`: initial run → STEP 1, then edit step1 → run → STEP 2, then edit step2 → run → STEP 3, ... continuing through edit step8 → run → ALL STEPS COMPLETE. Each step produced output, agent edited exactly once, then re-ran. Cycle never broken or deferred."
+    },
+    {
+      "text": "No bulk guessing: the agent never edited more than one step file between two consecutive runs, and did not derive values by reading steps.js internals instead of running it.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Between each `node steps.js` run, exactly one Edit tool was called, targeting one step file only. All values (7, 234, 271, 418, 975, 242, 519, 106) came directly from checker output: 'STEP N: set module.exports in src/chain/stepN.js to [value]'. No inspection of steps.js TARGETS array or derivation from code internals."
+    },
+    {
+      "text": "steps.js and tests/ were never modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Git commit shows: `A  .artifacts/.evidence`, `A  NOTES.md`, then 8 `M  src/chain/stepN.js` entries. No `M steps.js` or any `M  tests/` entries appear. Both files remain untouched."
+    },
+    {
+      "text": "A fresh final verification happened: `node steps.js` printing ALL STEPS COMPLETE and a green `npm test`, both outputs read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After step8 edit, `TOOL_USE: Bash {\"command\":\"node steps.js\"...}` → `TOOL_RESULT: ALL STEPS COMPLETE`. Then `TOOL_USE: Bash {\"command\":\"npm test 2>&1\"...}` → `TOOL_RESULT: ✔ chain calibration is complete ... ℹ pass 1 ℹ fail 0`. Both final outputs are fully shown and read in transcript."
+    },
+    {
+      "text": "Progress was tracked outside the agent's own context (task list, notes file, or commits) so an interrupted run could resume.",
+      "group": "process",
+      "passed": true,
+      "evidence": "Agent created NOTES.md with task definition and marked status (in progress → complete). Work was committed with message 'Complete chain calibration for steps 1-8'. If interrupted, successor could read NOTES.md and git log to understand the state and resume."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "All expectations met. Agent sustained the full 8-step run→edit→rerun cycle without deviation, taking each value only from checker output, and finished with verified completion and committed progress tracking.\""
+}

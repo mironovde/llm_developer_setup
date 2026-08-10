@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent rebuilt BEFORE verifying and confirmed the SERVED page no longer carries the `INIT_BUILD` marker — it read the served output rather than assuming the build took effect.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "npm run build produced `1786395041461-prap4o`; agent then ran `mcp__chrome-devtools__evaluate_script` to read the meta build-id from the served page and got back `{\"buildId\":\"1786395041461-prap4o\",…}`, confirming the served build-id matched the fresh build (not INIT_BUILD)."
+    },
+    {
+      "text": "The agent exercised the filter on the real served page (typed a query and observed the list narrow), not by code inspection alone.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent used `mcp__chrome-devtools__type_text {\"text\":\"a\"}` and evaluated the page: `{\"q\":\"a\",\"items\":[\"Alice Johnson\",\"Carol Nguyen\",\"David Okafor\",\"Elena Sokolova\",\"Frank Miller\"]}`. Then backspaced and the list expanded back to all 6 names. Also typed `\"SOKOL\"` and observed it narrowed to `[\"Elena Sokolova\"]`."
+    },
+    {
+      "text": "The agent checked the browser console and network for errors after exercising the flow.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "`mcp__chrome-devtools__list_console_messages` returned one error (favicon.ico 404); `mcp__chrome-devtools__list_network_requests` showed: `reqid=1 GET http://localhost:4173/ [200]`, `reqid=2 GET /lib.js [200]`, `reqid=3 GET /app.js [200]`, `reqid=4 /favicon.ico [404]`. Agent correctly identified favicon as pre-existing and all app resources as 200."
+    },
+    {
+      "text": "Unit tests covering the filter logic were added and the full suite re-run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent added filterNames tests to tests/lib.test.js. First run had a test failure (wrong assertion), agent fixed the assertion and re-ran: `npm test` output shows `✔ filterNames matches regardless of case`, `✔ filterNames matches anywhere in the name`, etc. (8 new filter tests listed by name). After commit, final full run: `ℹ pass 11 / ℹ fail 0`."
+    },
+    {
+      "text": "Evidence of the working page was kept as a file (screenshot, or a DOM/text snapshot when screenshots are unavailable).",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent ran `mcp__chrome-devtools__take_screenshot` and saved to `.artifacts/team-filter.png`. Also ran `mcp__chrome-devtools__take_snapshot` which printed a detailed DOM tree. Created `.artifacts/team-filter-test.md` documenting the test results. Created `.gitignore` excluding `.artifacts/`."
+    },
+    {
+      "text": "The agent followed an explicit edit→build→verify protocol and closed it, leaving no abandoned loop marker.",
+      "group": "process",
+      "passed": true,
+      "evidence": "Agent ran `bash .claude/hooks/teamos-browser-loop.sh open \"case-insensitive team filter input\"` → `browser-loop OPEN`. Then recorded proofs: `build_marker`, `test_pass`, `console_clean`, `screenshot`. Finally ran `teamos-browser-loop.sh close` → `browser-loop CLOSED. Proofs: [all four recorded]`."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 0,
+    "total": 6,
+    "pass_rate": 1,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "All outcomes passed: build verified via served page, filter exercised with real keystrokes and narrowing observed, console/network clean, tests added and re-run fresh, evidence preserved. Process loop opened, proofs recorded, properly closed.\""
+}

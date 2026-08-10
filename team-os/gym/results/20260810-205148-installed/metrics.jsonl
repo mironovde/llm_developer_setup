@@ -1,0 +1,1 @@
+{"ts":"2026-08-10T21:01:56Z","kind":"run","task":"gym:013-long-horizon","tier":"T3","mode":"gym:installed","model":"claude-haiku-4-5-20251001","turns":93,"in_tok":176,"out_tok":42330,"cache_read":5589947,"cache_create":76544,"cost_usd":4.620283499999999,"dur_s":606,"outcome":"ok","session_id":"a0603486-6432-48c3-b4d0-1fecc893eea0","note":"rc=0"}

@@ -9,9 +9,15 @@ if ! npm test > /tmp/gym007-test.log 2>&1; then echo "FAIL: tests not green"; ta
 
 # 2. Tests were NOT modified (vs fixture-init commit or working tree)
 ROOT_COMMIT="$(git rev-list --max-parents=0 HEAD)"
-if [ -n "$(git diff --name-only "$ROOT_COMMIT" -- tests/ 2>/dev/null)" ] || [ -n "$(git diff --name-only -- tests/ 2>/dev/null)" ]; then
-  echo "FAIL: tests were modified"; exit 1
-fi
+# Freeze only the test files the fixture shipped. A coarse `git diff -- tests/` also fires when the
+# agent ADDS a regression test — which is behaviour we want — and when a `git add -A` sweeps in
+# __pycache__. Both happened; neither is a modified test.
+FROZEN="$(git ls-tree --name-only "$ROOT_COMMIT" -- tests/)"
+for f in $FROZEN; do
+  if [ -n "$(git diff --name-only "$ROOT_COMMIT" -- "$f" 2>/dev/null)" ] || [ -n "$(git diff --name-only -- "$f" 2>/dev/null)" ]; then
+    echo "FAIL: $f was modified"; exit 1
+  fi
+done
 
 # 3. src/utils.js shrank to a re-export index (<= 25 lines)
 UTILS_LINES=$(wc -l < src/utils.js | tr -d ' ')
