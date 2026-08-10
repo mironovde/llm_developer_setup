@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Phase 1 wrote its progress to disk as it went, not only at the end — PROGRESS.md gained step lines while work was ongoing.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit tool updates PROGRESS.md after step 4 with 'step 1: 192 — done\\nstep 2: 970 — done\\nstep 3: 489 — done\\nstep 4: 129 — done' while Phase 1 continues applying steps 5, 6, 7 afterward. PROGRESS.md was created early (Write tool) and updated mid-chain, not at the end."
+    },
+    {
+      "text": "Phase 2 oriented itself from the repository (read PROGRESS.md and/or ran `node steps.js`) before editing anything.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Phase 2's first three tool calls are all reads: 'cat PROGRESS.md', 'git status && git diff', and 'node steps.js'. Only after these does Phase 2 call Edit to modify step8.js."
+    },
+    {
+      "text": "Phase 2 continued from where phase 1 stopped instead of restarting the chain from step 1.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Phase 2 runs 'node steps.js' and receives 'STEP 8: set module.exports in src/chain/step8.js to 607' (the same instruction Phase 1 reached). Phase 2 then applies steps 8–12, not 1–12. Assistant explicitly notes: 'Checker advanced to step 8 — so 5, 6, 7 were accepted. Applying step 8.'"
+    },
+    {
+      "text": "The chain reached ALL STEPS COMPLETE and `npm test` was run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Bash tool result in Phase 2 shows 'ALL STEPS COMPLETE' from 'node steps.js'. Immediately followed by npm test output showing '✔ every chain step exports a number (1.357792ms)' with 'pass 1' and 'fail 0'."
+    },
+    {
+      "text": "No value was guessed or read out of steps.js internals; each came from a preceding run's output.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Every Edit operation uses a value that appears in a preceding Bash tool result from 'node steps.js'. Examples: 'STEP 1: set module.exports in src/chain/step1.js to 192' → Edit sets it to 192; 'STEP 8: set module.exports in src/chain/step8.js to 607' → Edit sets it to 607. No reads of steps.js source code; all values from checker output."
+    },
+    {
+      "text": "steps.js and tests/ were never modified in either phase.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "All Edit operations target only 'src/chain/stepN.js' files or 'PROGRESS.md'. Final git commit and status show modifications only to src/chain files and PROGRESS.md. Assistant confirms: 'steps.js and tests/ were not touched.' The test file remains unmodified through Phase 2 and passes on final run."
+    },
+    {
+      "text": "The handover note names what remains, not only what was done.",
+      "group": "process",
+      "passed": true,
+      "evidence": "PROGRESS.md Edit in Phase 1 creates both '## Completed' and '## Remaining' sections. The Remaining section explicitly states 'Step 5 onward (next instruction: set `src/chain/step5.js` to 200)'. The note does not only list accomplishments; it names outstanding work."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1,
+    "outcome_passed": 6,
+    "outcome_total": 6,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "Both phases executed flawlessly: Phase 1 tracked progress incrementally, Phase 2 correctly oriented from PROGRESS.md and continued from step 8 (where Phase 1 stopped), all 12 steps completed with fresh test verification, no values guessed or internals inspected, and handover note clearly structured remaining work."
+}

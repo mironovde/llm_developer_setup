@@ -134,6 +134,35 @@
       "out_tokens": 10382,
       "dur_s": 216,
       "note": null
+    },
+    {
+      "id": "012-context-resume",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 1,
+      "budget_used": 37450,
+      "budget_limit": 400000,
+      "out_tokens": 7971,
+      "dur_s": 151,
+      "note": null
+    },
+    {
+      "id": "013-long-horizon",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 1,
+      "budget_used": 91412,
+      "budget_limit": 900000,
+      "out_tokens": 30550,
+      "dur_s": 464,
+      "note": null
     }
-  ]
+  ],
+  "totals": {
+    "pass": 12,
+    "fail": 0,
+    "skip": 1
+  }
 }
