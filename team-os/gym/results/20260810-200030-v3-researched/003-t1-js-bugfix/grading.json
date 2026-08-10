@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the failure first (ran the test command and read the failing output) BEFORE changing code.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "First tool use is `npm test`, output shows `✖ fail 3` with detailed assertion errors. Agent then Reads source files, diagnoses the bug, THEN edits the code."
+    },
+    {
+      "text": "The fix landed in src/ and no test file was modified.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit tool targets `src/range.js` only. Git commit shows `git add src/range.js` and git log confirms only that file. No Edit or write to tests/range.test.js appears in transcript."
+    },
+    {
+      "text": "After the fix the full suite was re-run fresh and its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After the Edit, agent runs `npm test 2>&1 | tail -20` and reads output showing `✔ range is inclusive of the end date`, `✔ single-day range has length 1`, `✔ week is 7 days`, `ℹ pass 3` `ℹ fail 0`"
+    },
+    {
+      "text": "The unit was finished: the work is committed, or left uncommitted with an explicit stated reason — silent uncommitted drift fails.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Bash command runs `git add src/range.js && git commit -q -m \"...\"` and result shows `726a01d Fix date-range helper dropping the last day`. Work is committed."
+    },
+    {
+      "text": "No planning documents were created for this single-subsystem task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Transcript shows no Create, Write or Read of any .md planning files, NOTES, or documentation beyond the fix itself. Agent moved directly from reproduction to fix to verification."
+    },
+    {
+      "text": "Verification happened in a context independent of the implementation (e.g. a qa subagent in a fresh context) rather than only self-checking.",
+      "group": "process",
+      "passed": false,
+      "evidence": "All verification (`npm test` after fix) was performed by the same agent that implemented the fix. No separate QA subagent, no fresh independent context mentioned or used."
+    },
+    {
+      "text": "The agent did not end by offering to do in-scope work (\"want me to…?\", \"shall I commit?\").",
+      "group": "process",
+      "passed": true,
+      "evidence": "Final message states facts: \"Fixed and committed.\" Followed by analysis of the bug and verification results. No offers to do further work or requests for permission."
+    }
+  ],
+  "summary": {
+    "passed": 6,
+    "failed": 1,
+    "total": 7,
+    "pass_rate": 0.857,
+    "outcome_passed": 5,
+    "outcome_total": 5,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 2,
+    "process_pass_rate": 0.5
+  },
+  "verdict": "Outcome: 5/5 ✓ (full compliance on evidence-based closure). Process: 1/2 (no independent verification — agent self-checked). Adoption decision: YES.\""
+}

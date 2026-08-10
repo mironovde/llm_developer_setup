@@ -2,5 +2,42 @@
   "run_id": "20260810-200030",
   "variant": "v3-researched",
   "config_root": "/Users/mironovde/development/llm_developer_setup/team-os/variants/v3-researched",
-  "tasks": []
+  "tasks": [
+    {
+      "id": "001-t0-typo",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 0,
+      "budget_used": 11574,
+      "budget_limit": 45000,
+      "out_tokens": 1370,
+      "dur_s": 30,
+      "note": null
+    },
+    {
+      "id": "002-t0-doc-fix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 0.8,
+      "process_pass_rate": 0,
+      "budget_used": 11787,
+      "budget_limit": 45000,
+      "out_tokens": 1494,
+      "dur_s": 30,
+      "note": null
+    },
+    {
+      "id": "003-t1-js-bugfix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 0.5,
+      "budget_used": 13763,
+      "budget_limit": 150000,
+      "out_tokens": 1795,
+      "dur_s": 33,
+      "note": null
+    }
+  ]
 }

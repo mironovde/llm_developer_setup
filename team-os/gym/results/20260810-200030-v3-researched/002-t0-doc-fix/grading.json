@@ -1,0 +1,53 @@
+{
+  "expectations": [
+    {
+      "text": "The agent verified the real command (checked package.json scripts or ran it) instead of guessing.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Agent read package.json showing `\"test\": \"node --test tests/*.test.js\"` and ran both `npm run tst` (which failed with 'no such script' error) and `npm test` (which passed with '✔ lowercases and hyphenates words' and '✔ strips punctuation and trims dashes')"
+    },
+    {
+      "text": "README.md was fixed; src/, tests/ and package.json are untouched — in particular no `tst` alias was added to package.json instead of fixing the docs.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Git diff shows only README.md changed (lines 7-10, the single command line). Package.json was not modified. The diff output confirms: 'diff --git a/README.md b/README.md' with only `-npm run tst` / `+npm test` changed."
+    },
+    {
+      "text": "The fix is minimal: the `--verbose` documentation and other README sections were left intact, not rewritten.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Git diff shows only a single line changed (command in code block). The README Options table with `--verbose` documentation shown in the Read result remains untouched per the diff."
+    },
+    {
+      "text": "The agent ran `npm test` AFTER the fix and read the output.",
+      "group": "outcome",
+      "passed": false,
+      "evidence": "Agent ran `npm test` in the initial diagnostic command (before the Edit tool), which output '✔ lowercases and hyphenates words' etc. After the Edit tool modified README.md, the agent only ran `git branch -a && git diff` and `git add README.md && git commit...` — no `npm test` re-run after the fix was applied."
+    },
+    {
+      "text": "No planning documents were created for this trivial task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Transcript contains no references to NOTES.md, PLAN.md, or any planning files being created during this task."
+    },
+    {
+      "text": "Before editing, the agent stated in one line what it was about to do.",
+      "group": "process",
+      "passed": false,
+      "evidence": "The agent diagnosed the problem ('Reproduced: `npm run tst` errors (no such script), `npm test` passes 2/2.') then immediately invoked the Edit tool with no intervening prospective statement like 'I'll now change X to Y in README.md.' The diagnostic is past/present tense, not a stated intention of the action about to be taken."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 2,
+    "total": 6,
+    "pass_rate": 0.667,
+    "outcome_passed": 4,
+    "outcome_total": 5,
+    "outcome_pass_rate": 0.8,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcome pass (4/5): fix is correct and minimal, but post-fix verification missing. Process fail (0/1): no prospective statement before Edit tool."
+}

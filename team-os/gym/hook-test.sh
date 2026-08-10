@@ -82,6 +82,68 @@ run_hook "$r" "$r/missing.jsonl" s9 false; expect "transcript unreadable" allow 
 
 run_hook "" "" s10 false; expect "no cwd in payload" allow $?
 
+# ── default-FAIL contract: teamos-evidence-track.sh + teamos-verify-gate.sh ──────────────────
+TRACK="$ROOT/home/hooks/teamos-evidence-track.sh"
+GATE="$ROOT/home/hooks/teamos-verify-gate.sh"
+OPCTL="$ROOT/home/hooks/teamos-operator-control.sh"
+
+track() { # $1=cwd $2=tool $3=json tool_input $4=stdout
+  jq -n --arg c "$1" --arg t "$2" --argjson i "$3" --arg o "${4:-}" \
+    '{cwd:$c, tool_name:$t, tool_input:$i, tool_response:{stdout:$o}}' | bash "$TRACK" >/dev/null 2>&1
+}
+gate() { # $1=cwd $2=file $3=content → rc + prints decision
+  # A hook that allows an action stays silent and exits 0 — empty output IS "allow".
+  local out
+  out="$(jq -n --arg c "$1" --arg f "$2" --arg n "$3" \
+    '{cwd:$c, tool_name:"Write", tool_input:{file_path:$f, content:$n}}' | bash "$GATE" 2>/dev/null)"
+  if [ -z "$out" ]; then printf 'allow'
+  else printf '%s' "$out" | jq -r '.hookSpecificOutput.permissionDecision // "allow"'; fi
+}
+expect_dec() { # $1=label $2=expected $3=actual
+  if [ "$2" = "$3" ]; then echo "  ok   $1 (expected $2)"; PASS=$((PASS+1))
+  else echo "  FAIL $1 (expected $2, got $3)"; FAIL=$((FAIL+1)); fi
+}
+
+echo "── default-FAIL contract"
+r="$(mkrepo contract)"; printf '{"feature-1":{"passes":false},"feature-2":{"passes":false}}\n' > "$r/test-results.json"
+expect_dec "mark pass with no evidence at all" deny "$(gate "$r" "$r/test-results.json" '{"feature-1":{"passes":true}}')"
+
+track "$r" Bash '{"command":"npm test"}' "5 passing"
+expect_dec "mark pass after a real test run" allow "$(gate "$r" "$r/test-results.json" '{"feature-1":{"passes":true}}')"
+expect_dec "second pass on one observation" deny "$(gate "$r" "$r/test-results.json" '{"feature-2":{"passes":true}}')"
+
+track "$r" Bash '{"command":"npm test"}' ""
+expect_dec "test command with empty output is not evidence" deny "$(gate "$r" "$r/test-results.json" '{"feature-2":{"passes":true}}')"
+
+track "$r" Read '{"file_path":"'"$r"'/.artifacts/run.log"}'
+expect_dec "reading an artifact log counts" allow "$(gate "$r" "$r/test-results.json" '{"feature-2":{"passes":true}}')"
+
+track "$r" Read '{"file_path":"'"$r"'/src/index.js"}'
+expect_dec "reading source code is not evidence" deny "$(gate "$r" "$r/test-results.json" '{"feature-2":{"passes":true}}')"
+
+expect_dec "editing the contract without claiming a pass" allow "$(gate "$r" "$r/test-results.json" '{"feature-3":{"passes":false}}')"
+expect_dec "writing some other file is never gated" allow "$(gate "$r" "$r/notes.md" '{"passes":true}')"
+
+r2="$(mkrepo nocontract)"
+expect_dec "project without a contract file is untouched" allow "$(gate "$r2" "$r2/test-results.json" '{"a":{"passes":true}}')"
+
+echo "── operator controls"
+r3="$(mkrepo opctl)"
+opctl() {
+  local out
+  out="$(jq -n --arg c "$1" '{cwd:$c, tool_name:"Bash", tool_input:{command:"ls"}}' | bash "$OPCTL" 2>/dev/null)"
+  if [ -z "$out" ]; then printf 'allow'
+  else printf '%s' "$out" | jq -r '.hookSpecificOutput.permissionDecision // "allow"'; fi
+}
+expect_dec "clean repo runs freely" allow "$(opctl "$r3")"
+printf 'budget spent\n' > "$r3/AGENT_STOP"
+expect_dec "AGENT_STOP halts every call" deny "$(opctl "$r3")"
+rm -f "$r3/AGENT_STOP"
+expect_dec "removing AGENT_STOP resumes" allow "$(opctl "$r3")"
+printf 'switch to the parser bug first\n' > "$r3/STEER.md"
+expect_dec "STEER.md surfaces once" ask "$(opctl "$r3")"
+expect_dec "and is consumed, not repeated" allow "$(opctl "$r3")"
+
 echo
 echo "hook tests: $PASS ok, $FAIL failed"
 [ "$FAIL" -eq 0 ]

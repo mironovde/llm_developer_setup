@@ -1,0 +1,47 @@
+{
+  "expectations": [
+    {
+      "text": "The typo is fixed in src/format.js and no other source file was rewritten.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit tool call shows only one replacement in src/format.js: old_string=\"  return `Recieved: ${amount} from ${name}`;\" changed to new_string=\"  return `Received: ${amount} from ${name}`;\" with replace_all=false. Subsequent git commit shows only src/format.js was staged and committed."
+    },
+    {
+      "text": "The agent ran `npm test` AFTER the fix and read the output — a fresh verification, not an assumption.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After the Edit tool modified src/format.js, a Bash tool call executed `npm test 2>&1 | tail -20` and returned: \"✔ receipt says Received (0.501666ms)\" and \"✔ date formats as YYYY-MM-DD\" with \"ℹ pass 2\" and \"ℹ fail 0\". Agent then stated: \"Verified: npm test now passes 2/2, 0 failures.\""
+    },
+    {
+      "text": "No subagent was spawned (no Agent tool call) for a one-word fix.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Tool calls in transcript are: Bash (grep), Bash (npm test), Read, Edit, Bash (npm test), Bash (git commit). No Agent tool was invoked."
+    },
+    {
+      "text": "No planning documents (PRD, spec, plan file) were created for this trivial task.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "No Write, Create, or file-creation tool calls appear in the transcript. Only file modified was src/format.js via Edit tool."
+    },
+    {
+      "text": "Before editing, the agent stated in one line what it was about to do.",
+      "group": "process",
+      "passed": false,
+      "evidence": "Before the Edit tool, the agent stated: \"Reproduced the failure. Now the fix:\" This is vague—it indicates fixing will occur, but does not explicitly describe the specific change (Recieved→Received on line 4). A clear one-line statement would be \"I'll fix the typo: change Recieved to Received on line 4\" or similar. The statement needed to specify *what* was being fixed, not just signal that a fix is coming."
+    }
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5,
+    "pass_rate": 0.8,
+    "outcome_passed": 4,
+    "outcome_total": 4,
+    "outcome_pass_rate": 1,
+    "process_passed": 0,
+    "process_total": 1,
+    "process_pass_rate": 0
+  },
+  "verdict": "Outcome: perfect (4/4 — typo fixed correctly, verified fresh, no subagent, no planning docs). Process: one ritual miss — \"Now the fix:\" lacked specificity about the actual change being made."
+}
