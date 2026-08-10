@@ -2,5 +2,18 @@
   "run_id": "20260810-202108",
   "variant": "v3-researched",
   "config_root": "/Users/mironovde/development/llm_developer_setup/team-os/variants/v3-researched",
-  "tasks": []
+  "tasks": [
+    {
+      "id": "013-long-horizon",
+      "status": "fail",
+      "check": "fail",
+      "judge_pass_rate": null,
+      "process_pass_rate": null,
+      "budget_used": 88972,
+      "budget_limit": 900000,
+      "out_tokens": 32523,
+      "dur_s": 563,
+      "note": null
+    }
+  ]
 }

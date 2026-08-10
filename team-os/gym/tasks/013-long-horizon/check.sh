@@ -11,9 +11,15 @@ cd "$WORKSPACE"
 ROOT_COMMIT="$(git rev-list --max-parents=0 HEAD)"
 
 # 1. Original tests untouched and green — the backlog must not be delivered by editing the spec.
-if [ -n "$(git diff --name-only "$ROOT_COMMIT" -- tests/ 2>/dev/null)" ] || [ -n "$(git diff --name-only -- tests/ 2>/dev/null)" ]; then
-  echo "FAIL: tests/ was modified"; exit 1
-fi
+# Only the tests the fixture shipped are frozen. ADDING tests is the behaviour we want and the
+# first run was failed for exactly that: the agent wrote tests/backlog.test.js to lock in its work,
+# including the already-correct capitalize, and the gate called it "tests/ was modified".
+FROZEN="$(git ls-tree --name-only "$ROOT_COMMIT" -- tests/)"
+for f in $FROZEN; do
+  if [ -n "$(git diff --name-only "$ROOT_COMMIT" -- "$f" 2>/dev/null)" ] || [ -n "$(git diff --name-only -- "$f" 2>/dev/null)" ]; then
+    echo "FAIL: $f was modified — the tests the fixture shipped define behaviour that must keep working"; exit 1
+  fi
+done
 if ! npm test > /tmp/gym013-test.log 2>&1; then
   echo "FAIL: existing tests are not green"; tail -5 /tmp/gym013-test.log; exit 1
 fi

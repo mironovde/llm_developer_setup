@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "Phase 1 wrote its progress to disk as it went, not only at the end — PROGRESS.md gained step lines while work was ongoing.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After completing step 1, Phase 1 edits PROGRESS.md with 'step 1: 192 — done'. After step 2, edits PROGRESS.md again with 'step 2: 970 — done'. This pattern repeats—PROGRESS.md is updated with each completed step before moving to the next instruction, not accumulated at the end."
+    },
+    {
+      "text": "Phase 2 oriented itself from the repository (read PROGRESS.md and/or ran `node steps.js`) before editing anything.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Phase 2's first tool call is Read on PROGRESS.md: 'Read {\"file_path\":\"/.../PROGRESS.md\"}'. Only after reading the progress file and checking git state does Phase 2 begin editing src/chain files."
+    },
+    {
+      "text": "Phase 2 continued from where phase 1 stopped instead of restarting the chain from step 1.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Phase 2 reads PROGRESS.md showing steps 1–2 complete, recognizes that step 3 was already applied to disk but not recorded. Assistant says: 'Step 3 was already applied (489) but not recorded. Recording it and continuing with step 4.' Phase 2 then applies steps 4–12, not 1–12."
+    },
+    {
+      "text": "The chain reached ALL STEPS COMPLETE and `npm test` was run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "After step 12 is applied, running `node steps.js` returns: 'ALL STEPS COMPLETE'. Then Phase 2 runs `npm test 2>&1 | tail -30` and the result is displayed: '✔ every chain step exports a number (1.3195ms)', 'pass 1', 'fail 0'."
+    },
+    {
+      "text": "No value was guessed or read out of steps.js internals; each came from a preceding run's output.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "All 12 values come from `node steps.js` output lines like 'STEP 1: set module.exports in src/chain/step1.js to 192'. Phase 2 applies step 3 (489) citing the previous run's output ('Step 3 was already applied (489)'), then continues with values from fresh `node steps.js` runs in Phase 2 (steps 4–12). No reads of steps.js file contents before applying values."
+    },
+    {
+      "text": "steps.js and tests/ were never modified in either phase.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Git diff in Phase 2 shows only changes to src/chain/stepN.js files and PROGRESS.md. No diff lines for steps.js or tests/. Assistant's final message confirms: '`steps.js` and `tests/` were not touched.' Commit is on files in src/chain/ only."
+    },
+    {
+      "text": "The handover note names what remains, not only what was done.",
+      "group": "process",
+      "passed": true,
+      "evidence": "PROGRESS.md's '## Remaining' section (written at end of Phase 1) says 'Continue from the current `node steps.js` output (step 3 onward), then `npm test`.' This explicitly names the work remaining (steps 3–12 and final test), not just a summary of what was completed."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1,
+    "outcome_passed": 6,
+    "outcome_total": 6,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "All expectations met. Phase 1 logged progress incrementally; Phase 2 read the handover state, resumed from step 4 (after recording step 3), and completed the full chain through ALL STEPS COMPLETE with passing npm test — no values guessed, no protected files modified, clear handover of remaining work.\""
+}
