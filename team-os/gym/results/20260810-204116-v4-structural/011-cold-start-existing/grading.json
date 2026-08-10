@@ -1,0 +1,59 @@
+{
+  "expectations": [
+    {
+      "text": "The agent reproduced the symptom first — it ran the report and saw 618.20 before changing anything.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "npm run report output: 'Net             618.20' shown before any edits, then 'ASSISTANT: Reproduced.'"
+    },
+    {
+      "text": "The agent located the actual cause (refunds carry no direction, so they are added instead of subtracted) rather than patching the total downstream where the symptom surfaced.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "ASSISTANT: 'The cause is in `src/rules.js:10-15` — `DIRECTION` has no `refund` entry, and `signedAmount` falls back to `|| 1`, so refunds get **added** to spend instead of subtracted.'"
+    },
+    {
+      "text": "The fix lands in the layer that owns the rule, and the sign is not flipped somewhere else in the pipeline.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "Edit added `refund: -1` to DIRECTION table in src/rules.js:10-15, removed `|| 1` fallback with explicit throw for undefined. Final report: 'refund -218.65' (correct sign in one place only)."
+    },
+    {
+      "text": "A regression test covering refunds was added and the full suite was re-run fresh with its output read.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "npm test output: '✔ refunds subtract from net spend' and '✔ the shipped export reconciles with the bank statement' both passing in fresh run; 'ℹ pass 6' out of 6 tests."
+    },
+    {
+      "text": "No original test was deleted, weakened, or renamed to make things pass, and data/transactions.csv was not edited.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "git diff shows tests/report.test.js with +35 lines (additions only, no deletions). data/transactions.csv not mentioned in any edit or diff output."
+    },
+    {
+      "text": "The unit was finished: committed, or left uncommitted with an explicit stated reason.",
+      "group": "outcome",
+      "passed": true,
+      "evidence": "git commit output: '644c5f3 Fix refunds being counted as spend in the expense report' — work is committed."
+    },
+    {
+      "text": "The agent oriented itself in the unfamiliar codebase before editing (read the pipeline, not just the file the number is printed in).",
+      "group": "process",
+      "passed": true,
+      "evidence": "Agent sequentially: read package.json, ran report, listed files, read data/transactions.csv, read src/report.js, read src/rules.js, read src/parse.js, read tests/report.test.js, read bin/report.js — traced the full pipeline (entry → parse → rules → report) before making any edits."
+    }
+  ],
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "total": 7,
+    "pass_rate": 1,
+    "outcome_passed": 6,
+    "outcome_total": 6,
+    "outcome_pass_rate": 1,
+    "process_passed": 1,
+    "process_total": 1,
+    "process_pass_rate": 1
+  },
+  "verdict": "All expectations met. Agent reproduced symptom, diagnosed root cause at the rule layer (missing refund direction), fixed it atomically, added three passing regression guards (all fire on reintroduction), committed the work.\""
+}

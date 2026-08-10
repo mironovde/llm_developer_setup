@@ -2,5 +2,23 @@
   "run_id": "20260810-210501",
   "variant": "v3-researched",
   "config_root": "/Users/mironovde/development/llm_developer_setup/team-os/variants/v3-researched",
-  "tasks": []
+  "tasks": [
+    {
+      "id": "004-t1-py-bugfix",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 0,
+      "budget_used": 11590,
+      "budget_limit": 150000,
+      "out_tokens": 1391,
+      "dur_s": 32,
+      "note": null
+    }
+  ],
+  "totals": {
+    "pass": 1,
+    "fail": 0,
+    "skip": 0
+  }
 }

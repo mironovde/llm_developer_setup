@@ -41,15 +41,15 @@
     },
     {
       "id": "004-t1-py-bugfix",
-      "status": "fail",
-      "check": "fail",
+      "status": "pass",
+      "check": "pass",
       "judge_pass_rate": 1,
-      "process_pass_rate": 1,
-      "budget_used": 12063,
+      "process_pass_rate": 0,
+      "budget_used": 11590,
       "budget_limit": 150000,
-      "out_tokens": 1535,
-      "dur_s": 26,
-      "note": null
+      "out_tokens": 1391,
+      "dur_s": 32,
+      "note": "re-measured 2026-08-11 after a gate bug: __pycache__ swept in by git add -A read as a modified test"
     },
     {
       "id": "005-trap-t0",

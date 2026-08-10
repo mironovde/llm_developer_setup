@@ -1,6 +1,6 @@
 {
   "name": "installed",
-  "description": "The installed config — v1-core-r2 as measured on 2026-08-09, plus the security-auditor role kept for delo_yasno_2 which requires it by name.",
+  "description": "The installed config — v3-researched, rebuilt from Anthropic's Opus 5 / Fable 5 prompting guides. Adopted 2026-08-11 on 11 pass / 0 fail, outcome 0.982 vs 0.944, 262k tokens vs 293k.",
   "claude_md": "CLAUDE.md",
   "copy": [
     "agents",

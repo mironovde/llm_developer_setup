@@ -122,6 +122,18 @@
       "out_tokens": null,
       "dur_s": null,
       "note": "missing capability: xcodebuild"
+    },
+    {
+      "id": "011-cold-start-existing",
+      "status": "pass",
+      "check": "pass",
+      "judge_pass_rate": 1,
+      "process_pass_rate": 1,
+      "budget_used": 35148,
+      "budget_limit": 200000,
+      "out_tokens": 10382,
+      "dur_s": 216,
+      "note": null
     }
   ]
 }
