@@ -1,0 +1,12 @@
+{
+  "name": "v4-structural",
+  "description": "v3-researched plus the structural layer from Anthropic's long-running-agents reference: a default-FAIL contract enforced by hooks, and operator controls (AGENT_STOP, STEER.md). The prompt is identical to v3 \u2014 the variable is whether honesty about status is asked for or enforced.",
+  "claude_md": "CLAUDE.md",
+  "copy": [
+    "agents",
+    "skills",
+    "hooks"
+  ],
+  "seed_team": false,
+  "settings": "settings.json"
+}
