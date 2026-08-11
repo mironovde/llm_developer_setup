@@ -23,6 +23,13 @@ done
 # (dest-relative-to-CLAUDE_HOME, source) pairs
 MAPPINGS=()
 MAPPINGS+=("CLAUDE.md|$SRC_ROOT/home/CLAUDE.md")
+# Carried so a new machine is not quietly poorer: the global security policy and the legal
+# document templates lived only in ~/.claude and were in no repository.
+[ -f "$SRC_ROOT/home/SECURITY.md" ] && MAPPINGS+=("SECURITY.md|$SRC_ROOT/home/SECURITY.md")
+for f in "$SRC_ROOT"/home/legal-templates/*.md; do
+  [ -e "$f" ] || continue
+  MAPPINGS+=("legal-templates/$(basename "$f")|$f")
+done
 MAPPINGS+=("settings.json|$SRC_ROOT/home/settings.json")
 MAPPINGS+=("statusline.sh|$SRC_ROOT/home/statusline.sh")
 for f in "$SRC_ROOT"/home/hooks/*.sh; do

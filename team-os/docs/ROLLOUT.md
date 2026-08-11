@@ -27,8 +27,11 @@ bash ~/.claude/teamos/bin/doctor     # проверка машины
 | `skills/` (browser-loop, gym, retro, threat-model) | MCP-серверы под конкретный проект |
 | `agents/` (4 роли: implementer · researcher · security-auditor · evaluator) | `~/.claude/mcp-servers/1c_mcp` — внешний сервер: `git clone https://github.com/vladimir-kharin/1c_mcp.git` |
 | `commands/` (28 слэш-команд) | Авторизация в MCP (Figma, Supabase, Vercel и т.п.) |
-| `hooks/` (9 штук, включая контракт default-FAIL и операторские控制) | История, память проектов (`~/.claude/projects/`) |
+| `hooks/` (9 штук, включая контракт default-FAIL и операторские контроли) | История, память проектов (`~/.claude/projects/`) |
 | `teamos/bin/` (autopilot, standup, doctor, efficiency-report) | |
+| `SECURITY.md` — глобальная политика безопасности | |
+| `legal-templates/` — 6 шаблонов правовых документов | |
+| Пользовательские хуки из `claude-sync/hooks/` — ставит **отдельный** `claude-sync/install.sh` | |
 
 ## Личные настройки не затираются
 
