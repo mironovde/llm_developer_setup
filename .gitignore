@@ -64,3 +64,6 @@ data/raw/
 data/processed/
 wandb/
 mlruns/
+
+# Scratch output — per the working agreement this dir is throwaway
+.artifacts/
