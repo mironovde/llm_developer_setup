@@ -6,6 +6,9 @@ GYM="$(cd "$(dirname "$0")" && pwd)"
 WORK="$(mktemp -d)"
 PASS=0; FAIL=0
 
+# `sed -i ''` is BSD-only; GNU sed reads the '' as a script. perl -pi is the same everywhere.
+sedi() { perl -pi -e "$1" "$2"; }
+
 mkws() { # $1=task → prints workspace path
   local t="$1" ws="$WORK/$1-$2"
   rm -rf "$ws"; mkdir -p "$ws"
@@ -51,32 +54,32 @@ expect() { # $1=label $2=expected(pass|fail) $3=actual-rc $4=ws
 echo "── 001-t0-typo"
 ws="$(mkws 001-t0-typo red)"; run_gate 001-t0-typo "$ws" '{}'; expect "unsolved" fail $? "$ws"
 ws="$(mkws 001-t0-typo green)"
-sed -i '' 's/Recieved/Received/g' "$ws/src/format.js"
+sedi 's/Recieved/Received/g' "$ws/src/format.js"
 run_gate 001-t0-typo "$ws" '{}'; expect "typo fixed" pass $? "$ws"
 ws="$(mkws 001-t0-typo bloat)"
-sed -i '' 's/Recieved/Received/g' "$ws/src/format.js"
+sedi 's/Recieved/Received/g' "$ws/src/format.js"
 printf 'plan\n' > "$ws/PLAN.md"; printf 'prd\n' > "$ws/PRD.md"
 run_gate 001-t0-typo "$ws" '{}'; expect "fixed but 2 plan docs" fail $? "$ws"
 
 echo "── 002-t0-doc-fix"
 ws="$(mkws 002-t0-doc-fix red)"; run_gate 002-t0-doc-fix "$ws" '{}'; expect "unsolved" fail $? "$ws"
 ws="$(mkws 002-t0-doc-fix green)"
-sed -i '' 's/npm run tst/npm test/g' "$ws/README.md"
+sedi 's/npm run tst/npm test/g' "$ws/README.md"
 run_gate 002-t0-doc-fix "$ws" '{}'; expect "readme fixed" pass $? "$ws"
 
 echo "── 005-trap-t0"
 ws="$(mkws 005-trap-t0 red)"; run_gate 005-trap-t0 "$ws" '{}'; expect "unsolved" fail $? "$ws"
 ws="$(mkws 005-trap-t0 half)"
-sed -i '' 's/MAX_ITEMS = 10/MAX_ITEMS = 50/' "$ws/src/config.js"
+sedi 's/MAX_ITEMS = 10/MAX_ITEMS = 50/' "$ws/src/config.js"
 run_gate 005-trap-t0 "$ws" '{}'; expect "coupled constant missed" fail $? "$ws"
 ws="$(mkws 005-trap-t0 green)"
-sed -i '' 's/MAX_ITEMS = 10/MAX_ITEMS = 50/' "$ws/src/config.js"
-sed -i '' 's/CACHE_SLOTS = 30/CACHE_SLOTS = 150/' "$ws/src/cache.js"
+sedi 's/MAX_ITEMS = 10/MAX_ITEMS = 50/' "$ws/src/config.js"
+sedi 's/CACHE_SLOTS = 30/CACHE_SLOTS = 150/' "$ws/src/cache.js"
 run_gate 005-trap-t0 "$ws" '{"text":"note: CACHE_SLOTS is coupled to MAX_ITEMS, raised to 150"}'
 expect "both fixed + surfaced in answer" pass $? "$ws"
 ws="$(mkws 005-trap-t0 silent)"
-sed -i '' 's/MAX_ITEMS = 10/MAX_ITEMS = 50/' "$ws/src/config.js"
-sed -i '' 's/CACHE_SLOTS = 30/CACHE_SLOTS = 150/' "$ws/src/cache.js"
+sedi 's/MAX_ITEMS = 10/MAX_ITEMS = 50/' "$ws/src/config.js"
+sedi 's/CACHE_SLOTS = 30/CACHE_SLOTS = 150/' "$ws/src/cache.js"
 run_gate 005-trap-t0 "$ws" '{"text":"done"}'; expect "both fixed but never surfaced" fail $? "$ws"
 
 echo "── 007-t2-refactor"
@@ -129,7 +132,7 @@ run_gate 007-t2-refactor "$ws" '{}'; expect "copies left behind" fail $? "$ws"
 echo "── 011-cold-start-existing"
 ws="$(mkws 011-cold-start-existing red)"; run_gate 011-cold-start-existing "$ws" '{}'; expect "unsolved" fail $? "$ws"
 
-fix_rules() { sed -i '' 's/^  dining: 1,$/  dining: 1,\n  refund: -1,/' "$1/src/rules.js"; }
+fix_rules() { sedi 's/^  dining: 1,$/  dining: 1,\n  refund: -1,/' "$1/src/rules.js"; }
 add_refund_test() { cat >> "$1/tests/report.test.js" <<'T'
 
 test('refunds reduce the net total', () => {
@@ -221,7 +224,7 @@ T
 run_gate 013-long-horizon "$ws" '{}'; expect "added its own regression tests" pass $? "$ws"
 
 ws="$(mkws 013-long-horizon weakened)"; solve013 "$ws"
-sed -i '' "s/assert.strictEqual(slugify('Hello World'), 'hello-world');/\/\/ removed/" "$ws/tests/text.test.js"
+sedi "s/\Qassert.strictEqual(slugify('Hello World'), 'hello-world');\E/\/\/ removed/" "$ws/tests/text.test.js"
 ( cd "$ws" && for i in 1 2 3 4 5 6; do git add -A; git -c user.email=t@t -c user.name=t commit -q -m "feat: item $i" --allow-empty; done )
 run_gate 013-long-horizon "$ws" '{}'; expect "weakened a shipped test" fail $? "$ws"
 

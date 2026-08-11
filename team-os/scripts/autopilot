@@ -105,8 +105,11 @@ End your turn once the unit is complete and its state is written."
 PROMPT="$DEFAULT_PROMPT"
 [ -n "$PROMPT_FILE" ] && PROMPT="$(cat "$PROMPT_FILE")"
 
+# shasum is BSD/perl; Linux images often ship only sha256sum. Either works, neither is guaranteed.
+sha_of() { if command -v shasum >/dev/null 2>&1; then shasum; else sha256sum; fi; }
+
 repo_state_hash() {
-  { git rev-parse HEAD 2>/dev/null; git status --porcelain 2>/dev/null | sort; } | shasum | cut -d' ' -f1
+  { git rev-parse HEAD 2>/dev/null; git status --porcelain 2>/dev/null | sort; } | sha_of | cut -d' ' -f1
 }
 
 NO_PROGRESS=0

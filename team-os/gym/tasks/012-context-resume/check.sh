@@ -3,6 +3,9 @@
 # Env: WORKSPACE TRANSCRIPT RESULT_JSON BUDGET_USED BUDGET_LIMIT PHASE1_STATE
 # NOTE: under set -e, never write `cmd && { fail }` — a false cmd silently exits. Use if-statements.
 set -euo pipefail
+
+# shasum on BSD, sha256sum on most Linux images — pick whichever exists.
+sha_of() { if command -v shasum >/dev/null 2>&1; then command shasum -a 256 "$@"; else sha256sum "$@"; fi; }
 cd "$WORKSPACE"
 
 # 1. Chain complete (fresh run, here and now)
@@ -49,7 +52,7 @@ fi
 CHANGED=""
 while IFS=$'\t' read -r f h; do
   [ -f "$f" ] || { CHANGED="$CHANGED $f(deleted)"; continue; }
-  NOW=$(shasum -a 256 "$f" | cut -d' ' -f1)
+  NOW=$(sha_of "$f" | cut -d' ' -f1)
   if [ "$NOW" != "$h" ]; then CHANGED="$CHANGED $f"; fi
 done < <(jq -r '.step_hashes | to_entries[] | "\(.key)\t\(.value)"' "$PHASE1_STATE")
 if [ -n "$CHANGED" ]; then

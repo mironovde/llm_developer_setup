@@ -5,6 +5,9 @@
 # phase 2 continued instead of redoing settled work.
 set -uo pipefail
 
+# shasum on BSD, sha256sum on most Linux images — pick whichever exists.
+sha_of() { if command -v shasum >/dev/null 2>&1; then command shasum -a 256 "$@"; else sha256sum "$@"; fi; }
+
 OUT="$(node steps.js 2>/dev/null || true)"
 if printf '%s' "$OUT" | grep -q 'ALL STEPS COMPLETE'; then
   DONE=12
@@ -26,7 +29,7 @@ n=1
 while [ "$n" -le "$DONE" ]; do
   f="src/chain/step$n.js"
   if [ -f "$f" ]; then
-    h=$(shasum -a 256 "$f" | cut -d' ' -f1)
+    h=$(sha_of "$f" | cut -d' ' -f1)
     HASHES=$(printf '%s' "$HASHES" | jq --arg k "$f" --arg v "$h" '. + {($k): $v}')
   fi
   n=$((n + 1))
