@@ -7,12 +7,12 @@
 ## Процедура
 
 ```bash
-git clone <этот-репозиторий> ~/development/llm_developer_setup
-cd ~/development/llm_developer_setup
-git checkout team-os
+git clone https://github.com/mironovde/llm_developer_setup.git ~/development/llm_developer_setup
+cd ~/development/llm_developer_setup          # ветка по умолчанию main уже содержит всё
 
 bash team-os/install.sh --dry-run    # показывает, что будет заменено
 bash team-os/install.sh              # спросит подтверждение; --yes чтобы без него
+bash claude-sync/install.sh          # ОТДЕЛЬНЫЙ установщик пользовательских хуков
 bash ~/.claude/teamos/bin/doctor     # проверка машины
 ```
 
