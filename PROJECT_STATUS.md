@@ -1,42 +1,30 @@
 # Project Status
 
 ## Overview
-- **Project**: LLM Developer Setup — entry point + бэкап/синк глобальной конфигурации Claude Code
-- **Last Updated**: 2026-06-18
-- **Type**: живой шаблон/конфиг-репозиторий (не sprint-проект)
+- **Project**: LLM Developer Setup — versioned, portable configuration for Claude Code and Codex
+- **Last verified**: 2026-08-16
+- **Type**: active configuration repository
 
-## Что это репо делает
-1. **Entry point** для новых проектов (skills `.claude/skills/`, `.mcp.json`, шаблон workflow).
-2. **Версионируемый бэкап** глобального `~/.claude/` (`backups/<dated>/`).
-3. **Перенос между машинами** пользовательских хуков (`claude-sync/` + `install.sh`).
+## Active branches
 
-## Completed Features
-- 🟢 Набор project-local skills (`.claude/skills/`)
-- 🟢 Шаблоны безопасности (`templates/security/`)
-- 🟢 Слой автономной работы (хуки driver/watchdog/heartbeat/guards) + бэкап в `backups/`
-- 🟢 **Снапшот конфигурации 2026-06-18** (`backups/config-refresh-2026-06-18/`): живой `settings.json` + 7 project-CLAUDE.md
-- 🟢 **`claude-sync/`** — каноничные 9 пользовательских хуков + идемпотентный `install.sh` ($HOME-relative, `--dry-run`/`--no-launchd`), шаблон watchdog-plist
+| Agent | Branch | Canonical directory |
+| --- | --- | --- |
+| Claude Code | `claude` | `team-os/home/` |
+| Codex | `codex` | `codex/home/` |
 
-## Architecture Decisions
-- **Разделение владения хуками**: 9 пользовательских хуков версионируются здесь (`claude-sync/`); ~12 хуков фреймворка GSD НЕ дублируются (управляются апдейтером GSD — иначе устареют).
-- **Overlay-модель переноса**: на новой машине = установить GSD → `git clone` → `claude-sync/install.sh` → дотащить `settings.json`/`CLAUDE.md` из `backups/`.
-- **launchd-plist как шаблон** (`__HOME__`): живой plist содержал захардкоженный `/Users/...`; установщик подставляет `$HOME`.
+`main` and `team-os` remain compatibility branches for the prior Claude-only setup.
 
-## Next Steps
-1. [ ] (опционально) Нормализовать переносимость проводки в `settings.json`: `/opt/homebrew/bin/node` → `node`, `/Users/<name>/.claude` → `~/.claude`; положить переносимый `settings.json` в `claude-sync/`.
-2. [ ] (опционально) Решить судьбу устаревшего локального патча `gsd-statusline.js` (v1.38.3 vs живой v1.42.3).
+## Current Claude configuration
+- Global guidance, security reference, hooks, status line, and install tooling: `team-os/home/`.
+- `team-os/home/settings.json` was synchronized from the live `~/.claude/settings.json` on 2026-08-16.
+- Framework-managed GSD hooks are not duplicated; their installer remains the source of truth.
 
-## Blockers & Issues
-- Нет активных блокеров.
-- Known issue (non-blocking): проводка хуков в `settings.json` пока не переносима (абсолютный путь к node + пути `/Users/...`). Задокументировано в `claude-sync/README.md`.
+## Current Codex configuration
+- Added on branch `codex`. It is intentionally native to Codex: global `AGENTS.md`,
+  `config.toml`, plus a repository `AGENTS.md` template.
+- Claude hooks, permissions syntax, and plugins are not copied into Codex because
+  Codex uses its own sandbox, skills, plugins, MCP and config surfaces.
 
-## Recent Activity
-
-### 2026-06-18
-- ✅ Проверка актуальности конфигурации Claude на git (глобальной и проектной)
-- ✅ `backups/config-refresh-2026-06-18/` — снапшот живого `settings.json` + 7 project-CLAUDE.md (commit `74eb710`)
-- ✅ `claude-sync/` — переносимые пользовательские хуки + `install.sh` (commit `4dc40fb`)
-- 🔎 Разобран дрейф локального патча `gsd-statusline.js` (устаревший артефакт, pristine не восстановим)
-
----
-*Updated manually 2026-06-18 (session wrap-up)*
+## Boundaries
+- No secrets, authentication data, caches, session history, or local databases are versioned.
+- Historical snapshots stay in `backups/` and are not active configuration.

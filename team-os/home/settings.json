@@ -1,11 +1,9 @@
 {
-  "model": "opus",
   "env": {
-    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "2",
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+    "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "2"
   },
   "permissions": {
-    "defaultMode": "acceptEdits",
     "allow": [
       "Bash(git status:*)",
       "Bash(git diff:*)",
@@ -46,16 +44,6 @@
       "Bash(rg:*)",
       "WebSearch"
     ],
-    "ask": [
-      "Bash(gh pr merge:*)",
-      "Bash(gh release:*)",
-      "Bash(npm publish:*)",
-      "Bash(vercel:*)",
-      "Bash(fastlane:*)",
-      "Bash(terraform:*)",
-      "Bash(kubectl:*)",
-      "Bash(flyctl:*)"
-    ],
     "deny": [
       "Bash(git push --force:*)",
       "Bash(git push -f:*)",
@@ -68,8 +56,20 @@
       "Read(**/secrets/**)",
       "Read(~/.ssh/**)",
       "Read(~/.aws/**)"
-    ]
+    ],
+    "ask": [
+      "Bash(gh pr merge:*)",
+      "Bash(gh release:*)",
+      "Bash(npm publish:*)",
+      "Bash(vercel:*)",
+      "Bash(fastlane:*)",
+      "Bash(terraform:*)",
+      "Bash(kubectl:*)",
+      "Bash(flyctl:*)"
+    ],
+    "defaultMode": "auto"
   },
+  "model": "opus[1m]",
   "hooks": {
     "PreToolUse": [
       {
@@ -159,5 +159,29 @@
   "statusLine": {
     "type": "command",
     "command": "~/.claude/statusline.sh"
-  }
+  },
+  "enabledPlugins": {
+    "swift-lsp@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "playwright@claude-plugins-official": false,
+    "context7@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "feature-dev@claude-plugins-official": true,
+    "agent-sdk-dev@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true,
+    "playground@claude-plugins-official": true,
+    "firecrawl@claude-plugins-official": true,
+    "figma@claude-plugins-official": false,
+    "vercel@claude-plugins-official": false,
+    "supabase@claude-plugins-official": true
+  },
+  "effortLevel": "high",
+  "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
+  "theme": "light",
+  "remoteControlAtStartup": false,
+  "agentPushNotifEnabled": true
 }
