@@ -1,7 +1,7 @@
 # Project Status
 
 ## Overview
-- **Project**: LLM Developer Setup — versioned, portable configuration for Claude Code and Codex
+- **Project**: LLM Developer Setup — short, portable configuration for Claude Code and Codex
 - **Last verified**: 2026-08-16
 - **Type**: active configuration repository
 
@@ -12,19 +12,15 @@
 | Claude Code | `claude` | `team-os/home/` |
 | Codex | `codex` | `codex/home/` |
 
-`main` and `team-os` remain compatibility branches for the prior Claude-only setup.
+`main` and `team-os` remain compatibility branches for the former Claude-only setup.
 
-## Current Claude configuration
-- Global guidance, security reference, hooks, status line, and install tooling: `team-os/home/`.
-- `team-os/home/settings.json` was synchronized from the live `~/.claude/settings.json` on 2026-08-16.
-- Framework-managed GSD hooks are not duplicated; their installer remains the source of truth.
-
-## Current Codex configuration
-- Added on branch `codex`. It is intentionally native to Codex: global `AGENTS.md`,
-  `config.toml`, plus a repository `AGENTS.md` template.
-- Claude hooks, permissions syntax, and plugins are not copied into Codex because
-  Codex uses its own sandbox, skills, plugins, MCP and config surfaces.
+## Active configuration
+- The global policy is deliberately brief: outcome, scope, verification, user decisions, security, and communication.
+- Each project file contains only its own context, commands, and exceptional constraints.
+- Claude's current global files are `team-os/home/CLAUDE.md` and `team-os/home/settings.json`.
+- Current Delo Yasno project rules are `team-os/projects/delo_yasno_2/CLAUDE.md`.
+- Codex keeps its native equivalents on branch `codex`: `AGENTS.md` and `config.toml`.
 
 ## Boundaries
 - No secrets, authentication data, caches, session history, or local databases are versioned.
-- Historical snapshots stay in `backups/` and are not active configuration.
+- Historical variants, backups, hooks, and experiments remain in the repository for reference only; they are not part of the active configuration.
