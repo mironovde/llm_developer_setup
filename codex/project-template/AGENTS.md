@@ -1,12 +1,15 @@
 # Project guide
 
-Global working rules apply.
+Global Codex working agreements apply. Fill this guide from verified project
+facts; do not copy global process or tool manuals here.
 
-Keep this file short and project-specific:
+- Purpose and current product goal: <one sentence>.
+- Architecture and key directories: <boundaries and sources of truth>.
+- Current task record: <existing tracker, otherwise TASKS.md>; preserve its IDs.
+- Verified commands: <development>, <focused tests>, <required CI/build checks>.
+- Integration target: <actual branch>; release/deploy authority: <project policy>.
+- Project-specific constraints: <data, environments, resource or UI requirements>.
 
-- what the project does;
-- the important directories or architecture boundary;
-- development, test, and build commands;
-- only the constraints that are unique to this project.
-
-Do not repeat global process rules here.
+Read task state and actual Git status before continuing. Keep changing progress
+in the tracker. For the first tracked delivery, use the adjacent `TASKS.md`
+template only if no equivalent already exists.

@@ -1,0 +1,4 @@
+# Codex CLI 0.134+: codex --profile astra-deep
+# Use for difficult diagnosis, architecture, or high-risk review.
+model = "gpt-6-astra"
+model_reasoning_effort = "xhigh"

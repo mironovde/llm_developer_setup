@@ -1,28 +1,92 @@
-# Codex — active configuration
+# Codex / GPT-6 Astra
 
-Verified against the live Codex configuration on **2026-08-16**.
+Активная конфигурация: ветка `gpt-6-astra`. Проверено 2026-09-06 с Codex CLI
+0.152.0. Основания решений: [исследование](docs/ASTRA-RESEARCH.md).
 
-## Installable files
+## Что установлено
 
-| File here | Install location | Purpose |
-| --- | --- | --- |
-| `home/AGENTS.md` | `~/.codex/AGENTS.md` | Short global working agreement |
-| `home/config.toml` | merge into `~/.codex/config.toml` | Portable global defaults |
-| `projects/delo_yasno_2/AGENTS.md` | repository root | Current project-specific rules |
-| `project-template/AGENTS.md` | new repository root | Short starting point for a project |
+- `home/AGENTS.md` → `~/.codex/AGENTS.md`: автономность, номера задач, критерии,
+  видимый прогресс, атомарная доставка, регулярный commit/push, выбор инструментов.
+- `home/config.toml`: Astra / `medium`; установщик объединяет только три параметра
+  модели и удаляет прежнее ручное `model_context_window`.
+- `home/astra-deep.config.toml`: Astra / `xhigh` для сложных задач.
+- `home-directory/AGENTS.md`: короткая замена устаревшего `~/AGENTS.md`.
+- `projects/{crm_npf,delo_yasno_2,delo_yasno_3}/AGENTS.md`: проверенные проектные
+  сведения. Остальные проекты наследуют глобальное соглашение автоматически.
+- `project-template/`: образец для нового проекта; заполняется фактами. Если уже
+  есть tracker/`.planning/`, его заменять и перенумеровывать не нужно.
 
-## Codex adaptation
+Глобальное соглашение — около 1100 слов. Оно загружается один раз как общие
+предпочтения; проектные файлы содержат местные сведения и исключения. Рабочий
+журнал читается по текущей задаче, подробная история — по необходимости.
 
-Claude and Codex share the same concise outcomes, but use their native formats:
+## Установка
 
-- `CLAUDE.md` becomes `AGENTS.md`.
-- Claude permission rules and hooks are not copied. Codex uses its sandbox,
-  approval policy, skills, plugins, and MCP configuration.
-- `config.toml` contains the portable live settings. Project trust paths,
-  cache timestamps, model migration notices, sessions, and credentials stay local.
-- The bundled plugins mirror the live global configuration. Do not remove one
-  merely because its skill appears available: the explicit setting enables it.
+Нужен Python 3.11+. Из корня этого репозитория:
 
-The active remote branch is **`origin/codex`**. The separate
-**`origin/claude`** branch is the active Claude Code configuration.
-See [ACTIVE_CONFIGURATIONS.md](../ACTIVE_CONFIGURATIONS.md) for the branch map.
+```sh
+# Предпросмотр глобальных изменений, без записи
+python3 codex/install.py
+
+# Применить глобально; частные резервные копии создаются автоматически
+python3 codex/install.py --apply
+
+# Глобально и в проверенных существующих проектах
+python3 codex/install.py --apply \
+  --home-guide "$HOME/AGENTS.md" \
+  --project "crm_npf=$HOME/development/crm_npf" \
+  --project "delo_yasno_2=$HOME/development/delo_yasno_2" \
+  --project "delo_yasno_3=$HOME/development/delo_yasno_3"
+```
+
+Повторный запуск с теми же файлами не делает изменений. `--codex-home /path`
+задаёт явную директорию; иначе используется существующий `CODEX_HOME` или
+`~/.codex`. Перед установкой на другую машину сверить проектные шаблоны с её
+фактами: флаг `--project` устанавливает проверенную версию целиком.
+
+Установщик сохраняет permissions/sandbox, MCP, plugins, desktop, trust, notices
+и остальные значения TOML, проверяя их семантическую неизменность. Не копируйте
+короткий переносимый config поверх полного live-файла. Подключения и настройки
+безопасности не являются частью этой миграции; автономность не обходит действующие
+разрешения среды. Рабочий режим этой уже открытой задачи определяется приложением.
+
+Установка не запускает агента, не вызывает модель, не делает Git-операций и не
+публикует содержимое компьютера. Push выполняется агентом для завершённых частей
+задачи, по действующему соглашению. Для отдельной миграции проектных инструкций
+можно использовать изолированную ветку от актуальной remote-базы.
+
+## Профиль и новые сессии
+
+```sh
+codex                         # Astra / medium из глобальных настроек
+codex --profile astra-deep     # Astra / xhigh, отдельный файл профиля
+codex -c model_reasoning_effort='"high"'  # разовое переопределение
+```
+
+В desktop выбирайте Astra и effort в переключателе модели. Сохранённая настройка
+уже существующей задачи/проектный override может иметь приоритет над новым default.
+Файлы не меняют выбранную модель или effort посреди текущей задачи; начните новую
+сессию для полного перечитывания инструкций. Глобальные правила применяются и в
+worktrees, но их собственные AGENTS.md могут содержать прежние исключения до
+интеграции конфигурационной ветки. Не перезаписывайте все worktrees массово.
+
+## Откат и проверка
+
+Резервная копия: `~/.codex/backups/gpt-6-astra/<stamp>/`, каталог 0700, файлы 0600.
+В ней могут быть частные значения live-config — она остаётся вне Git.
+
+```sh
+python3 codex/install.py --restore /absolute/path/to/backup          # dry-run
+python3 codex/install.py --restore /absolute/path/to/backup --apply  # откат
+python3 -m unittest discover -s codex/tests -v
+codex debug prompt-input 'Configuration audit only.'
+```
+
+Откат проверяет контрольные суммы и отказывается затирать последующие изменения.
+После прерванной установки уже записанные файлы также можно откатить манифестом.
+Последняя команда проверяет сборку prompt без запроса к модели; её полный вывод
+может содержать местные инструкции и пути, поэтому не отправляйте его в Git.
+
+Статические проверки доказывают корректность установки и загрузки. Экономию
+токенов и качество поведения нужно оценивать на задачах, описанных в исследовании.
+Текущий результат внедрения: [ROLLOUT.md](docs/ROLLOUT.md).
